@@ -1,0 +1,632 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   Design tokens — ported from ai-plf-mockups (Japanese enterprise)
+   Brand = Tiffany teal #0ABAB5. Source of truth: HTML mockups.
+   ============================================================ */
+@theme {
+  --font-sans: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+
+  --color-brand-50: #e6f7f7;
+  --color-brand-100: #b3ebea;
+  --color-brand-500: #0abab5;
+  --color-brand-600: #099e9a;
+  --color-brand-700: #077d7a;
+
+  /* AI accent shares the brand teal ramp in the mockups */
+  --color-ai-50: #e6f7f7;
+  --color-ai-100: #b3ebea;
+  --color-ai-500: #0abab5;
+  --color-ai-600: #099e9a;
+  --color-ai-700: #077d7a;
+
+  --color-ink-900: #1a2233;
+  --color-ink-700: #374151;
+  --color-ink-500: #5f6b7a;
+  --color-ink-300: #9aa4b2;
+
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f7fa;
+  --color-surface-muted: #edf1f5;
+
+  --color-line: #e0e4ea;
+
+  --shadow-panel: 0 1px 0 0 rgba(15, 23, 42, 0.04), 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-pop: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 8px 32px rgba(15, 23, 42, 0.08);
+}
+
+/* Base */
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink-700);
+  background: var(--color-surface);
+}
+
+/* ============================================================
+   Custom utilities ported verbatim from the mockups
+   ============================================================ */
+.ai-grad {
+  background: linear-gradient(135deg, #0abab5 0%, #077d7a 100%);
+}
+.ai-grad-text {
+  background: linear-gradient(135deg, #0abab5 0%, #077d7a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.btn-floating {
+  background-color: #0abab5;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(10, 186, 181, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-floating:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(10, 186, 181, 0.35);
+}
+.btn-floating:active {
+  transform: translateY(0);
+}
+
+.bg-pattern {
+  background-color: #f5f7fa;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(10, 186, 181, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(10, 186, 181, 0.06) 0%, transparent 40%),
+    radial-gradient(circle, #e0e4ea 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 24px 24px;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Active sidebar item (lifted white chip) */
+.sidebar-active {
+  background-color: #ffffff;
+  color: #099e9a;
+  border: 1px solid rgba(10, 186, 181, 0.25);
+  box-shadow: 0 4px 10px rgba(10, 186, 181, 0.15);
+  transform: translateY(-1px);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+/* Thin scrollbars (Japanese enterprise density) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd2dc;
+  border-radius: 4px;
+}
+
+/* AI chat (S1+) — speech bubbles, shimmer skeleton, pulse ring */
+.bubble-ai::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 12px;
+  border: 6px solid transparent;
+  border-right-color: #f5f8ff;
+  border-left: 0;
+}
+.bubble-user::before {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 12px;
+  border: 6px solid transparent;
+  border-left-color: #099e9a;
+  border-right: 0;
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(90deg, #edf1f5 25%, #f5f7fa 50%, #edf1f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes pulseRing {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 131, 143, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(0, 131, 143, 0);
+  }
+}
+.ring-ai {
+  animation: pulseRing 2.5s infinite;
+}
+
+/* Reference Data (S6) — toggle switch, tags, mini CAD preview */
+.switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: #cbd2dc;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.switch.on {
+  background: #0abab5;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+.switch.on::after {
+  left: 16px;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 3px;
+  border: 1px solid;
+}
+.tag-vendor {
+  background: #f3e5f5;
+  border-color: #ce93d8;
+  color: #6a1b9a;
+}
+.tag-type {
+  background: #e6f7f7;
+  border-color: #b3ebea;
+  color: #099e9a;
+}
+.tag-tech {
+  background: #fff8e1;
+  border-color: #ffd54f;
+  color: #f57f17;
+}
+.tag-enduser {
+  background: #e1f5fe;
+  border-color: #81d4fa;
+  color: #01579b;
+}
+.mini-cad {
+  background-color: #fafbfc;
+  background-image: radial-gradient(circle, #d8dde3 0.8px, transparent 0.8px);
+  background-size: 12px 12px;
+}
+
+/* Flowchart canvas (S7 Program Generation) */
+.flow-canvas {
+  background-color: #fafbfc;
+  background-image: radial-gradient(circle, #d8dde3 1px, transparent 1px);
+  background-size: 18px 18px;
+  position: relative;
+}
+.flow-node {
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.flow-node:hover rect,
+.flow-node:hover circle,
+.flow-node:hover polygon {
+  stroke: #099e9a;
+  stroke-width: 2;
+}
+.flow-node.selected rect,
+.flow-node.selected polygon {
+  stroke: #099e9a;
+  stroke-width: 2.5;
+  fill: #e6f7f7;
+}
+.flow-node.ai-suggesting rect {
+  stroke: #00838f;
+  stroke-width: 2;
+  stroke-dasharray: 4 2;
+  animation: dash 1s linear infinite;
+}
+.flow-arrow {
+  stroke: #5f6b7a;
+  stroke-width: 1.5;
+  fill: none;
+}
+.flow-arrow-yes {
+  stroke: #2e7d32;
+}
+.flow-arrow-no {
+  stroke: #c62828;
+}
+.flow-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  fill: #1a2233;
+  pointer-events: none;
+}
+.flow-text-sm {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  fill: #5f6b7a;
+  pointer-events: none;
+}
+.flow-addr {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 9px;
+  fill: #00838f;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* Diff viewer (S5 Language Switch) */
+.diff-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr 36px;
+  min-height: 28px;
+  border-bottom: 1px solid #f0f2f5;
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.diff-row:hover {
+  background: #fafbfc;
+}
+.diff-row.selected {
+  background: #e6f7f7 !important;
+}
+.diff-row.low-conf {
+  background: #fffbeb;
+}
+.diff-row.low-conf.selected {
+  background: #fff3c4 !important;
+}
+.diff-row.edited {
+  background: #e6f7f7;
+}
+.ln {
+  color: #9aa4b2;
+  text-align: right;
+  padding: 4px 8px;
+  user-select: none;
+  border-right: 1px solid #f0f2f5;
+  background: #fafbfc;
+}
+.cell {
+  padding: 4px 10px;
+  line-height: 1.5;
+  cursor: text;
+  outline: none;
+}
+.cell.orig {
+  border-right: 1px solid #f0f2f5;
+  color: #1a2233;
+}
+.cell.trans {
+  color: #1a2233;
+}
+.cell[contenteditable='true']:focus {
+  background: white;
+  box-shadow: inset 0 0 0 2px #0abab5;
+}
+.conf-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #9aa4b2;
+}
+.diff-section {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr 36px;
+  background: linear-gradient(to right, #f0f4f8, #f5f8fa);
+  border-top: 2px solid #e0e4ea;
+  border-bottom: 1px solid #e0e4ea;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5f6b7a;
+}
+.diff-section > div {
+  padding: 6px 10px;
+}
+.diff-section > div:first-child {
+  background: #edf1f5;
+}
+.kw {
+  color: #6b5bff;
+  font-weight: 500;
+}
+.addr {
+  color: #00838f;
+  font-weight: 500;
+}
+
+/* Ladder diagram (S4 Program Check) — wire/rail scoped under .ladder-bg
+   so they don't override S3's .wire color */
+.ladder-bg {
+  background-color: #fafbfc;
+  background-image: linear-gradient(#f0f2f5 1px, transparent 1px);
+  background-size: 100% 60px;
+}
+.rung {
+  cursor: pointer;
+}
+.rung:hover .rung-bg {
+  fill: #f5f8ff;
+}
+.rung.selected .rung-bg {
+  fill: #fff3e0;
+  stroke: #ed6c02;
+  stroke-width: 1.5;
+}
+.rung.warning .rung-bg {
+  fill: #fffbeb;
+}
+.rung.error .rung-bg {
+  fill: #fef2f2;
+}
+.ladder-text {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 11px;
+  fill: #1a2233;
+  pointer-events: none;
+}
+.ladder-comment {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  fill: #5f6b7a;
+  pointer-events: none;
+}
+.ladder-addr {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 10px;
+  fill: #00838f;
+  font-weight: 600;
+  pointer-events: none;
+}
+.ladder-ln {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 10px;
+  fill: #9aa4b2;
+  pointer-events: none;
+}
+.ladder-bg .wire {
+  stroke: #1a2233;
+  stroke-width: 1.5;
+  fill: none;
+}
+.ladder-bg .rail {
+  stroke: #5f6b7a;
+  stroke-width: 2;
+}
+.section-header {
+  fill: #edf1f5;
+}
+.section-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  fill: #5f6b7a;
+}
+.sev-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.sev-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+.sev-info {
+  background: #e6f7f7;
+  color: #077d7a;
+}
+
+/* CAD canvas + components (S3 Electrical Drawing) */
+.cad-canvas {
+  background-color: #fafbfc;
+  background-image: radial-gradient(circle, #d8dde3 1px, transparent 1px);
+  background-size: 20px 20px;
+  position: relative;
+  overflow: auto;
+}
+.cad-comp {
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cad-comp rect {
+  transition: all 0.15s;
+}
+.cad-comp:hover rect {
+  stroke: #099e9a;
+  stroke-width: 2;
+}
+.cad-comp.selected rect {
+  stroke: #099e9a;
+  stroke-width: 2.5;
+  fill: #e6f7f7;
+}
+.cad-comp.processing rect {
+  stroke: #00838f;
+  stroke-dasharray: 4 2;
+  animation: dash 1s linear infinite;
+}
+@keyframes dash {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+.cad-comp.ai-generated rect {
+  stroke: #00838f;
+}
+.cad-label {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 10px;
+  fill: #1a2233;
+  pointer-events: none;
+}
+.cad-label-sm {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 8px;
+  fill: #5f6b7a;
+  pointer-events: none;
+}
+.wire {
+  stroke: #5f6b7a;
+  stroke-width: 1.5;
+  fill: none;
+}
+.wire-power {
+  stroke: #c62828;
+  stroke-width: 2;
+}
+.wire-ground {
+  stroke: #2e7d32;
+  stroke-width: 2;
+}
+.wire-signal {
+  stroke: #099e9a;
+  stroke-width: 1.2;
+  stroke-dasharray: 4 2;
+}
+.wire-label {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 8px;
+  fill: #5f6b7a;
+  pointer-events: none;
+}
+.ai-badge {
+  fill: #0abab5;
+}
+
+/* Citation chips + source highlight (S2 Q&A) */
+.cite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #e6f7f7;
+  color: #077d7a;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  margin: 0 2px;
+  cursor: pointer;
+  border: 1px solid #b3ebea;
+  vertical-align: 2px;
+  transition: all 0.15s;
+}
+.cite:hover {
+  background: #099e9a;
+  color: white;
+  transform: scale(1.05);
+}
+.cite.active {
+  background: #099e9a;
+  color: white;
+}
+@keyframes highlight {
+  0%,
+  100% {
+    background-color: rgba(255, 213, 79, 0);
+  }
+  50% {
+    background-color: rgba(255, 213, 79, 0.4);
+  }
+}
+.highlight-source {
+  animation: highlight 1.5s ease-in-out;
+  border-radius: 4px;
+}
+
+/* Case header collapse-on-scroll (F4) */
+.collapsed-header {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom-width: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Table rows (F3 Case List) */
+.row:hover {
+  background: #fafbfc;
+}
+.row.selected {
+  background: #e6f7f7;
+}
+
+/* Status pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid;
+}
+.pill-design {
+  background: #e6f7f7;
+  border-color: #b3ebea;
+  color: #077d7a;
+}
+.pill-kickoff {
+  background: #e6f7f7;
+  border-color: #b3ebea;
+  color: #077d7a;
+}
+.pill-build {
+  background: #fff8e1;
+  border-color: #ffd54f;
+  color: #f57f17;
+}
+.pill-onsite {
+  background: #fff3e0;
+  border-color: #ffb74d;
+  color: #e65100;
+}
+.pill-debug {
+  background: #ffebee;
+  border-color: #ef9a9a;
+  color: #b71c1c;
+}
+.pill-pre {
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+  color: #1b5e20;
+}
+.pill-done {
+  background: #e0f7fa;
+  border-color: #b2ebf2;
+  color: #00838f;
+}
