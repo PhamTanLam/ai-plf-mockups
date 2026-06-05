@@ -13,7 +13,7 @@ export interface RoundLog { n: number; ts: number; fields: number; outputs: numb
 
 // "Pool kiến thức" để AI (mô phỏng) tự ghi nhận thông tin theo nội dung nguồn/chat.
 const FIELD_CATALOG: { name: string; kw: RegExp; sample: string }[] = [
-  { name: 'Bối cảnh dự án', kw: /khách hàng|end-?user|người dùng cuối|thời hạn|bàn giao|deadline/i, sample: 'Khách hàng A (giả) · 2026/09' },
+  { name: 'Bối cảnh dự án', kw: /khách hàng|end-?user|người dùng cuối|thời hạn|bàn giao|deadline/i, sample: 'Khách hàng A · 2026/09' },
   { name: 'Tóm tắt hoạt động thiết bị', kw: /dây chuyền|lắp ráp|kiểm tra|hàn|cấp phôi|hoạt động|quy trình/i, sample: 'Dây chuyền lắp ráp & kiểm tra' },
   { name: 'Thiết bị điều khiển', kw: /servo|\bplc\b|mitsubishi|\biai\b|mr-?j5|iq-?r|điều khiển/i, sample: 'Servo ×6 · CC-LINK' },
   { name: 'Cấu hình mạng', kw: /cc-?link|ethernet|io-?link|ethercat|profinet|mạng/i, sample: 'CC-LINK IE Field' },
@@ -22,8 +22,8 @@ const FIELD_CATALOG: { name: string; kw: RegExp; sample: string }[] = [
   { name: 'Thiết bị liên động ngoài', kw: /liên động|băng tải|robot|conveyor|interlock/i, sample: '2 băng tải' },
   { name: 'Thông số an toàn', kw: /an toàn|iso\s?\d+|pl\s?[a-e]\b|safety|pilz|e-?stop/i, sample: 'ISO 10218-1' },
   { name: 'Yêu cầu đặc biệt của khách', kw: /yêu cầu đặc biệt|yêu cầu riêng|đặc thù/i, sample: 'Có' },
-  { name: 'Địa điểm debug / chạy thử', kw: /debug|chạy thử|hiện trường|nghiệm thu|nhà máy|xưởng/i, sample: 'Nhà máy (giả)' },
-  { name: 'Người phụ trách (cơ/điện/PM)', kw: /người phụ trách|phụ trách|\bpm\b|kỹ sư|owner/i, sample: '(giả)' },
+  { name: 'Địa điểm debug / chạy thử', kw: /debug|chạy thử|hiện trường|nghiệm thu|nhà máy|xưởng/i, sample: 'Nhà máy A' },
+  { name: 'Người phụ trách (cơ/điện/PM)', kw: /người phụ trách|phụ trách|\bpm\b|kỹ sư|owner/i, sample: 'Anh B (điện)' },
   { name: 'Nhịp sản xuất (takt)', kw: /takt|nhịp sản xuất|giây\/|sp\/giờ|cycle/i, sample: '35 giây/cái' },
   { name: 'Màu sơn tủ điện', kw: /màu sơn|ral\s?\d+|\bsơn\b/i, sample: 'RAL 7035' },
   { name: 'Điện áp nguồn cấp', kw: /điện áp|\b\d{3}\s?v\b|3 pha|380v|220v|50\s?hz/i, sample: '3 pha 380V/50Hz' },
@@ -43,8 +43,8 @@ export const OUTPUTS: OutputDef[] = [
 // Case demo: seed sẵn "bộ nhớ" giả (dự án đang làm dở) để sinh đầu ra có dữ liệu; dự án mới bắt đầu trống.
 const DEMO_CASE_IDS = new Set(['CASE-2026-0245', 'CASE-2026-0312', 'CASE-2026-0345', 'CASE-2026-0288'])
 const DEMO_FIELDS: { name: string; value: string }[] = [
-  { name: 'Bối cảnh dự án', value: 'Khách hàng A (giả) · end-user X · 2026/09' },
-  { name: 'Tóm tắt hoạt động thiết bị', value: 'Dây chuyền lắp ráp & kiểm tra (giả)' },
+  { name: 'Bối cảnh dự án', value: 'Khách hàng A · end-user X · 2026/09' },
+  { name: 'Tóm tắt hoạt động thiết bị', value: 'Dây chuyền lắp ráp & kiểm tra' },
   { name: 'Thiết bị điều khiển', value: 'Servo ×6 · CC-LINK' },
   { name: 'Cấu hình mạng', value: 'CC-LINK IE Field' },
   { name: 'Số chủng loại sản phẩm', value: '3 chủng loại' },
@@ -56,11 +56,11 @@ const DEMO_FIELDS: { name: string; value: string }[] = [
 function buildOutputMarkdown(id: string, fields: ProjectField[]): string {
   const get = (kw: RegExp) => fields.find(f => kw.test(f.name))?.value || '(chưa có)'
   const list = fields.length ? fields.map(f => `- **${f.name}:** ${f.value}`).join('\n') : '- (chưa có dữ liệu)'
-  const head = `# ${OUTPUTS.find(o => o.id === id)?.name}\n\n> Dữ liệu GIẢ ĐỊNH — sinh tự động để demo.\n`
+  const head = `# ${OUTPUTS.find(o => o.id === id)?.name}\n\n> Bản nháp sinh tự động từ thông tin đã ghi nhận — cần kỹ sư rà soát.\n`
   switch (id) {
     case 'doc': return head + `\n## Tóm tắt kỹ thuật\n${list}\n`
     case 'config': return head + `\n## Cấu thành hệ thống (đơn giản)\n- Điều khiển: ${get(/điều khiển/i)}\n- Mạng: ${get(/mạng/i)}\n- Liên động: ${get(/liên động/i)}\n- Chủng loại: ${get(/chủng loại/i)}\n`
-    case 'estimate': return head + `\n## Dự toán khái quát (ước tính demo)\n\n| Hạng mục | Ước tính |\n| :--- | ---: |\n| Thiết kế điện & phần mềm | ¥3.2M |\n| Vật tư điều khiển | ¥4.1M |\n| Lắp đặt & debug | ¥2.0M |\n| **Tổng (giả định)** | **¥9.3M** |\n\n- Thời gian ~16 tuần · Độ tin cậy 75% (demo).\n`
+    case 'estimate': return head + `\n## Dự toán khái quát (ước tính)\n\n| Hạng mục | Ước tính |\n| :--- | ---: |\n| Thiết kế điện & phần mềm | ¥3.2M |\n| Vật tư điều khiển | ¥4.1M |\n| Lắp đặt & debug | ¥2.0M |\n| **Tổng** | **¥9.3M** |\n\n- Thời gian ~16 tuần · Độ tin cậy 75%.\n`
     case 'schedule': return head + `\n## Lịch trình khái quát\n\n| Pha | Nội dung | Thời lượng |\n| :--- | :--- | :---: |\n| 1. Thiết kế | Bản vẽ điện, kiến trúc PM | 8 tuần |\n| 2. Chế tạo | Tủ điện, lập trình PLC/HMI | 6 tuần |\n| 3. Lắp đặt & Debug | takt ${get(/takt/i)} | 4 tuần |\n| 4. Bàn giao | Nghiệm thu | 2 tuần |\n`
     case 'proposal': return head + `\n## Tài liệu nền đề xuất\n**Bối cảnh:** ${get(/bối cảnh/i)}.\n\n**Mục tiêu:** tự động hoá ${get(/hoạt động/i)}, takt ${get(/takt/i)}.\n\n**Phạm vi:** ${get(/phạm vi/i)}.\n\n**An toàn:** ${get(/an toàn/i)}.\n`
     default: return head + '\n' + list
@@ -147,7 +147,8 @@ export function usePresalesState(caseId: string): PresalesApi {
   }, [fields])
 
   const summaryText = useCallback(() => {
-    return fields.length ? fields.map(f => `- **${f.name}:** ${f.value}`).join('\n') : '(chưa ghi nhận dữ liệu nào)'
+    // Chat hiển thị dạng text thuần (không phải markdown) → dùng bullet gọn, không dùng ** hay -
+    return fields.length ? fields.map(f => `• ${f.name}: ${f.value}`).join('\n') : '(chưa ghi nhận dữ liệu nào)'
   }, [fields])
 
   const clearAll = useCallback(() => setFields([]), [])

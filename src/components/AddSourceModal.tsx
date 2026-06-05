@@ -55,7 +55,7 @@ export default function AddSourceModal({ open, onClose, onAddFiles, onAddText }:
               <button onClick={close} className="ml-auto text-slate-400 hover:text-slate-700 cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5">
-              <p className="text-xs text-slate-500 mb-3">Dán nội dung văn bản vào bên dưới để thêm dưới dạng một nguồn (dùng dữ liệu giả).</p>
+              <p className="text-xs text-slate-500 mb-3">Dán nội dung văn bản vào bên dưới để thêm dưới dạng một nguồn.</p>
               <textarea autoFocus value={text} onChange={e => setText(e.target.value)} placeholder="Dán văn bản vào đây" className="w-full min-h-[210px] border border-slate-200 rounded-xl p-3.5 text-sm outline-none focus:border-brand-500 resize-y" />
               <div className="flex justify-end mt-3.5">
                 <button disabled={!text.trim()} onClick={() => { onAddText(text.trim()); reset() }} className="px-5 py-2 text-sm font-semibold bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white rounded-full cursor-pointer">Chèn</button>

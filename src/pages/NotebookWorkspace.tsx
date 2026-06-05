@@ -73,7 +73,7 @@ const phasesInfo: PhaseDetail[] = [
   {
     num: 1,
     title: 'Nhập / Sửa thông tin',
-    desc: 'Trích xuất + Q&A: AI ghi nhớ thông tin dự án (giả định) để phục vụ dự toán.',
+    desc: 'Trích xuất + Q&A: AI ghi nhớ thông tin dự án để phục vụ dự toán.',
     prompts: ['Tóm tắt dự án giúp tôi.', 'Sinh dự toán khái quát.'],
     tab: 'caseinput',
     sourcesToSelect: [],
@@ -536,7 +536,7 @@ export default function NotebookWorkspace() {
     // trả lời
     let aiText: string
     if (/tóm tắt|xem dữ liệu|dữ liệu đã|đã ghi|nhớ gì|thông tin dự án/i.test(text)) {
-      aiText = 'Dữ liệu dự án mình đang ghi nhớ (giả định):\n' + pre.summaryText()
+      aiText = 'Dữ liệu dự án mình đang ghi nhớ:\n' + pre.summaryText()
     } else {
       const added = pre.rememberFromContent(text)
       aiText = added.length ? `Mình đã ghi nhớ thêm: **${added.join(', ')}**. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã hiểu. Bạn kể thêm chi tiết, hoặc gõ "tóm tắt dự án" để xem mình đang nhớ gì.'
@@ -1495,7 +1495,15 @@ export default function NotebookWorkspace() {
                                   )
                                 }
                               }
-                              return <span key={index}>{part}</span>
+                              // Render **đậm** (chat dùng text thuần) cho phần không phải trích dẫn
+                              return (
+                                <span key={index}>
+                                  {part.split(/(\*\*[^*]+\*\*)/g).map((seg, j) => {
+                                    const b = seg.match(/^\*\*([^*]+)\*\*$/)
+                                    return b ? <strong key={j} className="font-semibold text-slate-900">{b[1]}</strong> : <span key={j}>{seg}</span>
+                                  })}
+                                </span>
+                              )
                             })}
                           </div>
                         ) : (
