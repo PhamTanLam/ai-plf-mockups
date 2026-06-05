@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useLocation, Link } from 'react-router-dom'
 import {
   ArrowLeft,
   FileText,
@@ -12,7 +12,11 @@ import {
   Calculator,
   GitMerge,
   Layers,
-  Cpu
+  Cpu,
+  RefreshCw,
+  ClipboardList,
+  History,
+  ArrowRight
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 
@@ -23,6 +27,11 @@ import LadderAuditor from '@/components/LadderAuditor'
 import SourceViewer from '@/components/SourceViewer'
 import ProjectReentry from '@/components/ProjectReentry'
 import DocumentGenerator from '@/components/DocumentGenerator'
+import CaseInput from '@/components/CaseInput'
+import ReviewStep from '@/components/ReviewStep'
+import ProposalStep from '@/components/ProposalStep'
+import AddSourceModal from '@/components/AddSourceModal'
+import { usePresalesState } from '@/hooks/usePresalesState'
 
 interface Message {
   id: string
@@ -51,7 +60,7 @@ interface PhaseDetail {
   title: string
   desc: string
   prompts: string[]
-  tab: 'audio' | 'cad' | 'gen' | 'audit' | 'translate' | 'notes' | 'reentry' | 'doc'
+  tab: 'audio' | 'cad' | 'gen' | 'audit' | 'translate' | 'notes' | 'reentry' | 'doc' | 'caseinput' | 'review' | 'proposal'
   sourcesToSelect: string[]
   inputs: string[]
   outputs: string[]
@@ -60,6 +69,41 @@ interface PhaseDetail {
 }
 
 const phasesInfo: PhaseDetail[] = [
+  // PRE-SALES = chu trình lặp 3 hoạt động (Nhập/Sửa → Kiểm tra → Dự toán), lặp theo "Vòng N"
+  {
+    num: 1,
+    title: 'Nhập / Sửa thông tin',
+    desc: 'Trích xuất + Q&A: AI ghi nhớ thông tin dự án (giả định) để phục vụ dự toán.',
+    prompts: ['Tóm tắt dự án giúp tôi.', 'Sinh dự toán khái quát.'],
+    tab: 'caseinput',
+    sourcesToSelect: [],
+    inputs: ['Tài liệu kỹ thuật (PDF)', 'Biên bản hỏi đáp', 'Video & hình ảnh'],
+    outputs: ['5 đầu ra pre-sales'],
+    users: 'Nhân viên kinh doanh',
+  },
+  {
+    num: 2,
+    title: 'Kiểm tra',
+    desc: 'Rà soát/chỉnh sửa thông tin đã nhập trước khi trình dự toán (có thể bỏ qua).',
+    prompts: ['Còn mục nào cần rà soát?'],
+    tab: 'review',
+    sourcesToSelect: [],
+    inputs: ['Câu hỏi'],
+    outputs: ['Xác nhận nội dung chỉ ra'],
+    users: 'Nhân viên kinh doanh hoặc SE',
+    note: 'Có thể bỏ qua bước này.',
+  },
+  {
+    num: 3,
+    title: 'Trình dự toán',
+    desc: 'Gom đầu ra thành hồ sơ trình khách. Có thể lặp vòng mới (sửa → dự toán lại) đến khi chốt đơn.',
+    prompts: ['Xuất hồ sơ đề xuất.'],
+    tab: 'proposal',
+    sourcesToSelect: [],
+    inputs: ['Câu hỏi'],
+    outputs: ['Tài liệu đề xuất'],
+    users: 'Nhân viên kinh doanh',
+  },
   {
     num: 7,
     title: 'Nhập lại thông tin dự án',
@@ -173,23 +217,70 @@ const stepperSteps = [
   { order: 5, label: 'Sinh code PLC', icon: Cpu, phases: [11, 13] },
 ]
 
+// Pre-sales (trước nhận đơn) = CHU TRÌNH LẶP 3 hoạt động: Nhập/Sửa → Kiểm tra → Dự toán.
+// Thực tế lặp lại nhiều vòng (sửa thông tin → dự toán lại) đến khi chốt đơn → mô hình "Vòng N".
+const presalesSteps = [
+  { order: 1, label: 'Nhập / Sửa', icon: FileText, phases: [1] },
+  { order: 2, label: 'Kiểm tra', icon: ClipboardList, phases: [2] },
+  { order: 3, label: 'Dự toán', icon: Calculator, phases: [3] },
+]
+
+// Các case demo (có sẵn tài liệu mẫu để minh hoạ luồng sau nhận đơn). Dự án MỚI bắt đầu KHÔNG có nguồn.
+const DEMO_IDS = new Set(['CASE-2026-0245', 'CASE-2026-0312', 'CASE-2026-0345', 'CASE-2026-0288'])
+// Trạng thái của case demo (fallback khi refresh/deep-link, không có router state)
+const DEMO_STATUS: Record<string, string> = {
+  'CASE-2026-0245': 'status.debug', 'CASE-2026-0312': 'status.design',
+  'CASE-2026-0345': 'status.pre', 'CASE-2026-0288': 'status.onsite',
+}
+// Tiến độ tổng dự án (đồng bộ với card ở dashboard) — fallback khi refresh/deep-link
+const DEMO_PROGRESS: Record<string, number> = {
+  'CASE-2026-0245': 88, 'CASE-2026-0312': 38, 'CASE-2026-0345': 70, 'CASE-2026-0288': 50,
+}
+// Trạng thái dự án → bước mở mặc định khi vào workspace
+function statusToPhase(status?: string): number {
+  switch (status) {
+    case 'status.preSales': case 'status.pre': return 1
+    case 'status.kickoff': return 8
+    case 'status.design': return 9
+    case 'status.build': return 10
+    case 'status.debug': return 11
+    case 'status.onsite': return 12
+    case 'status.done': return 13
+    default: return 1
+  }
+}
+const DEMO_SOURCES: SourceFile[] = [
+  { id: 'spec', title: 'WW2_Technical_Specs.pdf', type: 'PDF Spec Sheet', size: '245 KB', selected: true },
+  { id: 'cad', title: 'Electrical_CAD_Layout_v0.3.dxf', type: 'Electrical DWG', size: '1.2 MB', selected: true },
+  { id: 'flow', title: 'Auto_Welding_Sequence.json', type: 'Flow Diagram', size: '12 KB', selected: true },
+  { id: 'ladder', title: 'PLC_Ladder_Code.l5k', type: 'Ladder Logic', size: '89 KB', selected: false },
+  { id: 'manual', title: 'Mitsubishi_MRJ5_Servo_Manual.pdf', type: 'Device Manual', size: '4.8 MB', selected: false },
+]
+
 export default function NotebookWorkspace() {
   const { id } = useParams<{ id: string }>()
   const { locale } = useI18n()
   const chatEndRef = useRef<HTMLDivElement>(null)
 
 
-  const [activePhase, setActivePhase] = useState<number | null>(null)
+  // Bước mở mặc định = theo TRẠNG THÁI dự án (router state khi click từ dashboard; fallback map demo; mới → pre-sales bước 1)
+  const location = useLocation()
+  const navState = location.state as { status?: string; progress?: number } | null
+  const caseStatus = navState?.status || DEMO_STATUS[id || ''] || 'status.preSales'
+  const initialPhase = statusToPhase(caseStatus)
+  const providedProgress = navState?.progress ?? DEMO_PROGRESS[id || '']
+  const [activePhase, setActivePhase] = useState<number | null>(initialPhase)
   const [phases, setPhases] = useState<(PhaseDetail & { isVisible?: boolean })[]>(
     phasesInfo.map(p => ({ ...p, isVisible: true }))
   )
   const [activeUser, setActiveUser] = useState<'Linh' | 'Kanai' | 'AI'>('Linh')
-  const [activatedPhases, setActivatedPhases] = useState<number[]>([])
+  const [activatedPhases, setActivatedPhases] = useState<number[]>([initialPhase])
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(true)
 
   // Progress data state
   const [progressData, setProgressData] = useState<Record<number, number>>({
+    1: 0, 2: 0, 3: 0,
     7: 60,
     8: 40,
     9: 50,
@@ -199,7 +290,15 @@ export default function NotebookWorkspace() {
     13: 20,
   })
 
+  // Pre-sales NV1 state (mô phỏng, lưu localStorage theo case)
+  const pre = usePresalesState(id || 'default')
+  const [addSourceOpen, setAddSourceOpen] = useState(false)
+  const [showRounds, setShowRounds] = useState(false)
+  // Tiến độ TỔNG dự án (đồng bộ với card ngoài dashboard); dự án mới chưa có số → theo tiến độ nhập liệu
+  const projectProgress = providedProgress != null ? providedProgress : pre.progressPct
+
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([
+    'Nhập thông tin dự án (pre-sales)',
     'Nhập lại chênh lệch thông tin dự án sau khi nhận đơn hàng',
     'Soạn biên bản Kick-off bàn giao dự án',
     'Dịch thuật chú thích chương trình sang tiếng Việt',
@@ -292,13 +391,18 @@ export default function NotebookWorkspace() {
     : (activePhase === 11 || activePhase === 13)
     ? 5
     : 0
-  const [sources, setSources] = useState<SourceFile[]>([
-    { id: 'spec', title: 'WW2_Technical_Specs.pdf', type: 'PDF Spec Sheet', size: '245 KB', selected: true },
-    { id: 'cad', title: 'Electrical_CAD_Layout_v0.3.dxf', type: 'Electrical DWG', size: '1.2 MB', selected: true },
-    { id: 'flow', title: 'Auto_Welding_Sequence.json', type: 'Flow Diagram', size: '12 KB', selected: true },
-    { id: 'ladder', title: 'PLC_Ladder_Code.l5k', type: 'Ladder Logic', size: '89 KB', selected: false },
-    { id: 'manual', title: 'Mitsubishi_MRJ5_Servo_Manual.pdf', type: 'Device Manual', size: '4.8 MB', selected: false },
-  ])
+  // Pre-sales = chu trình lặp 3 hoạt động (phase 1→3); post-order = stepper tuyến tính (7→13)
+  const isPreSales = activePhase === null || activePhase <= 3
+  const activeStepIndex = currentStepIndex
+  const SOURCES_KEY = `aiplf.sources.${id || 'default'}`
+  const [sources, setSources] = useState<SourceFile[]>(() => {
+    try { const raw = localStorage.getItem(SOURCES_KEY); if (raw) return JSON.parse(raw) as SourceFile[] } catch { /* ignore */ }
+    // Dự án demo có tài liệu mẫu; dự án MỚI bắt đầu rỗng (người dùng tự thêm nguồn)
+    return id && DEMO_IDS.has(id) ? DEMO_SOURCES.map(s => ({ ...s })) : []
+  })
+  useEffect(() => {
+    try { localStorage.setItem(SOURCES_KEY, JSON.stringify(sources)) } catch { /* ignore */ }
+  }, [SOURCES_KEY, sources])
 
   const handlePhaseChange = (phaseNum: number) => {
     setActivePhase(phaseNum)
@@ -338,7 +442,7 @@ export default function NotebookWorkspace() {
     {
       id: 'm1',
       sender: 'ai',
-      text: 'Xin chào! Tôi là Trợ lý AI Kỹ thuật của bạn cho dự án này.\n\nToàn bộ nghiệp vụ STT 7-13 xử lý sau khi nhận đơn hàng. Khi bạn nhập câu hỏi, AI sẽ xác định giai đoạn phù hợp và mở giao diện tương ứng cho bạn.',
+      text: 'Xin chào! Tôi là Trợ lý AI Kỹ thuật cho dự án này.\n\nLuồng nghiệp vụ gồm **giai đoạn TRƯỚC nhận đơn** — chu trình lặp 3 hoạt động *Nhập/Sửa → Kiểm tra → Trình dự toán* (lặp nhiều vòng đến khi chốt đơn) — và **giai đoạn SAU nhận đơn (Pha 7–13)**. Hãy thêm nguồn hoặc kể về dự án để mình trích dữ liệu, hoặc chọn hoạt động trên thanh chu trình.',
       timestamp: '10:00 AM',
     },
   ])
@@ -391,13 +495,58 @@ export default function NotebookWorkspace() {
       return { ...prev, 8: progress }
     })
   }, [notes])
+
+  // Tiến độ hoạt động "Nhập / Sửa" (phase 1, pre-sales) lấy từ hook NV1
+  useEffect(() => {
+    setProgressData(prev => {
+      if (prev[1] === pre.progressPct) return prev
+      return { ...prev, 1: pre.progressPct }
+    })
+  }, [pre.progressPct])
   // Translation board states
 
   // Design Phase 9 States
   const [jpText, setJpText] = useState('自動運転シーケンス初期化完了。サーボアンプ電源投入を確認のこと。')
   const [viText, setViText] = useState('Khởi tạo chuỗi tự động vận hành hoàn tất. Hãy xác nhận nguồn điện động lực cho Servo Drive.')
 
+  // đẩy 1 cặp tin nhắn (người dùng + AI) vào chat
+  const pushChat = (userText: string, aiText: string, sugg?: string[]) => {
+    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    setMessages(prev => [
+      ...prev,
+      { id: `u-${Date.now()}`, sender: 'user', text: userText, timestamp: ts },
+      { id: `a-${Date.now() + 1}`, sender: 'ai', text: aiText, timestamp: ts },
+    ])
+    if (sugg) setActiveSuggestions(sugg)
+    setInputVal('')
+  }
+  const PRE_SUGG = ['Tóm tắt dự án', 'Sinh dự toán khái quát', 'Sinh lịch trình khái quát']
+
+  // Chat trong các bước pre-sales (1→6): AI ghi nhớ thông tin + tóm tắt + sinh đầu ra. KHÔNG gọi API.
+  const handlePresalesChat = (text: string) => {
+    // "Nhãn: giá trị" → ghi nhớ một thông tin
+    const mm = text.match(/^\s*(?:thêm|ghi chú)?\s*(.{2,40}?)\s*[:：]\s*(.+)$/)
+    if (mm) { pre.addField(mm[1].trim(), mm[2].trim()); pushChat(text, `✓ Đã ghi nhớ **${mm[1].trim()}**: ${mm[2].trim()}`, PRE_SUGG); return }
+    // ý định sinh đầu ra
+    let genMsg = ''
+    if (/dự toán|báo giá|estimate/i.test(text)) { pre.generate('estimate'); genMsg = ' Đã sinh **Dự toán khái quát** ✓ (xem ở "Đã tạo").' }
+    else if (/lịch trình|timeline|schedule/i.test(text)) { pre.generate('schedule'); genMsg = ' Đã sinh **Lịch trình khái quát** ✓.' }
+    else if (/cấu thành/i.test(text)) { pre.generate('config'); genMsg = ' Đã sinh **Cấu thành đơn giản** ✓.' }
+    else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) { pre.generate('proposal'); genMsg = ' Đã sinh **Tài liệu nền đề xuất** ✓.' }
+    // trả lời
+    let aiText: string
+    if (/tóm tắt|xem dữ liệu|dữ liệu đã|đã ghi|nhớ gì|thông tin dự án/i.test(text)) {
+      aiText = 'Dữ liệu dự án mình đang ghi nhớ (giả định):\n' + pre.summaryText()
+    } else {
+      const added = pre.rememberFromContent(text)
+      aiText = added.length ? `Mình đã ghi nhớ thêm: **${added.join(', ')}**. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã hiểu. Bạn kể thêm chi tiết, hoặc gõ "tóm tắt dự án" để xem mình đang nhớ gì.'
+    }
+    pushChat(text, (aiText + genMsg).trim(), PRE_SUGG)
+  }
+
   const sendMessagePrompt = (text: string) => {
+    // Trong luồng pre-sales (bước 1→6): xử lý riêng (mô phỏng), không dùng router post-order
+    if (activePhase !== null && activePhase <= 3) { handlePresalesChat(text); return }
     const query = text.toLowerCase()
     let matchedPhaseNum = activePhase
     let explanationText = ''
@@ -407,7 +556,13 @@ export default function NotebookWorkspace() {
 
     // Check query against keywords of each phase
     const phaseKeywords: Record<number, { keywords: string[], tab: string, title: string, desc: string }> = {
-      7: { 
+      1: {
+        keywords: ['nhập thông tin', 'pre-sales', 'presales', 'trước nhận đơn', 'trích xuất', 'nhập liệu dự án', '12 nhóm'],
+        tab: 'caseinput',
+        title: 'Nhập thông tin dự án',
+        desc: 'Đã mở **Bước 1: Nhập thông tin dự án** (pre-sales). Thêm nguồn ở cột trái hoặc kể về dự án để mình trích dữ liệu; gõ "bổ sung" để mình hỏi từng mục.'
+      },
+      7: {
         keywords: ['nhập lại', 'reentry', 're-entry', 'chênh lệch', 'đối chiếu', 'so sánh', 'đơn hàng', 'spec', 'specs'], 
         tab: 'reentry', 
         title: 'Nhập lại thông tin dự án',
@@ -473,7 +628,9 @@ export default function NotebookWorkspace() {
           explanationText = data.desc
           isMatched = true
           
-          if (phaseNum === 7) {
+          if (phaseNum === 1) {
+            suggestions = PRE_SUGG
+          } else if (phaseNum === 7) {
             suggestions = ['Có thay đổi gì về số lượng động cơ hay PLC?', 'Xem chi tiết thông số chênh lệch Melsec Q?']
           } else if (phaseNum === 8) {
             suggestions = ['Xác nhận thông tin dự án trước Kick-off.', 'Chuẩn bị danh sách thành viên SE và người phụ trách.']
@@ -553,6 +710,34 @@ export default function NotebookWorkspace() {
     setSources(
       sources.map((s) => (s.id === sourceId ? { ...s, selected: !s.selected } : s))
     )
+  }
+
+  const humanSize = (b: number) => b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB'
+
+  // Thêm nguồn từ modal (file: chỉ metadata; văn bản dán: trích từ nội dung)
+  const handleAddFiles = (files: { name: string; size: number }[]) => {
+    if (!files.length) return
+    const first = sources.length === 0
+    const news: SourceFile[] = files.map((f, i) => ({ id: `up-${Date.now()}-${i}`, title: f.name, type: 'Tải lên', size: humanSize(f.size), selected: true }))
+    setSources(prev => [...prev, ...news])
+    setAddSourceOpen(false)
+    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    let aiText: string
+    if (first) { const names = pre.rememberFromContent(); aiText = names.length ? `Đã đọc ${files.length} tài liệu và ghi nhớ: **${names.join(', ')}**.` : `Đã thêm ${files.length} tài liệu.` }
+    else { const d = pre.reExtract(files[0].name); aiText = d.length ? `Đã đọc lại & đối chiếu — cập nhật **${d[0].name}**.` : `Đã thêm ${files.length} tài liệu.` }
+    setMessages(prev => [...prev, { id: `a-${Date.now()}`, sender: 'ai', text: aiText, timestamp: ts }])
+    if (activePhase === null) handlePhaseChange(1)
+  }
+  const handleAddText = (text: string) => {
+    setSources(prev => [...prev, { id: `txt-${Date.now()}`, title: 'Văn bản dán', type: 'Văn bản', size: text.length + ' ký tự', selected: true }])
+    setAddSourceOpen(false)
+    const names = pre.rememberFromContent(text)   // AI tự ghi nhớ từ nội dung dán
+    const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    setMessages(prev => [...prev, { id: `a-${Date.now()}`, sender: 'ai', text: names.length ? `Đã đọc văn bản và ghi nhớ: **${names.join(', ')}**. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã thêm văn bản làm nguồn.', timestamp: ts }])
+    if (activePhase === null) handlePhaseChange(1)
+  }
+  const addSourceFromNote = (title: string) => {
+    setSources(prev => [...prev, { id: `note-${Date.now()}`, title: title.slice(0, 40) + ' (ghi chú)', type: 'Ghi chú', size: '—', selected: true }])
   }
 
   const addNote = () => {
@@ -671,7 +856,11 @@ export default function NotebookWorkspace() {
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
               {leftActiveTab === 'sources' ? (
-                sources.map((src) => (
+                <>
+                  <button onClick={() => setAddSourceOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 mb-1 text-[11px] font-bold border border-slate-200 bg-white rounded-xl text-slate-700 hover:bg-slate-50 cursor-pointer">
+                    <Plus className="w-3 h-3" />Thêm nguồn
+                  </button>
+                  {sources.map((src) => (
                   <div
                     key={src.id}
                     onClick={() => {
@@ -710,7 +899,8 @@ export default function NotebookWorkspace() {
                       <span>{src.size}</span>
                     </div>
                   </div>
-                ))
+                  ))}
+                </>
               ) : (
                 historyLogs.length === 0 ? (
                   <div className="text-[10px] text-slate-400 text-center py-6 px-3">
@@ -835,7 +1025,7 @@ export default function NotebookWorkspace() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-extrabold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full tracking-wider font-mono">
-                      {activePhase !== null ? `PHA ${activePhase} WORKSPACE` : 'DÂY CHUYỀN NGHIỆP VỤ'}
+                      {activePhase !== null ? `${activePhase <= 3 ? `TRƯỚC NHẬN ĐƠN · VÒNG ${pre.round}` : `PHA ${activePhase} · SAU NHẬN ĐƠN`}` : 'DÂY CHUYỀN NGHIỆP VỤ'}
                     </span>
                     <h1 className="text-sm font-extrabold text-slate-900">
                       {activePhase !== null
@@ -858,84 +1048,143 @@ export default function NotebookWorkspace() {
               {activePhase !== null && (
                 <div className="flex items-center gap-2 text-xs text-slate-600 font-mono shrink-0">
                   <span className="font-semibold bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-3xs">
-                    Độ hoàn thành: <strong className="font-bold text-brand-600">{progressData[activePhase] ?? 0}%</strong>
+                    Tiến độ dự án: <strong className="font-bold text-brand-600">{projectProgress}%</strong>
                   </span>
+                  <span className="text-[10px] text-slate-400">Bước/Pha {activePhase}: {progressData[activePhase] ?? 0}%</span>
                 </div>
               )}
             </div>
 
             {/* Progress Stepper Timeline */}
-            <div className="border-t border-slate-100 pt-3.5 flex items-center justify-between w-full max-w-5xl mx-auto px-4 select-none">
-              {stepperSteps.map((step, idx) => {
-                const StepIcon = step.icon;
-                const isCompleted = step.order < currentStepIndex;
-                const isActive = step.order === currentStepIndex;
-                const isFuture = step.order > currentStepIndex || currentStepIndex === 0;
-
-                return (
-                  <div key={step.order} className="flex items-center flex-1 last:flex-none">
-                    {/* Step node */}
-                    <div
-                      onClick={() => {
-                        const targetPhase = step.phases[0];
-                        handlePhaseChange(targetPhase);
-                      }}
-                      className="flex flex-col items-center gap-1.5 cursor-pointer group relative"
-                    >
-                      <div className="relative">
-                        {isCompleted && (
-                          <div className="w-8 h-8 rounded-full bg-brand-500 border border-brand-500 flex items-center justify-center text-white shadow-sm transition-all duration-300 group-hover:scale-110">
-                            <Check className="w-4 h-4 stroke-[3]" />
-                          </div>
-                        )}
-
-                        {isActive && (
-                          <div className="relative flex items-center justify-center">
-                            {/* Outer pulsating ring */}
-                            <div className="absolute -inset-1 rounded-full bg-brand-500/25 animate-pulse" />
-                            <div className="relative w-8 h-8 rounded-full bg-white border-2 border-brand-500 flex items-center justify-center text-brand-600 shadow-md transition-all duration-300 group-hover:scale-105">
-                              <StepIcon className="w-4 h-4 text-brand-500 animate-pulse" />
-                            </div>
-                          </div>
-                        )}
-
-                        {isFuture && (
-                          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 transition-all duration-300 group-hover:border-slate-350 group-hover:bg-slate-50">
-                            <StepIcon className="w-4 h-4 text-slate-400/80" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Label text */}
-                      <span
-                        className={`text-[10.5px] font-bold transition-all duration-200 whitespace-nowrap ${
-                          isActive
-                            ? 'text-brand-600 font-extrabold text-shadow-sm'
-                            : isCompleted
-                            ? 'text-slate-800'
-                            : 'text-slate-450 font-medium group-hover:text-slate-600'
-                        }`}
-                      >
-                        {step.label}
-                      </span>
-                    </div>
-
-                    {/* Connection line */}
-                    {idx < stepperSteps.length - 1 && (
-                      <div className="flex-1 mx-4 h-[2px] relative -top-3.5">
-                        <div
-                          className={`absolute inset-0 rounded-full transition-all duration-500 ${
-                            step.order < currentStepIndex
-                              ? 'bg-brand-500 shadow-sm'
-                              : 'bg-slate-200'
-                          }`}
-                        />
-                      </div>
-                    )}
+            {isPreSales ? (
+              /* ===== Chu trình pre-sales: 3 hoạt động lặp theo Vòng N ===== */
+              <div className="border-t border-slate-100 pt-3.5 select-none">
+                <div className="flex items-center gap-3 w-full max-w-5xl mx-auto px-4">
+                  {/* Nhãn vòng */}
+                  <div className="flex items-center gap-1.5 shrink-0 text-[10.5px] font-bold text-violet-700 bg-violet-50 border border-violet-200 rounded-full px-3 py-1.5">
+                    <RefreshCw className="w-3.5 h-3.5" /> Vòng {pre.round}
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* 3 chip hoạt động + mũi tên */}
+                  <div className="flex items-center gap-1.5 flex-1 justify-center">
+                    {presalesSteps.map((step, idx) => {
+                      const StepIcon = step.icon
+                      const phaseNum = step.phases[0]
+                      const isActive = activePhase === phaseNum
+                      return (
+                        <div key={step.order} className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handlePhaseChange(phaseNum)}
+                            className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer ${
+                              isActive
+                                ? 'bg-brand-500 border-brand-500 text-white shadow-sm'
+                                : 'bg-white border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-600'
+                            }`}
+                          >
+                            <StepIcon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                            {step.label}
+                          </button>
+                          {idx < presalesSteps.length - 1 && <ArrowRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />}
+                        </div>
+                      )
+                    })}
+                    {/* gợi ý lặp lại */}
+                    <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-slate-400 ml-1">
+                      <RefreshCw className="w-3 h-3" /> lặp đến khi chốt đơn
+                    </span>
+                  </div>
+
+                  {/* Hành động vòng */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => { pre.newRound(); handlePhaseChange(1); addLog(`Bắt đầu vòng dự toán mới (Vòng ${pre.round + 1})`, 1) }}
+                      className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white text-violet-700 hover:bg-violet-50 px-3 py-1.5 text-[10.5px] font-bold cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Vòng mới
+                    </button>
+                    <button
+                      onClick={() => setShowRounds(true)}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 px-3 py-1.5 text-[10.5px] font-bold cursor-pointer"
+                    >
+                      <History className="w-3.5 h-3.5" /> Lịch sử ({pre.rounds.length})
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ===== Stepper tuyến tính sau nhận đơn (7→13) ===== */
+              <div className="border-t border-slate-100 pt-3.5 flex items-center justify-between w-full max-w-5xl mx-auto px-4 select-none">
+                {stepperSteps.map((step, idx) => {
+                  const StepIcon = step.icon;
+                  const isCompleted = step.order < activeStepIndex;
+                  const isActive = step.order === activeStepIndex;
+                  const isFuture = step.order > activeStepIndex || activeStepIndex === 0;
+
+                  return (
+                    <div key={step.order} className="flex items-center flex-1 last:flex-none">
+                      {/* Step node */}
+                      <div
+                        onClick={() => {
+                          const targetPhase = step.phases[0];
+                          handlePhaseChange(targetPhase);
+                        }}
+                        className="flex flex-col items-center gap-1.5 cursor-pointer group relative"
+                      >
+                        <div className="relative">
+                          {isCompleted && (
+                            <div className="w-8 h-8 rounded-full bg-brand-500 border border-brand-500 flex items-center justify-center text-white shadow-sm transition-all duration-300 group-hover:scale-110">
+                              <Check className="w-4 h-4 stroke-[3]" />
+                            </div>
+                          )}
+
+                          {isActive && (
+                            <div className="relative flex items-center justify-center">
+                              {/* Outer pulsating ring */}
+                              <div className="absolute -inset-1 rounded-full bg-brand-500/25 animate-pulse" />
+                              <div className="relative w-8 h-8 rounded-full bg-white border-2 border-brand-500 flex items-center justify-center text-brand-600 shadow-md transition-all duration-300 group-hover:scale-105">
+                                <StepIcon className="w-4 h-4 text-brand-500 animate-pulse" />
+                              </div>
+                            </div>
+                          )}
+
+                          {isFuture && (
+                            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 transition-all duration-300 group-hover:border-slate-350 group-hover:bg-slate-50">
+                              <StepIcon className="w-4 h-4 text-slate-400/80" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Label text */}
+                        <span
+                          className={`text-[10.5px] font-bold transition-all duration-200 whitespace-nowrap ${
+                            isActive
+                              ? 'text-brand-600 font-extrabold text-shadow-sm'
+                              : isCompleted
+                              ? 'text-slate-800'
+                              : 'text-slate-450 font-medium group-hover:text-slate-600'
+                          }`}
+                        >
+                          {step.label}
+                        </span>
+                      </div>
+
+                      {/* Connection line */}
+                      {idx < stepperSteps.length - 1 && (
+                        <div className="flex-1 mx-4 h-[2px] relative -top-3.5">
+                          <div
+                            className={`absolute inset-0 rounded-full transition-all duration-500 ${
+                              step.order < activeStepIndex
+                                ? 'bg-brand-500 shadow-sm'
+                                : 'bg-slate-200'
+                            }`}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Dynamic Component Canvas Rendering */}
@@ -951,12 +1200,35 @@ export default function NotebookWorkspace() {
                 </div>
               ) : activeRightTab === 'reentry' && (
                 <div className="max-w-4xl mx-auto animate-in fade-in duration-300">
-                  <ProjectReentry 
+                  <ProjectReentry
                     currentUser={activeUser}
                     onProgressChange={handleProgress7}
                     onAddLog={(action) => addLog(action, 7)}
                   />
                 </div>
+              )}
+
+              {activeRightTab === 'caseinput' && (
+                <CaseInput
+                  mode={pre.round > 1 ? 'reentry' : 'initial'}
+                  pre={pre}
+                  onConvertToSource={addSourceFromNote}
+                  onToast={(m) => addLog(m, activePhase ?? 1)}
+                  onAdvance={() => handlePhaseChange(2)}
+                />
+              )}
+
+              {activeRightTab === 'review' && (
+                <ReviewStep pre={pre} onAdvance={() => handlePhaseChange(3)} />
+              )}
+
+              {activeRightTab === 'proposal' && (
+                <ProposalStep
+                  pre={pre}
+                  onToast={(m) => addLog(m, activePhase ?? 3)}
+                  onNewRound={() => { pre.newRound(); addLog(`Bắt đầu vòng dự toán mới (Vòng ${pre.round + 1})`, 1); handlePhaseChange(1) }}
+                  onAccept={() => { addLog('Đã nhận đơn hàng — chuyển sang giai đoạn sau nhận đơn', 7); handlePhaseChange(7) }}
+                />
               )}
 
               {activeRightTab === 'doc' && (
@@ -1301,6 +1573,44 @@ export default function NotebookWorkspace() {
         </aside>
 
       </div>
+
+      <AddSourceModal open={addSourceOpen} onClose={() => setAddSourceOpen(false)} onAddFiles={handleAddFiles} onAddText={handleAddText} />
+
+      {/* Lịch sử các vòng dự toán (pre-sales) */}
+      {showRounds && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-6" onClick={e => { if (e.target === e.currentTarget) setShowRounds(false) }}>
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-pop overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200">
+              <History className="w-4 h-4 text-violet-600" />
+              <h3 className="text-sm font-bold text-slate-900 flex-1">Lịch sử vòng dự toán</h3>
+              <span className="text-[11px] font-mono text-slate-400">Đang ở Vòng {pre.round}</span>
+              <button onClick={() => setShowRounds(false)} className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="px-5 py-4 overflow-y-auto">
+              <div className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2.5 text-xs text-brand-800 mb-3">
+                <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+                <span><strong>Vòng {pre.round}</strong> (hiện tại) · {pre.total} thông tin · {pre.savedOutputs.filter(o => o.kind === 'gen').length} đầu ra</span>
+              </div>
+              {pre.rounds.length === 0 ? (
+                <p className="text-center text-xs text-slate-400 py-6">Chưa có vòng nào hoàn tất. Bấm <strong>Vòng mới</strong> sau khi dự toán để bắt đầu lặp lại.</p>
+              ) : (
+                <ol className="space-y-2">
+                  {pre.rounds.map(r => (
+                    <li key={r.n} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3.5 py-2.5">
+                      <span className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-bold text-slate-600 shrink-0">#{r.n}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-slate-800">Vòng {r.n}</div>
+                        <div className="text-[10px] text-slate-400">{r.fields} thông tin · {r.outputs} đầu ra</div>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono shrink-0">{new Date(r.ts).toLocaleDateString('vi-VN')}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dynamic Stepper configuration modal */}
       {isConfigOpen && (

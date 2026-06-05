@@ -89,10 +89,10 @@ export default function NotebookList() {
       id: newCode.trim() || `CASE-${Date.now().toString().slice(-4)}`,
       title: newTitle,
       code: newCode.trim() || `CASE-${Date.now().toString().slice(-4)}`,
-      status: 'status.design',
-      pillClass: 'pill-design',
+      status: 'status.preSales',
+      pillClass: 'pill-pre',
       progress: 0,
-      sourcesCount: 1, // Default technical requirements source
+      sourcesCount: 0, // Dự án mới chưa có nguồn nào
       updatedAt: 'Just now',
       owner: 'User',
       ownerInitials: 'U',
@@ -110,10 +110,16 @@ export default function NotebookList() {
     setLocale(langs[nextIdx])
   }
 
+  // Số nguồn thực: ưu tiên đọc từ localStorage (đồng bộ với workspace), fallback số mặc định của card
+  const sourceCount = (c: CaseItem) => {
+    try { const raw = localStorage.getItem('aiplf.sources.' + c.id); if (raw) { const a = JSON.parse(raw); if (Array.isArray(a)) return a.length } } catch { /* ignore */ }
+    return c.sourcesCount
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-mesh flex flex-col text-slate-850 page-enter-fade">
+    <div className="h-screen overflow-hidden bg-gradient-mesh flex flex-col text-slate-850 page-enter-fade">
       {/* Premium Header */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 flex items-center justify-between shadow-sm">
+      <header className="shrink-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center text-white shadow-md shadow-brand-500/20">
             <BookOpen className="w-5.5 h-5.5 stroke-[2]" />
@@ -159,9 +165,9 @@ export default function NotebookList() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
+      <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-6 pt-8 flex flex-col gap-6 overflow-hidden">
         {/* Banner with Greeting */}
-        <section className="glass-panel border border-slate-200/80 rounded-2xl p-6 shadow-panel flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <section className="shrink-0 glass-panel border border-slate-200/80 rounded-2xl p-6 shadow-panel flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl -z-10 animate-pulse-slow" />
           <div className="space-y-2">
             <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-brand-700 via-brand-500 to-indigo-600 bg-clip-text text-transparent">
@@ -178,8 +184,8 @@ export default function NotebookList() {
         </section>
 
         {/* Notebooks Grid */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
+        <section className="flex-1 min-h-0 flex flex-col gap-4">
+          <div className="shrink-0 flex items-center justify-between">
             <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase font-mono">
               {locale === 'ja' ? '最近のノートブック' : locale === 'vi' ? 'Danh sách dự án hoạt động' : 'Recent Notebooks'}
             </h3>
@@ -188,6 +194,7 @@ export default function NotebookList() {
             </span>
           </div>
 
+          <div className="flex-1 min-h-0 overflow-y-auto pb-8 -mr-2 pr-2">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {/* New Notebook card */}
             <div
@@ -212,6 +219,7 @@ export default function NotebookList() {
               <Link
                 key={c.id}
                 to={`/workspace/${c.id}`}
+                state={{ status: c.status }}
                 className="bg-white border border-slate-200/85 hover:border-brand-500/50 rounded-2xl p-6 flex flex-col justify-between gap-4 cursor-pointer hover-lift min-h-[190px] shadow-xs relative overflow-hidden group"
               >
                 {/* Visual side marker */}
@@ -244,7 +252,7 @@ export default function NotebookList() {
                   <div className="flex items-center justify-between text-xs text-slate-450 font-mono">
                     <div className="flex items-center gap-1">
                       <FileText className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{c.sourcesCount} files</span>
+                      <span>{sourceCount(c)} files</span>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -255,6 +263,7 @@ export default function NotebookList() {
                 </div>
               </Link>
             ))}
+          </div>
           </div>
         </section>
       </main>

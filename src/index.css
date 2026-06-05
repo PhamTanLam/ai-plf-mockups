@@ -532,3 +532,19 @@ body {
     opacity: 1;
   }
 }
+
+/* MarkdownLite (view chi tiết đầu ra / bảng trong chat) */
+.ml-body .ml-h { font-weight: 800; color: #0f172a; margin: 12px 0 6px; }
+.ml-body h1.ml-h { font-size: 18px; }
+.ml-body h2.ml-h { font-size: 15px; }
+.ml-body h3.ml-h, .ml-body h4.ml-h { font-size: 13px; }
+.ml-body ul, .ml-body ol { margin: 6px 0 6px 18px; padding: 0; }
+.ml-body li { margin: 3px 0; }
+.ml-body strong { color: #0f172a; font-weight: 700; }
+.ml-body code { background: #f1f5f9; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+.ml-body blockquote, .ml-body em { color: #64748b; }
+.ml-table { overflow-x: auto; margin: 9px 0; }
+.ml-table table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.ml-table th, .ml-table td { border: 1px solid #e2e8f0; padding: 6px 9px; vertical-align: top; text-align: left; }
+.ml-table th { background: #f8fafc; font-weight: 600; color: #334155; }
+.ml-table td { color: #475569; }
