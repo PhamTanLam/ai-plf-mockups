@@ -12,11 +12,7 @@ import {
   Calculator,
   GitMerge,
   Layers,
-  Cpu,
-  RefreshCw,
-  ClipboardList,
-  History,
-  ArrowRight
+  Cpu
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 
@@ -96,7 +92,7 @@ const phasesInfo: PhaseDetail[] = [
   {
     num: 3,
     title: 'Trình dự toán',
-    desc: 'Gom đầu ra thành hồ sơ trình khách. Có thể lặp vòng mới (sửa → dự toán lại) đến khi chốt đơn.',
+    desc: 'Gom đầu ra thành hồ sơ trình khách. Có thể cập nhật (sửa → dự toán lại) đến khi chốt đơn.',
     prompts: ['Xuất hồ sơ đề xuất.'],
     tab: 'proposal',
     sourcesToSelect: [],
@@ -219,11 +215,6 @@ const stepperSteps = [
 
 // Pre-sales (trước nhận đơn) = CHU TRÌNH LẶP 3 hoạt động: Nhập/Sửa → Kiểm tra → Dự toán.
 // Thực tế lặp lại nhiều vòng (sửa thông tin → dự toán lại) đến khi chốt đơn → mô hình "Vòng N".
-const presalesSteps = [
-  { order: 1, label: 'Nhập / Sửa', icon: FileText, phases: [1] },
-  { order: 2, label: 'Kiểm tra', icon: ClipboardList, phases: [2] },
-  { order: 3, label: 'Dự toán', icon: Calculator, phases: [3] },
-]
 
 // Các case demo (có sẵn tài liệu mẫu để minh hoạ luồng sau nhận đơn). Dự án MỚI bắt đầu KHÔNG có nguồn.
 const DEMO_IDS = new Set(['CASE-2026-0245', 'CASE-2026-0312', 'CASE-2026-0345', 'CASE-2026-0288'])
@@ -293,7 +284,7 @@ export default function NotebookWorkspace() {
   // Pre-sales NV1 state (mô phỏng, lưu localStorage theo case)
   const pre = usePresalesState(id || 'default')
   const [addSourceOpen, setAddSourceOpen] = useState(false)
-  const [showRounds, setShowRounds] = useState(false)
+
   // Tiến độ TỔNG dự án (đồng bộ với card ngoài dashboard); dự án mới chưa có số → theo tiến độ nhập liệu
   const projectProgress = providedProgress != null ? providedProgress : pre.progressPct
 
@@ -442,7 +433,7 @@ export default function NotebookWorkspace() {
     {
       id: 'm1',
       sender: 'ai',
-      text: 'Xin chào! Tôi là Trợ lý AI Kỹ thuật cho dự án này.\n\nLuồng nghiệp vụ gồm **giai đoạn TRƯỚC nhận đơn** — chu trình lặp 3 hoạt động *Nhập/Sửa → Kiểm tra → Trình dự toán* (lặp nhiều vòng đến khi chốt đơn) — và **giai đoạn SAU nhận đơn (Pha 7–13)**. Hãy thêm nguồn hoặc kể về dự án để mình trích dữ liệu, hoặc chọn hoạt động trên thanh chu trình.',
+      text: 'Xin chào! Tôi là Trợ lý AI Kỹ thuật cho dự án này.\n\nLuồng nghiệp vụ gồm **giai đoạn TRƯỚC nhận đơn** — chu trình lặp 3 hoạt động *Nhập/Sửa → Kiểm tra → Trình dự toán* (cập nhật đến khi chốt đơn) — và **giai đoạn SAU nhận đơn (Pha 7–13)**. Hãy thêm nguồn hoặc kể về dự án để mình trích dữ liệu, hoặc chọn hoạt động trên thanh chu trình.',
       timestamp: '10:00 AM',
     },
   ])
@@ -503,6 +494,27 @@ export default function NotebookWorkspace() {
       return { ...prev, 1: pre.progressPct }
     })
   }, [pre.progressPct])
+
+  // Cập nhật danh sách gợi ý câu hỏi tiếp theo tương ứng với pha hiện tại
+  useEffect(() => {
+    if (activePhase === 1 || activePhase === 2 || activePhase === 3 || activePhase === null) {
+      setActiveSuggestions(PRE_SUGG)
+    } else if (activePhase === 7) {
+      setActiveSuggestions(['Có thay đổi gì về số lượng động cơ hay PLC?', 'Xem chi tiết thông số chênh lệch Melsec Q?'])
+    } else if (activePhase === 8) {
+      setActiveSuggestions(['Xác nhận thông tin dự án trước Kick-off.', 'Chuẩn bị danh sách thành viên SE và người phụ trách.'])
+    } else if (activePhase === 9) {
+      setActiveSuggestions(['Dịch thuật chú thích chương trình sang tiếng Việt.', 'Giải thích ý nghĩa chú thích vận hành.'])
+    } else if (activePhase === 10) {
+      setActiveSuggestions(['Tạo bản vẽ điện CAD và chương trình PLC.', 'Sinh thông số vận hành cho quy trình tự động.'])
+    } else if (activePhase === 11) {
+      setActiveSuggestions(['Kiểm tra chương trình PLC và tìm lỗi.', 'Đánh giá an toàn mạch điện và ladder.'])
+    } else if (activePhase === 12) {
+      setActiveSuggestions(['Cập nhật sơ đồ đấu dây hiện trường.', 'Hiệu chỉnh PLC và TP tại hiện trường.'])
+    } else if (activePhase === 13) {
+      setActiveSuggestions(['Soạn tài liệu hướng dẫn sử dụng TP.', 'Tạo biên bản nghiệm thu kiểm tra.'])
+    }
+  }, [activePhase])
   // Translation board states
 
   // Design Phase 9 States
@@ -520,7 +532,14 @@ export default function NotebookWorkspace() {
     if (sugg) setActiveSuggestions(sugg)
     setInputVal('')
   }
-  const PRE_SUGG = ['Tóm tắt dự án', 'Sinh dự toán khái quát', 'Sinh lịch trình khái quát']
+  const PRE_SUGG = [
+    'Tóm tắt dự án',
+    'Soạn nội dung tài liệu dự toán',
+    'Mô tả cấu thành hệ thống (đơn giản)',
+    'Lập dự toán khái quát',
+    'Lập lịch trình khái quát',
+    'Soạn tài liệu nền đề xuất'
+  ]
 
   // Chat trong các bước pre-sales (1→6): AI ghi nhớ thông tin + tóm tắt + sinh đầu ra. KHÔNG gọi API.
   const handlePresalesChat = (text: string) => {
@@ -529,7 +548,12 @@ export default function NotebookWorkspace() {
     if (mm) { pre.addField(mm[1].trim(), mm[2].trim()); pushChat(text, `✓ Đã ghi nhớ **${mm[1].trim()}**: ${mm[2].trim()}`, PRE_SUGG); return }
     // ý định sinh đầu ra
     let genMsg = ''
-    if (/dự toán|báo giá|estimate/i.test(text)) { pre.generate('estimate'); genMsg = ' Đã sinh **Dự toán khái quát** ✓ (xem ở "Đã tạo").' }
+    if (text === 'Soạn nội dung tài liệu dự toán') { pre.generate('doc'); genMsg = ' Đã sinh **Nội dung tài liệu dự toán** ✓.' }
+    else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') { pre.generate('config'); genMsg = ' Đã sinh **Cấu thành hệ thống (đơn giản)** ✓.' }
+    else if (text === 'Lập dự toán khái quát') { pre.generate('estimate'); genMsg = ' Đã sinh **Dự toán khái quát** ✓.' }
+    else if (text === 'Lập lịch trình khái quát') { pre.generate('schedule'); genMsg = ' Đã sinh **Lịch trình khái quát** ✓.' }
+    else if (text === 'Soạn tài liệu nền đề xuất') { pre.generate('proposal'); genMsg = ' Đã sinh **Tài liệu nền đề xuất** ✓.' }
+    else if (/dự toán|báo giá|estimate/i.test(text)) { pre.generate('estimate'); genMsg = ' Đã sinh **Dự toán khái quát** ✓ (xem ở "Đã tạo").' }
     else if (/lịch trình|timeline|schedule/i.test(text)) { pre.generate('schedule'); genMsg = ' Đã sinh **Lịch trình khái quát** ✓.' }
     else if (/cấu thành/i.test(text)) { pre.generate('config'); genMsg = ' Đã sinh **Cấu thành đơn giản** ✓.' }
     else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) { pre.generate('proposal'); genMsg = ' Đã sinh **Tài liệu nền đề xuất** ✓.' }
@@ -1025,7 +1049,7 @@ export default function NotebookWorkspace() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-extrabold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full tracking-wider font-mono">
-                      {activePhase !== null ? `${activePhase <= 3 ? `TRƯỚC NHẬN ĐƠN · VÒNG ${pre.round}` : `PHA ${activePhase} · SAU NHẬN ĐƠN`}` : 'DÂY CHUYỀN NGHIỆP VỤ'}
+                      {activePhase !== null ? `${activePhase <= 3 ? 'TRƯỚC NHẬN ĐƠN' : `PHA ${activePhase} · SAU NHẬN ĐƠN`}` : 'DÂY CHUYỀN NGHIỆP VỤ'}
                     </span>
                     <h1 className="text-sm font-extrabold text-slate-900">
                       {activePhase !== null
@@ -1056,62 +1080,7 @@ export default function NotebookWorkspace() {
             </div>
 
             {/* Progress Stepper Timeline */}
-            {isPreSales ? (
-              /* ===== Chu trình pre-sales: 3 hoạt động lặp theo Vòng N ===== */
-              <div className="border-t border-slate-100 pt-3.5 select-none">
-                <div className="flex items-center gap-3 w-full max-w-5xl mx-auto px-4">
-                  {/* Nhãn vòng */}
-                  <div className="flex items-center gap-1.5 shrink-0 text-[10.5px] font-bold text-violet-700 bg-violet-50 border border-violet-200 rounded-full px-3 py-1.5">
-                    <RefreshCw className="w-3.5 h-3.5" /> Vòng {pre.round}
-                  </div>
-
-                  {/* 3 chip hoạt động + mũi tên */}
-                  <div className="flex items-center gap-1.5 flex-1 justify-center">
-                    {presalesSteps.map((step, idx) => {
-                      const StepIcon = step.icon
-                      const phaseNum = step.phases[0]
-                      const isActive = activePhase === phaseNum
-                      return (
-                        <div key={step.order} className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handlePhaseChange(phaseNum)}
-                            className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer ${
-                              isActive
-                                ? 'bg-brand-500 border-brand-500 text-white shadow-sm'
-                                : 'bg-white border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-600'
-                            }`}
-                          >
-                            <StepIcon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                            {step.label}
-                          </button>
-                          {idx < presalesSteps.length - 1 && <ArrowRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />}
-                        </div>
-                      )
-                    })}
-                    {/* gợi ý lặp lại */}
-                    <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-slate-400 ml-1">
-                      <RefreshCw className="w-3 h-3" /> lặp đến khi chốt đơn
-                    </span>
-                  </div>
-
-                  {/* Hành động vòng */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      onClick={() => { pre.newRound(); handlePhaseChange(1); addLog(`Bắt đầu vòng dự toán mới (Vòng ${pre.round + 1})`, 1) }}
-                      className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white text-violet-700 hover:bg-violet-50 px-3 py-1.5 text-[10.5px] font-bold cursor-pointer"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" /> Vòng mới
-                    </button>
-                    <button
-                      onClick={() => setShowRounds(true)}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 px-3 py-1.5 text-[10.5px] font-bold cursor-pointer"
-                    >
-                      <History className="w-3.5 h-3.5" /> Lịch sử ({pre.rounds.length})
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
+            {isPreSales ? null : (
               /* ===== Stepper tuyến tính sau nhận đơn (7→13) ===== */
               <div className="border-t border-slate-100 pt-3.5 flex items-center justify-between w-full max-w-5xl mx-auto px-4 select-none">
                 {stepperSteps.map((step, idx) => {
@@ -1226,7 +1195,6 @@ export default function NotebookWorkspace() {
                 <ProposalStep
                   pre={pre}
                   onToast={(m) => addLog(m, activePhase ?? 3)}
-                  onNewRound={() => { pre.newRound(); addLog(`Bắt đầu vòng dự toán mới (Vòng ${pre.round + 1})`, 1); handlePhaseChange(1) }}
                   onAccept={() => { addLog('Đã nhận đơn hàng — chuyển sang giai đoạn sau nhận đơn', 7); handlePhaseChange(7) }}
                 />
               )}
@@ -1392,9 +1360,9 @@ export default function NotebookWorkspace() {
                     setActiveViewerSource(null)
                     setHighlightedPhrase(undefined)
                   }}
-                  className="text-slate-500 hover:text-slate-800 text-xs font-semibold p-1 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                  className="text-slate-500 hover:text-slate-800 text-xs font-semibold px-2 py-1 hover:bg-slate-100 rounded-lg transition flex items-center gap-1 cursor-pointer"
                 >
-                  ✕ Đóng
+                  <X className="w-3.5 h-3.5" /> Đóng
                 </button>
               </div>
               <div className="flex-1 p-2 min-h-0">
@@ -1427,10 +1395,10 @@ export default function NotebookWorkspace() {
                 </div>
                 <button 
                   onClick={() => setIsCopilotExpanded(false)}
-                  className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-205 rounded-lg transition cursor-pointer"
+                  className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition cursor-pointer"
                   title="Thu nhỏ trợ lý"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
@@ -1524,7 +1492,7 @@ export default function NotebookWorkspace() {
                 <div className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 select-none px-1">
                   <span>💡 Gợi ý câu hỏi tiếp theo</span>
                 </div>
-                <div className="max-h-[80px] overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+                <div className="max-h-[140px] overflow-y-auto space-y-1 pr-1 scrollbar-thin">
                   {activeSuggestions
                     .filter((prompt) => !askedQuestions.includes(prompt))
                     .map((prompt, idx) => (
@@ -1584,41 +1552,7 @@ export default function NotebookWorkspace() {
 
       <AddSourceModal open={addSourceOpen} onClose={() => setAddSourceOpen(false)} onAddFiles={handleAddFiles} onAddText={handleAddText} />
 
-      {/* Lịch sử các vòng dự toán (pre-sales) */}
-      {showRounds && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-6" onClick={e => { if (e.target === e.currentTarget) setShowRounds(false) }}>
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-pop overflow-hidden">
-            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200">
-              <History className="w-4 h-4 text-violet-600" />
-              <h3 className="text-sm font-bold text-slate-900 flex-1">Lịch sử vòng dự toán</h3>
-              <span className="text-[11px] font-mono text-slate-400">Đang ở Vòng {pre.round}</span>
-              <button onClick={() => setShowRounds(false)} className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="px-5 py-4 overflow-y-auto">
-              <div className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2.5 text-xs text-brand-800 mb-3">
-                <RefreshCw className="w-3.5 h-3.5 shrink-0" />
-                <span><strong>Vòng {pre.round}</strong> (hiện tại) · {pre.total} thông tin · {pre.savedOutputs.filter(o => o.kind === 'gen').length} đầu ra</span>
-              </div>
-              {pre.rounds.length === 0 ? (
-                <p className="text-center text-xs text-slate-400 py-6">Chưa có vòng nào hoàn tất. Bấm <strong>Vòng mới</strong> sau khi dự toán để bắt đầu lặp lại.</p>
-              ) : (
-                <ol className="space-y-2">
-                  {pre.rounds.map(r => (
-                    <li key={r.n} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3.5 py-2.5">
-                      <span className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-bold text-slate-600 shrink-0">#{r.n}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-slate-800">Vòng {r.n}</div>
-                        <div className="text-[10px] text-slate-400">{r.fields} thông tin · {r.outputs} đầu ra</div>
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono shrink-0">{new Date(r.ts).toLocaleDateString('vi-VN')}</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Dynamic Stepper configuration modal */}
       {isConfigOpen && (

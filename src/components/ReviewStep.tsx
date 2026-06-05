@@ -7,7 +7,7 @@ export default function ReviewStep({ pre, onAdvance }: { pre: PresalesApi; onAdv
     <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-5 shadow-panel space-y-4">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h4 className="text-xs font-bold text-slate-500 font-mono uppercase tracking-wider">Kiểm tra · Vòng {pre.round}</h4>
+          <h4 className="text-xs font-bold text-slate-500 font-mono uppercase tracking-wider">Kiểm tra</h4>
           <p className="text-[11px] text-slate-500 mt-0.5">Rà soát thông tin AI đã ghi nhớ trước khi trình dự toán. <span className="italic">Có thể bỏ qua bước này.</span></p>
         </div>
         <span className="text-xs font-mono text-slate-500">{pre.total} mục</span>

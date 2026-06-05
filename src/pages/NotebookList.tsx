@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, BookOpen, FileText, Search, Globe2 } from 'lucide-react'
+import { Plus, BookOpen, FileText, Search, Globe2, X } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import type { Locale } from '@/i18n/types'
 
@@ -278,9 +278,10 @@ export default function NotebookList() {
               </h3>
               <button
                 onClick={() => setShowNewModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-semibold p-1 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                title="Đóng"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
