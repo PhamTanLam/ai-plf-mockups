@@ -8,18 +8,16 @@ import {
   Send,
   Settings,
   X,
-  Check,
-  Calculator,
-  GitMerge,
-  Layers,
-  Cpu
+  Cpu,
+  FolderOpen,
+  Download,
+  RefreshCw
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 
 // Import components
 import CadViewer from '@/components/CadViewer'
 import FlowchartEditor from '@/components/FlowchartEditor'
-import LadderAuditor from '@/components/LadderAuditor'
 import SourceViewer from '@/components/SourceViewer'
 import ProjectReentry from '@/components/ProjectReentry'
 import DocumentGenerator from '@/components/DocumentGenerator'
@@ -27,6 +25,8 @@ import CaseInput from '@/components/CaseInput'
 import ReviewStep from '@/components/ReviewStep'
 import ProposalStep from '@/components/ProposalStep'
 import AddSourceModal from '@/components/AddSourceModal'
+import SmartMaterialsTable from '@/components/SmartMaterialsTable'
+import DebugCodeStep, { DEFAULT_ST_CODE, COMPACT_ST_CODE } from '@/components/DebugCodeStep'
 import { usePresalesState } from '@/hooks/usePresalesState'
 
 interface Message {
@@ -45,18 +45,12 @@ interface SourceFile {
   selected: boolean
 }
 
-interface StickyNote {
-  id: string
-  content: string
-  color: string
-}
-
 interface PhaseDetail {
   num: number
   title: string
   desc: string
   prompts: string[]
-  tab: 'audio' | 'cad' | 'gen' | 'audit' | 'translate' | 'notes' | 'reentry' | 'doc' | 'caseinput' | 'review' | 'proposal'
+  tab: 'audio' | 'cad' | 'gen' | 'audit' | 'translate' | 'notes' | 'reentry' | 'doc' | 'caseinput' | 'review' | 'proposal' | 'materials' | 'design_code' | 'debug_code'
   sourcesToSelect: string[]
   inputs: string[]
   outputs: string[]
@@ -65,7 +59,7 @@ interface PhaseDetail {
 }
 
 const phasesInfo: PhaseDetail[] = [
-  // PRE-SALES = chu trình lặp 3 hoạt động (Nhập/Sửa → Kiểm tra → Dự toán), lặp theo "Vòng N"
+  // PRE-SALES = chu trình lặp 3 hoạt động (Nhập/Sửa → Kiểm tra → Dự toán)
   {
     num: 1,
     title: 'Nhập / Sửa thông tin',
@@ -100,10 +94,11 @@ const phasesInfo: PhaseDetail[] = [
     outputs: ['Tài liệu đề xuất'],
     users: 'Nhân viên kinh doanh',
   },
+  // POST-SALES = 5 bước tuyến tính (Phases 7, 8, 9, 10, 11)
   {
     num: 7,
-    title: 'Nhập lại thông tin dự án',
-    desc: 'Nhập chênh lệch giữa trước và sau khi nhận đơn hàng.',
+    title: 'Tiếp nhận & Khảo sát',
+    desc: 'Nhập thông số thiết bị thực tế sau đơn hàng và đối chiếu chênh lệch specs.',
     prompts: [
       'Nhập lại chênh lệch thông số dự án sau khi nhận đơn hàng.',
       'Xác nhận nội dung dự án mới và chênh lệch.',
@@ -111,107 +106,86 @@ const phasesInfo: PhaseDetail[] = [
     tab: 'reentry',
     sourcesToSelect: ['spec'],
     inputs: ['Câu hỏi', 'Nhập thông tin chênh lệch'],
-    outputs: ['Xác nhận nội dung dự án'],
-    users: 'Nhân viên kinh doanh',
+    outputs: ['Đối chiếu specs chênh lệch'],
+    users: 'Kỹ sư dự án',
   },
   {
     num: 8,
-    title: 'Kick-off',
-    desc: 'Bàn giao thông tin cho bên tiếp nhận.',
+    title: 'Họp Kick-off',
+    desc: 'Bàn giao thông tin dự án, ghi chú kỹ thuật và biên bản họp cho các bên.',
     prompts: [
       'Soạn biên bản Kick-off bàn giao dự án.',
-      'Xác nhận thông tin dự án cho phiên Kick-off.',
+      'Xem danh sách ghi chú cuộc họp kick-off.',
     ],
     tab: 'notes',
     sourcesToSelect: ['spec', 'flow'],
-    inputs: ['Câu hỏi'],
-    outputs: ['Xác nhận thông tin dự án'],
-    users: 'Nhân viên kinh doanh, SE, Người phụ trách',
+    inputs: ['Ý kiến đóng góp'],
+    outputs: ['Ghi chú bàn giao'],
+    users: 'Kỹ sư & Người phụ trách',
   },
   {
     num: 9,
-    title: 'Thiết kế',
-    desc: 'Thiết kế phần cứng, PLC và TP. Dịch thuật chú thích chương trình Nhật - Việt.',
+    title: 'Điều chỉnh vật tư',
+    desc: 'Điều chỉnh thiết bị, số lượng và đơn giá thông minh qua lại giữa Chat và Bảng vật tư. Lịch sử lưu tại Thư viện.',
     prompts: [
-      'Dịch chú thích tiếng Nhật của chương trình PLC sang tiếng Việt.',
-      'Giải nghĩa các dòng chú thích tiếng Nhật trong code PLC.',
+      'Thêm 2 cảm biến quang',
+      'Nâng cấp lên HMI GOT2000 10-inch',
+      'Bổ sung 1 trục Servo Motor'
     ],
-    tab: 'translate',
-    sourcesToSelect: ['spec', 'cad'],
-    inputs: ['Chú thích tiếng Nhật'],
-    outputs: ['Bản dịch tiếng Việt (văn bản)'],
-    users: 'SE, Người phụ trách',
-    note: 'Phân nhánh theo nội dung: Cơ khí, điện, phần mềm.',
+    tab: 'materials',
+    sourcesToSelect: ['spec'],
+    inputs: ['Yêu cầu điều chỉnh'],
+    outputs: ['Bảng vật tư thông minh V2'],
+    users: 'Kỹ sư thiết kế / Sales',
   },
   {
     num: 10,
-    title: 'Sản xuất',
-    desc: 'Tạm thời tập trung vào điện: tạo bản vẽ điện, lập trình PLC/TP và thông số vận hành.',
+    title: 'Thiết kế & Code tự động',
+    desc: 'Tự động tạo bản vẽ sơ đồ mạch CAD và sinh mã Structured Text (ST) dựa trên tri thức quy chuẩn.',
     prompts: [
-      'Tạo bản vẽ điện CAD và chương trình PLC.',
-      'Sinh thông số vận hành và giải thích chương trình.',
+      'Xem bản vẽ sơ đồ đấu nối CAD.',
+      'Xem mã lệnh PLC Structured Text (ST).',
+      'Tải về mã nguồn & bản vẽ thiết kế.'
     ],
-    tab: 'gen',
+    tab: 'design_code',
     sourcesToSelect: ['spec', 'flow', 'cad'],
-    inputs: ['Câu hỏi'],
-    outputs: ['Bản vẽ điện (CAD)', 'Chương trình PLC', 'Thông số vận hành', 'Giải thích chương trình (văn bản)'],
-    users: 'SE, Người phụ trách',
-    note: 'Phân nhánh theo nội dung: Cơ khí, điện, phần mềm.',
-  },
-  {
-    num: 11,
-    title: 'Debug',
-    desc: 'Tạm thời tập trung vào điện: kiểm tra chương trình PLC và TP.',
-    prompts: [
-      'Kiểm tra chương trình PLC và tìm lỗi.',
-      'Đánh giá lỗi an toàn mạch điện.',
-    ],
-    tab: 'audit',
-    sourcesToSelect: ['ladder', 'manual'],
-    inputs: ['Câu hỏi'],
-    outputs: ['Kiểm tra chương trình (văn bản)'],
-    users: 'SE, Người phụ trách',
-    note: 'Phân nhánh theo nội dung: Cơ khí, điện, phần mềm.',
+    inputs: ['Quy chuẩn thiết kế'],
+    outputs: ['Bản vẽ CAD (.dwg)', 'Mã Structured Text PLC (.l5k)'],
+    users: 'AI Assistant / Kỹ sư',
   },
   {
     num: 12,
-    title: 'Hiệu chỉnh tại hiện trường',
-    desc: 'Tạm thời tập trung vào điện: đấu dây và debug PLC/TP tại hiện trường.',
+    title: 'Debug & Hiệu chỉnh Code',
+    desc: 'Chỉnh sửa trực tiếp mã PLC ST, kiểm tra lỗi cú pháp và tối ưu hóa code bằng AI.',
     prompts: [
-      'Cập nhật sơ đồ đấu dây hiện trường.',
-      'Hiệu chỉnh PLC tại hiện trường.',
+      'Kiểm tra lỗi cú pháp mã PLC.',
+      'Tối ưu hóa mã PLC ST (Paraphrase).',
+      'Thêm còi báo động vào code.'
     ],
-    tab: 'cad',
-    sourcesToSelect: ['cad', 'ladder'],
-    inputs: ['Nội dung sửa phần cứng'],
-    outputs: ['Bản vẽ điện (CAD)'],
-    users: 'SE, Người phụ trách',
-    note: 'Phân nhánh theo nội dung: Cơ khí, điện, phần mềm.',
+    tab: 'debug_code',
+    sourcesToSelect: ['spec', 'flow', 'cad'],
+    inputs: ['PLC ST Code', 'Yêu cầu hiệu chỉnh'],
+    outputs: ['Mã PLC ST đã hiệu chỉnh'],
+    users: 'Kỹ sư / AI Assistant',
   },
   {
-    num: 13,
-    title: 'Giám sát / Nghiệm thu',
-    desc: 'Tạm thời tập trung vào điện: tạo tài liệu hướng dẫn và biên bản kiểm tra.',
+    num: 11,
+    title: 'Nghiệm thu & HDSD',
+    desc: 'Tạo tài liệu hướng dẫn vận hành thiết bị HMI và biên bản kiểm tra nghiệm thu hoàn chỉnh.',
     prompts: [
-      'Soạn tài liệu nghiệm thu và hướng dẫn sử dụng.',
-      'Tổng hợp kết quả kiểm tra và nội dung màn hình TP.',
+      'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng',
+      'Tải Biên bản nghiệm thu.docx',
+      'Tải Hướng dẫn vận hành HMI.pdf'
     ],
     tab: 'doc',
-    sourcesToSelect: ['spec', 'cad', 'flow'],
-    inputs: ['Câu hỏi', 'Thông tin màn hình TP', 'Kết quả kiểm tra'],
-    outputs: ['Thông tin nền hướng dẫn sử dụng (văn bản)', 'Thông tin nền biên bản kiểm tra (văn bản)'],
-    users: 'SE, Người phụ trách',
-    note: 'Phân nhánh theo nội dung: Cơ khí, điện, phần mềm.',
-  },
+    sourcesToSelect: ['spec', 'cad'],
+    inputs: ['Kết quả kiểm tra', 'Thông tin vận hành'],
+    outputs: ['Biên bản nghiệm thu', 'Tài liệu hướng dẫn sử dụng HMI'],
+    users: 'Khách hàng / SE',
+  }
 ]
 
-const stepperSteps = [
-  { order: 1, label: 'Nhận thông tin', icon: FileText, phases: [7] },
-  { order: 2, label: 'Dự toán', icon: Calculator, phases: [8] },
-  { order: 3, label: 'Sơ đồ luồng', icon: GitMerge, phases: [9, 10] },
-  { order: 4, label: 'Thiết kế CAD', icon: Layers, phases: [12] },
-  { order: 5, label: 'Sinh code PLC', icon: Cpu, phases: [11, 13] },
-]
+
 
 // Pre-sales (trước nhận đơn) = CHU TRÌNH LẶP 3 hoạt động: Nhập/Sửa → Kiểm tra → Dự toán.
 // Thực tế lặp lại nhiều vòng (sửa thông tin → dự toán lại) đến khi chốt đơn → mô hình "Vòng N".
@@ -234,9 +208,8 @@ function statusToPhase(status?: string): number {
     case 'status.kickoff': return 8
     case 'status.design': return 9
     case 'status.build': return 10
-    case 'status.debug': return 11
-    case 'status.onsite': return 12
-    case 'status.done': return 13
+    case 'status.debug': return 12
+    case 'status.onsite': case 'status.done': return 11
     default: return 1
   }
 }
@@ -265,7 +238,13 @@ export default function NotebookWorkspace() {
     phasesInfo.map(p => ({ ...p, isVisible: true }))
   )
   const [activeUser, setActiveUser] = useState<'Linh' | 'Kanai' | 'AI'>('Linh')
-  const [activatedPhases, setActivatedPhases] = useState<number[]>([initialPhase])
+  const [activatedPhases, setActivatedPhases] = useState<number[]>(() => {
+    if (initialPhase <= 3) return [initialPhase]
+    const postSalesOrder = [7, 8, 9, 10, 12, 11]
+    const idx = postSalesOrder.indexOf(initialPhase)
+    if (idx === -1) return [initialPhase]
+    return postSalesOrder.slice(0, idx + 1)
+  })
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(true)
 
@@ -276,10 +255,24 @@ export default function NotebookWorkspace() {
     8: 40,
     9: 50,
     10: 80,
+    12: 50,
     11: 30,
-    12: 30,
-    13: 20,
   })
+
+  const [materialsVersion, setMaterialsVersion] = useState(0)
+  const [kickoffText, setKickoffText] = useState('')
+  const [designSubTab, setDesignSubTab] = useState<'cad' | 'code'>('cad')
+  const KICKOFF_STORAGE_KEY = `aiplf.kickoff_notes_text.${id || 'default'}`
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setMaterialsVersion(prev => prev + 1)
+      const storedKickoff = localStorage.getItem(KICKOFF_STORAGE_KEY)
+      if (storedKickoff) setKickoffText(storedKickoff)
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [KICKOFF_STORAGE_KEY])
 
   // Pre-sales NV1 state (mô phỏng, lưu localStorage theo case)
   const pre = usePresalesState(id || 'default')
@@ -289,14 +282,12 @@ export default function NotebookWorkspace() {
   const projectProgress = providedProgress != null ? providedProgress : pre.progressPct
 
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([
-    'Nhập thông tin dự án (pre-sales)',
-    'Nhập lại chênh lệch thông tin dự án sau khi nhận đơn hàng',
-    'Soạn biên bản Kick-off bàn giao dự án',
-    'Dịch thuật chú thích chương trình sang tiếng Việt',
-    'Tạo bản vẽ điện CAD và chương trình PLC',
-    'Kiểm tra chương trình PLC và tìm lỗi',
-    'Cập nhật sơ đồ đấu dây tại hiện trường',
-    'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng'
+    'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+    'Chuyển sang Bước 2: Họp Kick-off',
+    'Chuyển sang Bước 3: Điều chỉnh vật tư',
+    'Chuyển sang Bước 4: Thiết kế & Code tự động',
+    'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+    'Chuyển sang Bước 6: Nghiệm thu & HDSD'
   ])
 
   const suggestionResponses: Record<string, {
@@ -305,86 +296,287 @@ export default function NotebookWorkspace() {
     suggestions: string[]
     citations?: { id: number; sourceId: string; phrase?: string; tab?: string }[]
   }> = {
-    'Nhập lại chênh lệch thông tin dự án sau khi nhận đơn hàng': {
+    'Chuyển sang Bước 1: Tiếp nhận & Khảo sát': {
       phaseNum: 7,
-      explanationText: 'Đã chuyển sang Pha 7: Nhập lại thông tin dự án. Hãy cung cấp chi tiết chênh lệch giữa đơn hàng gốc và thực tế để xác nhận nội dung dự án.',
+      explanationText: 'Đã chuyển sang Bước 1: Tiếp nhận & Khảo sát. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.',
       suggestions: [
         'Có thay đổi gì về số lượng động cơ hay PLC?',
-        'Xác nhận thông số điện áp và loại thiết bị.',
+        'Xem chi tiết thông số chênh lệch Melsec Q?',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'reentry' }],
+    },
+    'Chuyển sang Bước 2: Họp Kick-off': {
+      phaseNum: 8,
+      explanationText: 'Đã chuyển sang Bước 2: Họp Kick-off. Giao diện biên bản bien_ban_kickoff_ban_giao.txt đã được hiển thị ở bên trái.',
+      suggestions: [
+        'Soạn biên bản Kick-off bàn giao dự án',
+        'Xem danh sách ghi chú cuộc họp kick-off.',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'notes' }],
+    },
+    'Chuyển sang Bước 3: Điều chỉnh vật tư': {
+      phaseNum: 9,
+      explanationText: 'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Bảng vật tư thông minh đã hiển thị ở bên trái.',
+      suggestions: [
+        'Thêm 2 cảm biến quang',
+        'Nâng cấp màn hình HMI',
+        'Bổ sung 1 trục Servo Motor',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
+    },
+    'Chuyển sang Bước 4: Thiết kế & Code tự động': {
+      phaseNum: 10,
+      explanationText: 'Đã chuyển sang Bước 4: Thiết kế & Code tự động. AI đã sinh bản vẽ CAD và Structured Text.',
+      suggestions: [
+        'Xem sơ đồ bản vẽ CAD & mã Structured Text',
+        'Tải về mã nguồn & bản vẽ thiết kế',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'cad', tab: 'design_code' }],
+    },
+    'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code': {
+      phaseNum: 12,
+      explanationText: 'Đã chuyển sang Bước 5: Debug & Hiệu chỉnh Code. Tại đây bạn có thể chỉnh sửa trực tiếp mã Structured Text (ST) của PLC, chạy kiểm tra lỗi biên dịch, và yêu cầu AI paraphrase/tối ưu hóa chương trình.',
+      suggestions: [
+        'Kiểm tra lỗi cú pháp mã PLC.',
+        'Tối ưu hóa mã PLC ST (Paraphrase).',
+        'Thêm còi báo động vào code.',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
+    },
+    'Chuyển sang Bước 6: Nghiệm thu & HDSD': {
+      phaseNum: 11,
+      explanationText: 'Đã chuyển sang Bước 6: Nghiệm thu & HDSD. Bạn có thể tải các file tài liệu hướng dẫn và nghiệm thu.',
+      suggestions: [
+        'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng',
+        'Tải Biên bản nghiệm thu.docx',
+        'Tải Hướng dẫn vận hành HMI.pdf',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
+    },
+    'Nhập lại chênh lệch thông số dự án sau khi nhận đơn hàng': {
+      phaseNum: 7,
+      explanationText: 'Đã chuyển sang Bước 1: Tiếp nhận & Khảo sát. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.',
+      suggestions: [
+        'Có thay đổi gì về số lượng động cơ hay PLC?',
+        'Xem chi tiết thông số chênh lệch Melsec Q?',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'reentry' }],
+    },
+    'Xem chi tiết thông số chênh lệch Melsec Q?': {
+      phaseNum: 7,
+      explanationText: 'Nhật ký khảo sát ghi nhận cấu hình cũ dùng PLC FX5U (Compact) và cấu hình mới nâng cấp lên PLC Q03UDE (Module) cùng màn hình GOT2000 10-inch. Bản vẽ CAD và Mã PLC ST ở Bước 4 đã tự động cập nhật theo cấu hình mới này.',
+      suggestions: [
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'reentry' }],
     },
     'Soạn biên bản Kick-off bàn giao dự án': {
       phaseNum: 8,
-      explanationText: 'Đã mở Pha 8: Kick-off. Tôi sẽ giúp bạn soạn biên bản bàn giao và xác nhận thông tin dự án cho bên tiếp nhận.',
+      explanationText: 'Đã chuyển sang Bước 2: Họp Kick-off. Tôi đã lập danh sách ghi chú bàn giao dự án và chuẩn bị sẵn biên bản cuộc họp.',
       suggestions: [
-        'Xác nhận thông tin dự án trước Kick-off.',
-        'Chuẩn bị danh sách thành viên SE và người phụ trách.',
+        'Xem danh sách ghi chú cuộc họp kick-off.',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'notes' }],
     },
-    'Dịch thuật chú thích chương trình sang tiếng Việt': {
+    'Xem danh sách ghi chú cuộc họp kick-off.': {
+      phaseNum: 8,
+      explanationText: 'Dưới đây là các ghi chú kỹ thuật quan trọng trong Biên bản họp Kick-off (hiển thị ở khung bên trái):\n- Cần kiểm tra lại nguồn cấp AC200V 3 pha cho các Servo Drive tại nhà xưởng.\n- Bản vẽ CAD mạch lực cần tách biệt dây động lực và dây tín hiệu cảm biến để chống nhiễu.',
+      suggestions: [
+        'Soạn biên bản Kick-off bàn giao dự án',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'notes' }],
+    },
+    'Thêm 2 cảm biến quang': {
       phaseNum: 9,
-      explanationText: 'Đã mở Pha 9: Thiết kế. Tôi sẽ hỗ trợ bạn dịch các chú thích tiếng Nhật trong chương trình điều khiển sang tiếng Việt để phục vụ thiết kế phần cứng và PLC.',
+      explanationText: 'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Đang tiến hành tăng số lượng Cảm biến quang điện (Photoelectric Sensor) thêm 2 cái.',
       suggestions: [
-        'Dịch chú thích tiếng Nhật PLC sang tiếng Việt.',
-        'Giải thích ý nghĩa chú thích vận hành.',
+        'Nâng cấp màn hình HMI',
+        'Bổ sung 1 trục Servo Motor',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
-      citations: [{ id: 1, sourceId: 'spec', tab: 'translate' }],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
     },
-    'Tạo bản vẽ điện CAD và chương trình PLC': {
+    'Nâng cấp màn hình HMI': {
+      phaseNum: 9,
+      explanationText: 'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Đang thay đổi cấu hình màn hình HMI sang GOT2000 10-inch và áp dụng giá trị mặc định của Master Data.',
+      suggestions: [
+        'Thêm 2 cảm biến quang',
+        'Bổ sung 1 trục Servo Motor',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
+    },
+    'Bổ sung 1 trục Servo Motor': {
+      phaseNum: 9,
+      explanationText: 'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Đang tiến hành bổ sung thêm 1 trục Servo Motor (MR-J5-40A) cho cơ cấu băng tải nạp phôi phụ.',
+      suggestions: [
+        'Thêm 2 cảm biến quang',
+        'Nâng cấp màn hình HMI',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
+    },
+    'Xem sơ đồ bản vẽ CAD & mã Structured Text': {
       phaseNum: 10,
-      explanationText: 'Đã mở Pha 10: Sản xuất. Tôi sẽ tạo bản vẽ điện CAD, chương trình PLC cùng thông số vận hành và giải thích chương trình.',
+      explanationText: 'Đã chuyển sang Bước 4: Thiết kế & Code tự động. AI đã xử lý ngầm và sinh bản vẽ CAD đấu dây cùng mã Structured Text (ST) tuân thủ quy tắc E-stop KA1 và khởi tạo Servo. Bạn có thể xem trực tiếp hoặc tải về.',
       suggestions: [
-        'Sinh thông số vận hành cho quy trình tự động.',
-        'Giải thích chương trình PLC bằng văn bản.',
+        'Tải về mã nguồn & bản vẽ thiết kế',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
-      citations: [{ id: 1, sourceId: 'flow', tab: 'gen' }],
+      citations: [{ id: 1, sourceId: 'cad', tab: 'design_code' }],
     },
-    'Kiểm tra chương trình PLC và tìm lỗi': {
-      phaseNum: 11,
-      explanationText: 'Đã mở Pha 11: Debug. Tôi sẽ kiểm tra chương trình PLC, phát hiện lỗi và đánh giá an toàn mạch.',
+    'Tải về mã nguồn & bản vẽ thiết kế': {
+      phaseNum: 10,
+      explanationText: 'Mã nguồn PLC và Bản vẽ điện CAD đã sẵn sàng. Vui lòng bấm vào các nút Tải Bản vẽ CAD (.dwg) hoặc Tải Mã PLC (.l5k) ở thanh công cụ canvas để tải về.',
       suggestions: [
-        'Đánh giá an toàn mạch điện và ladder.',
-        'Xem báo cáo kiểm tra chương trình.',
+        'Xem sơ đồ bản vẽ CAD & mã Structured Text',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
-      citations: [{ id: 1, sourceId: 'ladder', tab: 'audit' }],
+      citations: [{ id: 1, sourceId: 'cad', tab: 'design_code' }],
     },
-    'Cập nhật sơ đồ đấu dây tại hiện trường': {
+    'Kiểm tra lỗi cú pháp mã PLC.': {
       phaseNum: 12,
-      explanationText: 'Đã mở Pha 12: Hiệu chỉnh tại hiện trường. Tôi sẽ giúp bạn cập nhật sơ đồ đấu dây và tạo bản vẽ điện CAD phản ánh thay đổi phần cứng.',
+      explanationText: 'Đang tiến hành chạy trình biên dịch kiểm định cú pháp PLC... Phát hiện 0 lỗi cú pháp! Tất cả các khối lệnh (Emergency Stop KA1, Axis Move, AI Quality scans) đều tuân thủ định dạng IEC 61131-3.',
       suggestions: [
-        'Hiệu chỉnh PLC và TP tại hiện trường.',
-        'Tạo bản vẽ CAD cho thiết kế đấu nối mới.',
+        'Tối ưu hóa mã PLC ST (Paraphrase).',
+        'Thêm còi báo động vào code.',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
-      citations: [{ id: 1, sourceId: 'cad', tab: 'cad' }],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
+    },
+    'Tối ưu hóa mã PLC ST (Paraphrase).': {
+      phaseNum: 12,
+      explanationText: 'Tôi đã tối ưu hóa mã PLC ST (Paraphrase) sang cấu trúc máy trạng thái `CASE..OF` gọn đẹp hơn, giúp cải thiện tốc độ xử lý vòng quét của CPU PLC Melsec. Màn hình biên soạn đã cập nhật chương trình mới.',
+      suggestions: [
+        'Kiểm tra lỗi cú pháp mã PLC.',
+        'Thêm còi báo động vào code.',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
+    },
+    'Thêm còi báo động vào code.': {
+      phaseNum: 12,
+      explanationText: 'Đã thêm biến `ALARM_SIREN : BOOL` và gán `ALARM_SIREN := TRUE;` trong bước phát hiện sản phẩm lỗi NG (Bước 5b). Hệ thống còi báo sẽ tự động bật khi có phôi lỗi và tắt khi cổng đẩy mở xong.',
+      suggestions: [
+        'Kiểm tra lỗi cú pháp mã PLC.',
+        'Tối ưu hóa mã PLC ST (Paraphrase).',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
     },
     'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng': {
-      phaseNum: 13,
-      explanationText: 'Đã mở Pha 13: Giám sát / Nghiệm thu. Tôi sẽ soạn tài liệu hướng dẫn sử dụng và biên bản kiểm tra dựa trên kết quả kiểm tra và màn hình TP.',
+      phaseNum: 11,
+      explanationText: 'Đã chuyển sang Bước 6: Nghiệm thu & HDSD. Tôi đã tự động biên soạn các tài liệu kỹ thuật hoàn chỉnh: \n\n📄 [Biên bản nghiệm thu.docx]\n📄 [Hướng dẫn vận hành HMI.pdf]\n\nBạn có thể tải trực tiếp ở khung bên cạnh hoặc gõ yêu cầu cụ thể.',
       suggestions: [
-        'Tổng hợp thông tin nền cho báo cáo nghiệm thu.',
-        'Soạn biên bản kiểm tra chi tiết.',
+        'Tải Biên bản nghiệm thu.docx',
+        'Tải Hướng dẫn vận hành HMI.pdf',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
     },
+    'Tải Biên bản nghiệm thu.docx': {
+      phaseNum: 11,
+      explanationText: 'Đang tải file Biên bản nghiệm thu.docx (45 KB) về máy của bạn...',
+      suggestions: [
+        'Tải Hướng dẫn vận hành HMI.pdf',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
+    },
+    'Tải Hướng dẫn vận hành HMI.pdf': {
+      phaseNum: 11,
+      explanationText: 'Đang tải file Hướng dẫn vận hành HMI.pdf (1.1 MB) về máy của bạn...',
+      suggestions: [
+        'Tải Biên bản nghiệm thu.docx',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
+    }
   }
 
   const activeRightTab = activePhase !== null ? phases.find((p) => p.num === activePhase)?.tab ?? 'reentry' : null
-  const currentStepIndex = activePhase === 7
-    ? 1
-    : activePhase === 8
-    ? 2
-    : (activePhase === 9 || activePhase === 10)
-    ? 3
-    : activePhase === 12
-    ? 4
-    : (activePhase === 11 || activePhase === 13)
-    ? 5
-    : 0
-  // Pre-sales = chu trình lặp 3 hoạt động (phase 1→3); post-order = stepper tuyến tính (7→13)
-  const isPreSales = activePhase === null || activePhase <= 3
-  const activeStepIndex = currentStepIndex
+
   const SOURCES_KEY = `aiplf.sources.${id || 'default'}`
   const [sources, setSources] = useState<SourceFile[]>(() => {
     try { const raw = localStorage.getItem(SOURCES_KEY); if (raw) return JSON.parse(raw) as SourceFile[] } catch { /* ignore */ }
@@ -423,17 +615,17 @@ export default function NotebookWorkspace() {
   }, [])
 
   const handleProgress7 = useCallback((prog: number) => handleProgressChange(7, prog), [handleProgressChange])
+  const handleProgress9 = useCallback((prog: number) => handleProgressChange(9, prog), [handleProgressChange])
   const handleProgress10 = useCallback((prog: number) => handleProgressChange(10, prog), [handleProgressChange])
-  const handleProgress11 = useCallback((prog: number) => handleProgressChange(11, prog), [handleProgressChange])
   const handleProgress12 = useCallback((prog: number) => handleProgressChange(12, prog), [handleProgressChange])
-  const handleProgress13 = useCallback((prog: number) => handleProgressChange(13, prog), [handleProgressChange])
+  const handleProgress11 = useCallback((prog: number) => handleProgressChange(11, prog), [handleProgressChange])
 
   // Chat message thread
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'm1',
       sender: 'ai',
-      text: 'Xin chào! Tôi là Trợ lý AI Kỹ thuật cho dự án này.\n\nLuồng nghiệp vụ gồm **giai đoạn TRƯỚC nhận đơn** — chu trình lặp 3 hoạt động *Nhập/Sửa → Kiểm tra → Trình dự toán* (cập nhật đến khi chốt đơn) — và **giai đoạn SAU nhận đơn (Pha 7–13)**. Hãy thêm nguồn hoặc kể về dự án để mình trích dữ liệu, hoặc chọn hoạt động trên thanh chu trình.',
+      text: 'Xin chào! Tôi là Trợ lý AI Kỹ thuật cho dự án này.\n\nLuồng nghiệp vụ gồm giai đoạn TRƯỚC nhận đơn — chu trình lặp 3 hoạt động *Nhập/Sửa → Kiểm tra → Trình dự toán* (cập nhật đến khi chốt đơn) — và giai đoạn SAU nhận đơn (Pha 7–13). Hãy thêm nguồn hoặc kể về dự án để mình trích dữ liệu, hoặc chọn hoạt động trên thanh chu trình.',
       timestamp: '10:00 AM',
     },
   ])
@@ -471,21 +663,66 @@ export default function NotebookWorkspace() {
     setHistoryLogs(prev => [newLog, ...prev])
   }, [activeUser])
 
-  // Sticky notes list
-  const [notes, setNotes] = useState<StickyNote[]>([
-    { id: 'n1', content: 'Cần kiểm tra lại điện áp đầu vào AC200V 3 pha cho các trục Servo A1, A2, A3 trước khi nghiệm thu.', color: 'bg-amber-50 border-amber-250 text-amber-800' },
-    { id: 'n2', content: 'Gửi bản vẽ CAD đã cập nhật mạch liên khóa KA1 cho bộ phận lắp ráp tủ điện.', color: 'bg-emerald-50 border-emerald-250 text-emerald-800' },
-  ])
-  const [noteInput, setNoteInput] = useState('')
-
+  // Initial Load for Kickoff Text
   useEffect(() => {
-    // Dynamically update progress for notes (Phase 8)
-    const progress = Math.min(100, notes.length * 25)
-    setProgressData(prev => {
-      if (prev[8] === progress) return prev
-      return { ...prev, 8: progress }
-    })
-  }, [notes])
+    const stored = localStorage.getItem(KICKOFF_STORAGE_KEY)
+    if (stored) {
+      setKickoffText(stored)
+    } else {
+      const defaultText = `# BIÊN BẢN HỌP KICK-OFF & BÀN GIAO DỰ ÁN (CASE-2026-0245)
+Thời gian: 06/06/2026 09:30 - 10:30
+Địa điểm: Phòng họp kỹ thuật / MS Teams
+Thành phần tham dự:
+- Kanai (Lead SE)
+- Linh (Software Engineer)
+- AI Assistant (Hỗ trợ Kỹ thuật)
+
+---
+
+## I. THỐNG NHẤT THAY ĐỔI THÔNG SỐ KỸ THUẬT (SPECS)
+1. Xác nhận nâng cấp cấu hình PLC điều khiển lên dòng Q03UDE của Mitsubishi (thay thế dòng compact FX5U) để đáp ứng xử lý robot hàn.
+2. Thêm 1 trục Servo MR-J5-40A (Trục tay gắp phụ A4) nâng tổng số trục lên 4 trục.
+3. Nâng cấp chuẩn an toàn hệ thống lên ISO 13849 PLd, lắp thêm rơ le an toàn Omron G9SE liên khóa tiếp điểm KA1.
+4. Nâng cấp màn hình điều khiển HMI GOT2000 từ 7-inch lên 10-inch.
+
+## II. PHÂN CÔNG CÔNG VIỆC & TIẾN ĐỘ BÀN GIAO
+1. Linh (Phụ trách Phần mềm):
+   - Viết chương trình PLC Structured Text (ST) khởi tạo Servo MR-J5 và tích hợp các liên khóa an toàn.
+   - Hạn hoàn thành: 08/06/2026.
+   
+2. Kanai (Phụ trách Thiết kế Điện):
+   - Thiết kế bản vẽ sơ đồ đấu nối CAD mạch lực và mạch điều khiển tủ điện chính.
+   - Hạn hoàn thành: 09/06/2026.
+   
+3. AI Assistant (Trợ lý tự động hóa):
+   - Hỗ trợ biên dịch và rà soát lỗi cú pháp mã PLC ST.
+   - Tự động sinh tài liệu hướng dẫn vận hành HMI và biên bản nghiệm thu specs.
+
+---
+## III. GHI CHÚ KỸ THUẬT QUAN TRỌNG (SAVED NOTES)
+- Cần kiểm tra lại nguồn cấp AC200V 3 pha cho các Servo Drive tại nhà xưởng.
+- Bản vẽ CAD mạch lực cần tách biệt dây động lực và dây tín hiệu cảm biến để chống nhiễu.`
+      setKickoffText(defaultText)
+      localStorage.setItem(KICKOFF_STORAGE_KEY, defaultText)
+    }
+    handleProgressChange(8, 100)
+  }, [id, KICKOFF_STORAGE_KEY])
+
+  const [isDownloadingKickoff, setIsDownloadingKickoff] = useState(false)
+  const downloadKickoffText = () => {
+    setIsDownloadingKickoff(true)
+    setTimeout(() => {
+      setIsDownloadingKickoff(false)
+      const element = document.createElement("a")
+      const file = new Blob([kickoffText], {type: 'text/plain;charset=utf-8'})
+      element.href = URL.createObjectURL(file)
+      element.download = "bien_ban_kickoff_ban_giao.txt"
+      document.body.appendChild(element)
+      element.click()
+      document.body.removeChild(element)
+      addLog('Đã tải xuống Biên bản Kick-off: bien_ban_kickoff_ban_giao.txt', 8)
+    }, 1000)
+  }
 
   // Tiến độ hoạt động "Nhập / Sửa" (phase 1, pre-sales) lấy từ hook NV1
   useEffect(() => {
@@ -500,26 +737,73 @@ export default function NotebookWorkspace() {
     if (activePhase === 1 || activePhase === 2 || activePhase === 3 || activePhase === null) {
       setActiveSuggestions(PRE_SUGG)
     } else if (activePhase === 7) {
-      setActiveSuggestions(['Có thay đổi gì về số lượng động cơ hay PLC?', 'Xem chi tiết thông số chênh lệch Melsec Q?'])
+      setActiveSuggestions([
+        'Có thay đổi gì về số lượng động cơ hay PLC?',
+        'Xem chi tiết thông số chênh lệch Melsec Q?',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ])
     } else if (activePhase === 8) {
-      setActiveSuggestions(['Xác nhận thông tin dự án trước Kick-off.', 'Chuẩn bị danh sách thành viên SE và người phụ trách.'])
+      setActiveSuggestions([
+        'Soạn biên bản Kick-off bàn giao dự án',
+        'Xem danh sách ghi chú cuộc họp kick-off.',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ])
     } else if (activePhase === 9) {
-      setActiveSuggestions(['Dịch thuật chú thích chương trình sang tiếng Việt.', 'Giải thích ý nghĩa chú thích vận hành.'])
+      setActiveSuggestions([
+        'Thêm 2 cảm biến quang',
+        'Nâng cấp màn hình HMI',
+        'Bổ sung 1 trục Servo Motor',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ])
     } else if (activePhase === 10) {
-      setActiveSuggestions(['Tạo bản vẽ điện CAD và chương trình PLC.', 'Sinh thông số vận hành cho quy trình tự động.'])
-    } else if (activePhase === 11) {
-      setActiveSuggestions(['Kiểm tra chương trình PLC và tìm lỗi.', 'Đánh giá an toàn mạch điện và ladder.'])
+      setActiveSuggestions([
+        'Xem sơ đồ bản vẽ CAD & mã Structured Text',
+        'Tải về mã nguồn & bản vẽ thiết kế',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ])
     } else if (activePhase === 12) {
-      setActiveSuggestions(['Cập nhật sơ đồ đấu dây hiện trường.', 'Hiệu chỉnh PLC và TP tại hiện trường.'])
-    } else if (activePhase === 13) {
-      setActiveSuggestions(['Soạn tài liệu hướng dẫn sử dụng TP.', 'Tạo biên bản nghiệm thu kiểm tra.'])
+      setActiveSuggestions([
+        'Kiểm tra lỗi cú pháp mã PLC.',
+        'Tối ưu hóa mã PLC ST (Paraphrase).',
+        'Thêm còi báo động vào code.',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ])
+    } else if (activePhase === 11) {
+      setActiveSuggestions([
+        'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng',
+        'Tải Biên bản nghiệm thu.docx',
+        'Tải Hướng dẫn vận hành HMI.pdf',
+        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+      ])
     }
   }, [activePhase])
   // Translation board states
 
   // Design Phase 9 States
-  const [jpText, setJpText] = useState('自動運転シーケンス初期化完了。サーボアンプ電源投入を確認のこと。')
-  const [viText, setViText] = useState('Khởi tạo chuỗi tự động vận hành hoàn tất. Hãy xác nhận nguồn điện động lực cho Servo Drive.')
 
   // đẩy 1 cặp tin nhắn (người dùng + AI) vào chat
   const pushChat = (userText: string, aiText: string, sugg?: string[]) => {
@@ -545,32 +829,292 @@ export default function NotebookWorkspace() {
   const handlePresalesChat = (text: string) => {
     // "Nhãn: giá trị" → ghi nhớ một thông tin
     const mm = text.match(/^\s*(?:thêm|ghi chú)?\s*(.{2,40}?)\s*[:：]\s*(.+)$/)
-    if (mm) { pre.addField(mm[1].trim(), mm[2].trim()); pushChat(text, `✓ Đã ghi nhớ **${mm[1].trim()}**: ${mm[2].trim()}`, PRE_SUGG); return }
+    if (mm) { pre.addField(mm[1].trim(), mm[2].trim()); pushChat(text, `✓ Đã ghi nhớ ${mm[1].trim()}: ${mm[2].trim()}`, PRE_SUGG); return }
     // ý định sinh đầu ra
     let genMsg = ''
-    if (text === 'Soạn nội dung tài liệu dự toán') { pre.generate('doc'); genMsg = ' Đã sinh **Nội dung tài liệu dự toán** ✓.' }
-    else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') { pre.generate('config'); genMsg = ' Đã sinh **Cấu thành hệ thống (đơn giản)** ✓.' }
-    else if (text === 'Lập dự toán khái quát') { pre.generate('estimate'); genMsg = ' Đã sinh **Dự toán khái quát** ✓.' }
-    else if (text === 'Lập lịch trình khái quát') { pre.generate('schedule'); genMsg = ' Đã sinh **Lịch trình khái quát** ✓.' }
-    else if (text === 'Soạn tài liệu nền đề xuất') { pre.generate('proposal'); genMsg = ' Đã sinh **Tài liệu nền đề xuất** ✓.' }
-    else if (/dự toán|báo giá|estimate/i.test(text)) { pre.generate('estimate'); genMsg = ' Đã sinh **Dự toán khái quát** ✓ (xem ở "Đã tạo").' }
-    else if (/lịch trình|timeline|schedule/i.test(text)) { pre.generate('schedule'); genMsg = ' Đã sinh **Lịch trình khái quát** ✓.' }
-    else if (/cấu thành/i.test(text)) { pre.generate('config'); genMsg = ' Đã sinh **Cấu thành đơn giản** ✓.' }
-    else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) { pre.generate('proposal'); genMsg = ' Đã sinh **Tài liệu nền đề xuất** ✓.' }
+    if (text === 'Soạn nội dung tài liệu dự toán') { pre.generate('doc'); genMsg = ' Đã sinh Nội dung tài liệu dự toán ✓.' }
+    else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') { pre.generate('config'); genMsg = ' Đã sinh Cấu thành hệ thống (đơn giản) ✓.' }
+    else if (text === 'Lập dự toán khái quát') { pre.generate('estimate'); genMsg = ' Đã sinh Dự toán khái quát ✓.' }
+    else if (text === 'Lập lịch trình khái quát') { pre.generate('schedule'); genMsg = ' Đã sinh Lịch trình khái quát ✓.' }
+    else if (text === 'Soạn tài liệu nền đề xuất') { pre.generate('proposal'); genMsg = ' Đã sinh Tài liệu nền đề xuất ✓.' }
+    else if (/dự toán|báo giá|estimate/i.test(text)) { pre.generate('estimate'); genMsg = ' Đã sinh Dự toán khái quát ✓ (xem ở "Đã tạo").' }
+    else if (/lịch trình|timeline|schedule/i.test(text)) { pre.generate('schedule'); genMsg = ' Đã sinh Lịch trình khái quát ✓.' }
+    else if (/cấu thành/i.test(text)) { pre.generate('config'); genMsg = ' Đã sinh Cấu thành đơn giản ✓.' }
+    else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) { pre.generate('proposal'); genMsg = ' Đã sinh Tài liệu nền đề xuất ✓.' }
     // trả lời
     let aiText: string
     if (/tóm tắt|xem dữ liệu|dữ liệu đã|đã ghi|nhớ gì|thông tin dự án/i.test(text)) {
       aiText = 'Dữ liệu dự án mình đang ghi nhớ:\n' + pre.summaryText()
     } else {
       const added = pre.rememberFromContent(text)
-      aiText = added.length ? `Mình đã ghi nhớ thêm: **${added.join(', ')}**. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã hiểu. Bạn kể thêm chi tiết, hoặc gõ "tóm tắt dự án" để xem mình đang nhớ gì.'
+      aiText = added.length ? `Mình đã ghi nhớ thêm: ${added.join(', ')}. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã hiểu. Bạn kể thêm chi tiết, hoặc gõ "tóm tắt dự án" để xem mình đang nhớ gì.'
     }
     pushChat(text, (aiText + genMsg).trim(), PRE_SUGG)
+  }
+
+  const parseChatForMaterials = (chatText: string) => {
+    const text = chatText.toLowerCase();
+    let matchedKeyword = '';
+    let quantityChange = 0;
+    
+    if (text.includes('cảm biến quang') || text.includes('quang điện') || text.includes('photoelectric')) {
+      matchedKeyword = 'photoelectric';
+    } else if (text.includes('tiệm cận') || text.includes('proximity')) {
+      matchedKeyword = 'proximity';
+    } else if (text.includes('servo') || text.includes('động cơ')) {
+      matchedKeyword = 'mr-j5';
+    } else if (text.includes('plc') || text.includes('cpu')) {
+      matchedKeyword = 'q03ude';
+    } else if (text.includes('hmi') || text.includes('màn hình')) {
+      matchedKeyword = 'got2000';
+    } else if (text.includes('nguồn') || text.includes('power')) {
+      matchedKeyword = 'power';
+    } else if (text.includes('rơ le') || text.includes('safety')) {
+      matchedKeyword = 'safety';
+    } else if (text.includes('cáp') || text.includes('phụ kiện') || text.includes('accessories')) {
+      matchedKeyword = 'cable';
+    }
+    
+    const qtyMatch = text.match(/(?:thêm|bớt|tăng|giảm|nâng|hạ)?\s*(\d+)\s*(?:cái|bộ|lô|chiếc)?/);
+    if (qtyMatch) {
+      quantityChange = parseInt(qtyMatch[1]);
+      if (text.includes('bớt') || text.includes('giảm') || text.includes('hạ')) {
+        quantityChange = -quantityChange;
+      }
+    } else if (text.includes('thêm') || text.includes('tăng')) {
+      quantityChange = 1;
+    } else if (text.includes('bớt') || text.includes('giảm')) {
+      quantityChange = -1;
+    }
+    
+    return { matchedKeyword, quantityChange };
   }
 
   const sendMessagePrompt = (text: string) => {
     // Trong luồng pre-sales (bước 1→6): xử lý riêng (mô phỏng), không dùng router post-order
     if (activePhase !== null && activePhase <= 3) { handlePresalesChat(text); return }
+
+    const preset = suggestionResponses[text]
+    if (preset) {
+      const isMaterialChange = text === 'Thêm 2 cảm biến quang' || text === 'Nâng cấp màn hình HMI' || text === 'Bổ sung 1 trục Servo Motor'
+      if (!isMaterialChange) {
+        let matchedPhaseNum = preset.phaseNum
+        let explanationText = preset.explanationText
+        let suggestions = preset.suggestions
+        let phaseCitations = preset.citations ?? []
+
+        const aiMsg: Message = {
+          id: `a-${Date.now()}`,
+          sender: 'ai',
+          text: explanationText,
+          citations: phaseCitations,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }
+
+        setAskedQuestions((prev) => [...prev, text])
+        setMessages((prev) => [...prev, { id: `u-${Date.now()}`, sender: 'user', text, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }, aiMsg])
+        setActiveSuggestions(suggestions)
+        setInputVal('')
+
+        // Cập nhật code trong localStorage nếu chọn gợi ý liên quan
+        const codeKey = `aiplf.plc_st_code.${id || 'default'}`
+        if (text === 'Tối ưu hóa mã PLC ST (Paraphrase).') {
+          localStorage.setItem(codeKey, COMPACT_ST_CODE)
+          window.dispatchEvent(new Event('storage'))
+        } else if (text === 'Thêm còi báo động vào code.') {
+          const currentCode = localStorage.getItem(codeKey) || DEFAULT_ST_CODE
+          if (!currentCode.includes('ALARM_SIREN := TRUE')) {
+            const searchStr = 'DISCHARGE_NG_GATE := TRUE;'
+            if (currentCode.includes(searchStr)) {
+              const updated = currentCode.replace(searchStr, 'DISCHARGE_NG_GATE := TRUE;\n  ALARM_SIREN := TRUE; // Còi hú báo động sự cố sản phẩm lỗi')
+              localStorage.setItem(codeKey, updated)
+              window.dispatchEvent(new Event('storage'))
+            }
+          }
+        }
+
+        if (matchedPhaseNum !== activePhase) {
+          handlePhaseChange(matchedPhaseNum)
+        }
+        return
+      }
+    }
+    
+    // AI Chat interceptor for Step 1 (Phase 7 - Tiếp nhận & Khảo sát text document updates)
+    if (activePhase === 7) {
+      const queryLower = text.toLowerCase()
+      let updatedNote = ''
+      let shouldUpdate = false
+      
+      if (queryLower.includes('plc') || queryLower.includes('melsec')) {
+        updatedNote = `\n- * [Cập nhật từ AI Chat]: Đã chuyển đổi dòng bộ điều khiển sang dòng cao cấp Melsec Q03UDE phục vụ robot hàn.`
+        shouldUpdate = true
+      } else if (queryLower.includes('servo') || queryLower.includes('trục')) {
+        updatedNote = `\n- * [Cập nhật từ AI Chat]: Bổ sung thêm 1 trục Servo Motor A4 (MR-J5-40A) cho băng tải nạp phôi phụ.`
+        shouldUpdate = true
+      } else if (queryLower.includes('cảm biến quang') || queryLower.includes('quang')) {
+        updatedNote = `\n- * [Cập nhật từ AI Chat]: Tăng số lượng cảm biến quang điện phân loại phôi lên 8 cái.`
+        shouldUpdate = true
+      } else if (queryLower.includes('rơ le') || queryLower.includes('an toàn') || queryLower.includes('safety')) {
+        updatedNote = `\n- * [Cập nhật từ AI Chat]: Nâng cấp tiêu chuẩn an toàn lên ISO 13849 PLd, lắp thêm rơ le an toàn Omron G9SE.`
+        shouldUpdate = true
+      } else if (queryLower.includes('hmi') || queryLower.includes('màn hình')) {
+        updatedNote = `\n- * [Cập nhật từ AI Chat]: Đổi kích thước màn hình GOT2000 từ 7-inch lên 10-inch.`
+        shouldUpdate = true
+      }
+
+      if (shouldUpdate) {
+        try {
+          const storedText = localStorage.getItem(`aiplf.project_reentry_text.${id}`)
+          const baseText = storedText || `# NHẬT KÝ KHẢO SÁT HIỆN TRƯỜNG & THAY ĐỔI SPECS (CASE-2026-0245)`
+          const newText = baseText + `\n\n[HẠNG MỤC CẬP NHẬT TỪ CHAT ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]:` + updatedNote
+          localStorage.setItem(`aiplf.project_reentry_text.${id}`, newText)
+          localStorage.setItem(`aiplf.project_reentry_synced.${id}`, 'true')
+          
+          // Also update the materials directly in localStorage
+          const materialsKey = `aiplf.materials.${id}`
+          const storedMaterials = localStorage.getItem(materialsKey)
+          if (storedMaterials) {
+            const materialsList = JSON.parse(storedMaterials)
+            const updatedMat = materialsList.map((item: any) => {
+              if (queryLower.includes('plc') && item.name.includes('PLC')) return { ...item, quantity: 1, unitPrice: 1200 }
+              if (queryLower.includes('servo') && item.name.includes('Servo')) return { ...item, quantity: 4 }
+              if (queryLower.includes('quang') && item.name.includes('Photoelectric')) return { ...item, quantity: 8 }
+              if (queryLower.includes('hmi') && item.name.includes('HMI')) return { ...item, quantity: 1, unitPrice: 850 }
+              return item
+            })
+            localStorage.setItem(materialsKey, JSON.stringify(updatedMat))
+          }
+          
+          window.dispatchEvent(new Event('storage')) // triggers re-render in ProjectReentry & SmartMaterialsTable
+          setMaterialsVersion(prev => prev + 1)
+          
+          const aiResponse = `Tôi đã cập nhật yêu cầu chỉnh sửa của bạn vào Nhật ký khảo sát khao_sat_thay_doi_specs.txt ở khung bên trái. \n\nĐồng thời, cấu hình vật tư liên quan đã được đồng bộ tự động sang Bước 3. Điều chỉnh vật tư. Bạn có thể kiểm tra tệp tin và tiếp tục trao đổi.`
+          pushChat(text, aiResponse)
+          return
+        } catch (e) {
+          console.error(e)
+        }
+      }
+    }
+
+    // AI Chat interceptor for Step 2 (Phase 8 - Họp Kick-off meeting minutes updates)
+    if (activePhase === 8) {
+      try {
+        const storedText = localStorage.getItem(KICKOFF_STORAGE_KEY)
+        const baseText = storedText || `# BIÊN BẢN HỌP KICK-OFF & BÀN GIAO DỰ ÁN (CASE-2026-0245)`
+        const newText = baseText + `\n- [Cập nhật từ AI Chat ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]: ${text}`
+        localStorage.setItem(KICKOFF_STORAGE_KEY, newText)
+        setKickoffText(newText)
+        
+        window.dispatchEvent(new Event('storage'))
+        
+        const aiResponse = `Đã ghi nhận ý kiến đóng góp của bạn và cập nhật vào Biên bản cuộc họp bien_ban_kickoff_ban_giao.txt ở khung bên trái. Các thông tin phân công này đã được đồng bộ.`
+        pushChat(text, aiResponse)
+        return
+      } catch (e) {
+        console.error(e)
+      }
+    }
+
+    // Bidirectional Chat-Table sync for Step 3 (Phase 9)
+    if (activePhase === 9) {
+      const { matchedKeyword, quantityChange } = parseChatForMaterials(text)
+      if (matchedKeyword && quantityChange !== 0) {
+        try {
+          const stored = localStorage.getItem(`aiplf.materials.${id}`)
+          if (stored) {
+            const currentList = JSON.parse(stored)
+            const updated = currentList.map((item: any) => {
+              const matchesName = item.name.toLowerCase().includes(matchedKeyword)
+              const matchesCat = item.category.toLowerCase().includes(matchedKeyword)
+              if (matchesName || matchesCat) {
+                return { ...item, quantity: Math.max(0, item.quantity + quantityChange) }
+              }
+              return item
+            })
+            localStorage.setItem(`aiplf.materials.${id}`, JSON.stringify(updated))
+            setMaterialsVersion(prev => prev + 1)
+            
+            const matchedItem = currentList.find((item: any) => 
+              item.name.toLowerCase().includes(matchedKeyword) || 
+              item.category.toLowerCase().includes(matchedKeyword)
+            )
+            const itemName = matchedItem ? matchedItem.name : matchedKeyword
+            const aiText = `Đã ghi nhận điều chỉnh vật tư từ chat: ${itemName} được ${quantityChange > 0 ? 'tăng thêm' : 'giảm bớt'} ${Math.abs(quantityChange)} cái. \n\nTổng giá trị vật tư đã được cập nhật tương ứng. Phiên bản mới này đã được đồng bộ để lưu lại tại Thư viện.`
+            pushChat(text, aiText)
+            return
+          }
+        } catch (e) {
+          console.error(e)
+        }
+      }
+    }
+
+    // AI Chat interceptor for Step 5 (Phase 12 - Debug & Hiệu chỉnh Code)
+    if (activePhase === 12) {
+      const queryLower = text.toLowerCase()
+      let explanation = ''
+      let shouldUpdate = false
+      let updatedCode = ''
+      
+      const codeKey = `aiplf.plc_st_code.${id || 'default'}`
+      const currentCode = localStorage.getItem(codeKey) || DEFAULT_ST_CODE
+
+      if (queryLower.includes('cảnh báo') || queryLower.includes('còi') || queryLower.includes('alarm') || queryLower.includes('siren')) {
+        if (!currentCode.includes('ALARM_SIREN := TRUE')) {
+          const searchStr = 'DISCHARGE_NG_GATE := TRUE;'
+          if (currentCode.includes(searchStr)) {
+            updatedCode = currentCode.replace(searchStr, 'DISCHARGE_NG_GATE := TRUE;\n  ALARM_SIREN := TRUE; // Còi hú báo động sự cố sản phẩm lỗi')
+            shouldUpdate = true
+            explanation = 'Tôi đã tự động cập nhật mã nguồn PLC ST: Thêm còi báo động `ALARM_SIREN := TRUE;` vào bước phân loại sản phẩm lỗi NG (Bước 5b) ở khu soạn thảo bên trái. Bạn có thể chạy kiểm tra cú pháp để xác nhận.'
+          } else {
+            updatedCode = currentCode + '\n// Cập nhật từ Chat: Còi cảnh báo lỗi\nALARM_SIREN := TRUE;'
+            shouldUpdate = true
+            explanation = 'Đã thêm logic còi báo động `ALARM_SIREN := TRUE;` vào chương trình. Vui lòng xem ở khung bên trái.'
+          }
+        } else {
+          explanation = 'Mã nguồn hiện tại đã được tích hợp còi báo động lỗi `ALARM_SIREN := TRUE;` tại bước phân loại sản phẩm lỗi NG.'
+        }
+      } else if (queryLower.includes('tối ưu') || queryLower.includes('paraphrase') || queryLower.includes('state machine') || queryLower.includes('case')) {
+        updatedCode = COMPACT_ST_CODE
+        shouldUpdate = true
+        explanation = 'Tôi đã thực hiện tối ưu hóa (Paraphrase) mã nguồn PLC ST sang dạng State Machine sử dụng cấu trúc `CASE..OF` giúp chương trình gọn nhẹ hơn, giảm dung lượng bộ nhớ PLC và tăng chu kỳ quét vòng quét (scan time).'
+      } else if (queryLower.includes('cú pháp') || queryLower.includes('lỗi') || queryLower.includes('debug')) {
+        explanation = 'Tôi đã phân tích mã nguồn Structured Text hiện tại. Bạn có thể nhấn trực tiếp nút **Chạy kiểm tra cú pháp** ở cột bên phải để AI biên dịch thử thời gian thực.'
+      } else if (queryLower.includes('tạo lỗi') || queryLower.includes('thử lỗi')) {
+        if (currentCode.includes('EMERGENCY_STOP := TRUE;')) {
+          updatedCode = currentCode.replace('EMERGENCY_STOP := TRUE;', 'EMERGENCY_STOP = TRUE; // Lỗi cú pháp cố ý gán bằng dấu =')
+          shouldUpdate = true
+          explanation = 'Tôi đã cố ý tạo ra một lỗi cú pháp tại dòng gán biến `EMERGENCY_STOP = TRUE;` (thiếu dấu hai chấm `:` trước dấu `=`). Hãy click nút **Chạy kiểm tra cú pháp** ở bên phải để xem AI phát hiện và đề xuất sửa lỗi nhanh thế nào.'
+        }
+      }
+
+      if (shouldUpdate) {
+        localStorage.setItem(codeKey, updatedCode)
+        window.dispatchEvent(new Event('storage'))
+        
+        const revKey = `aiplf.code_revisions.${id || 'default'}`
+        const storedRev = localStorage.getItem(revKey)
+        let revList = []
+        if (storedRev) revList = JSON.parse(storedRev)
+        const newRev = {
+          id: `rev-${Date.now()}`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          desc: text.length > 30 ? text.substring(0, 30) + '...' : text,
+          code: updatedCode
+        }
+        revList.unshift(newRev)
+        localStorage.setItem(revKey, JSON.stringify(revList.slice(0, 5)))
+        
+        pushChat(text, explanation)
+        return
+      } else if (explanation) {
+        pushChat(text, explanation)
+        return
+      }
+    }
+
     const query = text.toLowerCase()
     let matchedPhaseNum = activePhase
     let explanationText = ''
@@ -584,58 +1128,52 @@ export default function NotebookWorkspace() {
         keywords: ['nhập thông tin', 'pre-sales', 'presales', 'trước nhận đơn', 'trích xuất', 'nhập liệu dự án', '12 nhóm'],
         tab: 'caseinput',
         title: 'Nhập thông tin dự án',
-        desc: 'Đã mở **Bước 1: Nhập thông tin dự án** (pre-sales). Thêm nguồn ở cột trái hoặc kể về dự án để mình trích dữ liệu; gõ "bổ sung" để mình hỏi từng mục.'
+        desc: 'Đã mở Bước 1: Nhập thông tin dự án (pre-sales). Thêm nguồn ở cột trái hoặc kể về dự án để mình trích dữ liệu; gõ "bổ sung" để mình hỏi từng mục.'
       },
       7: {
-        keywords: ['nhập lại', 'reentry', 're-entry', 'chênh lệch', 'đối chiếu', 'so sánh', 'đơn hàng', 'spec', 'specs'], 
+        keywords: ['tiếp nhận', 'khảo sát', 'nhập lại', 'reentry', 're-entry', 'chênh lệch', 'đối chiếu', 'so sánh', 'đơn hàng', 'spec', 'specs'], 
         tab: 'reentry', 
-        title: 'Nhập lại thông tin dự án',
-        desc: 'Tôi đã di chuyển màn hình đến **Pha 7: Nhập lại thông tin dự án** để bạn thực hiện đối chiếu chênh lệch thông số thiết bị.' 
+        title: 'Tiếp nhận & Khảo sát',
+        desc: 'Tôi đã di chuyển màn hình đến Bước 1: Tiếp nhận & Khảo sát để bạn thực hiện đối chiếu chênh lệch thông số thiết bị.' 
       },
       8: { 
         keywords: ['kick-off', 'kickoff', 'bàn giao', 'handover', 'ghi chú', 'biên bản cuộc họp', 'họp', 'notes', 'lưu ghi chú'], 
         tab: 'notes', 
-        title: 'Kick-off',
-        desc: 'Tôi đã di chuyển màn hình đến **Pha 8: Kick-off** để bạn theo dõi nội dung ghi chú và biên bản cuộc họp bàn giao.' 
+        title: 'Họp Kick-off',
+        desc: 'Tôi đã di chuyển màn hình đến Bước 2: Họp Kick-off để bạn theo dõi nội dung ghi chú và biên bản cuộc họp bàn giao.' 
       },
       9: { 
-        keywords: ['thiết kế', 'design', 'dịch', 'translate', 'nhật', 'việt', 'chú thích', 'comment'], 
-        tab: 'translate', 
-        title: 'Thiết kế',
-        desc: 'Tôi đã di chuyển màn hình đến **Pha 9: Thiết kế** để dịch thuật chú thích chương trình Nhật - Việt.' 
+        keywords: ['vật tư', 'vật liệu', 'materials', 'số lượng', 'đơn giá', 'bảng giá', 'điều chỉnh vật tư', 'tăng cảm biến', 'thêm cảm biến', 'nâng cấp hmi'], 
+        tab: 'materials', 
+        title: 'Điều chỉnh vật tư',
+        desc: 'Tôi đã di chuyển màn hình đến Bước 3: Điều chỉnh vật tư. Bạn có thể thay đổi trực tiếp trên bảng vật tư hoặc gõ điều chỉnh vào chat.' 
       },
       10: { 
-        keywords: ['sản xuất', 'cad', 'plc', 'structured text', 'st', 'program', 'thông số vận hành', 'flowchart', 'tạo bản vẽ'], 
-        tab: 'gen', 
-        title: 'Sản xuất',
-        desc: 'Tôi đã di chuyển màn hình đến **Pha 10: Sản xuất** để bạn chỉnh sửa sơ đồ tuần tự và sinh mã lệnh Structured Text (ST).' 
+        keywords: ['thiết kế', 'code', 'structured text', 'st', 'bản vẽ', 'cad', 'dwg', 'sinh code', 'tạo bản vẽ', 'tải về', 'mã plc'], 
+        tab: 'design_code', 
+        title: 'Thiết kế & Code tự động',
+        desc: 'Tôi đã di chuyển màn hình đến Bước 4: Thiết kế & Code tự động để hiển thị bản vẽ CAD cùng mã lệnh PLC Structured Text.' 
+      },
+      12: {
+        keywords: ['debug', 'sửa lỗi', 'hiệu chỉnh', 'chỉnh code', 'paraphrase', 'tối ưu hóa st', 'tối ưu st', 'tối ưu code', 'cú pháp', 'compiler'],
+        tab: 'debug_code',
+        title: 'Debug & Hiệu chỉnh Code',
+        desc: 'Tôi đã di chuyển màn hình đến Bước 5: Debug & Hiệu chỉnh Code. Tại đây bạn có thể soạn thảo, biên dịch thử và tối ưu code bằng AI.'
       },
       11: { 
-        keywords: ['debug', 'quét lỗi', 'sửa lỗi', 'an toàn', 'ladder', 'audit', 'ka1', 'mạch liên khóa', 'lỗi', 'kiểm tra'], 
-        tab: 'audit', 
-        title: 'Debug',
-        desc: 'Tôi đã di chuyển màn hình đến **Pha 11: Debug** để chạy quét lỗi liên khóa an toàn và kiểm tra ladder logic.' 
-      },
-      12: { 
-        keywords: ['hiệu chỉnh', 'hiện trường', 'đấu nối', 'sơ đồ dây', 'sửa phần cứng', 'dxf', 'cập nhật sơ đồ'], 
-        tab: 'cad', 
-        title: 'Hiệu chỉnh tại hiện trường',
-        desc: 'Tôi đã di chuyển màn hình đến **Pha 12: Hiệu chỉnh tại hiện trường** để hiển thị bản vẽ CAD đấu dây mạch lực.' 
-      },
-      13: { 
-        keywords: ['nghiệm thu', 'giám sát', 'hdsd', 'hướng dẫn', 'test', 'chất lượng', 'tài liệu', 'doc', 'báo cáo'], 
+        keywords: ['nghiệm thu', 'hdsd', 'tài liệu', 'hướng dẫn', 'test', 'doc', 'biên bản', 'báo cáo', 'tải biên bản'], 
         tab: 'doc', 
-        title: 'Giám sát / Nghiệm thu',
-        desc: 'Tôi đã di chuyển màn hình đến **Pha 13: Giám sát / Nghiệm thu** để hiển thị biểu mẫu nghiệm thu và kết xuất tài liệu vận hành HMI.' 
+        title: 'Nghiệm thu & HDSD',
+        desc: 'Tôi đã di chuyển màn hình đến Bước 6: Nghiệm thu & HDSD để bạn nhận các file tài liệu hướng dẫn và biên bản nghiệm thu thiết bị.' 
       }
     }
 
-    const preset = suggestionResponses[text]
-    if (preset) {
-      matchedPhaseNum = preset.phaseNum
-      explanationText = preset.explanationText
-      suggestions = preset.suggestions
-      phaseCitations = preset.citations ?? []
+    const presetVal = suggestionResponses[text]
+    if (presetVal) {
+      matchedPhaseNum = presetVal.phaseNum
+      explanationText = presetVal.explanationText
+      suggestions = presetVal.suggestions
+      phaseCitations = presetVal.citations ?? []
       isMatched = true
     } else {
       // Find matching phase based on keywords
@@ -657,17 +1195,15 @@ export default function NotebookWorkspace() {
           } else if (phaseNum === 7) {
             suggestions = ['Có thay đổi gì về số lượng động cơ hay PLC?', 'Xem chi tiết thông số chênh lệch Melsec Q?']
           } else if (phaseNum === 8) {
-            suggestions = ['Xác nhận thông tin dự án trước Kick-off.', 'Chuẩn bị danh sách thành viên SE và người phụ trách.']
+            suggestions = ['Xem danh sách ghi chú cuộc họp kick-off.', 'Thêm ghi chú kỹ thuật mới.']
           } else if (phaseNum === 9) {
-            suggestions = ['Dịch thuật chú thích chương trình sang tiếng Việt.', 'Giải thích ý nghĩa chú thích vận hành.']
+            suggestions = ['Thêm 2 cảm biến quang', 'Nâng cấp màn hình HMI', 'Bổ sung 1 trục Servo Motor']
           } else if (phaseNum === 10) {
-            suggestions = ['Tạo bản vẽ điện CAD và chương trình PLC.', 'Sinh thông số vận hành cho quy trình tự động.']
-          } else if (phaseNum === 11) {
-            suggestions = ['Kiểm tra chương trình PLC và tìm lỗi.', 'Đánh giá an toàn mạch điện và ladder.']
+            suggestions = ['Tải về mã nguồn & bản vẽ thiết kế', 'Xem mã lệnh PLC Structured Text (ST)']
           } else if (phaseNum === 12) {
-            suggestions = ['Cập nhật sơ đồ đấu dây hiện trường.', 'Hiệu chỉnh PLC và TP tại hiện trường.']
-          } else if (phaseNum === 13) {
-            suggestions = ['Soạn tài liệu hướng dẫn sử dụng TP.', 'Tạo biên bản nghiệm thu kiểm tra.']
+            suggestions = ['Kiểm tra lỗi cú pháp mã PLC.', 'Tối ưu hóa mã PLC ST (Paraphrase).', 'Thêm còi báo động vào code.']
+          } else if (phaseNum === 11) {
+            suggestions = ['Tải Biên bản nghiệm thu.docx', 'Tải Hướng dẫn vận hành HMI.pdf']
           }
           
           phaseCitations = [{ id: 1, sourceId: 'spec', tab: data.tab }]
@@ -677,11 +1213,11 @@ export default function NotebookWorkspace() {
     }
 
     if (!isMatched) {
-      explanationText = `Dựa trên câu hỏi "${text}" của bạn và các tài liệu nguồn đã nạp, tôi chưa tìm thấy từ khóa trùng khớp với 7 pha nghiệp vụ sau đơn hàng. \n\nVui lòng thử hỏi về một trong các bước như: nhập lại thông số chênh lệch, họp kick-off, thiết kế phần cứng, lập trình sản xuất PLC, debug lỗi an toàn, hiệu chỉnh đấu dây hiện trường, hoặc nghiệm thu bàn giao.`
+      explanationText = `Dựa trên câu hỏi "${text}" của bạn và các tài liệu nguồn đã nạp, tôi chưa tìm thấy từ khóa trùng khớp với 5 bước thiết kế sau đơn hàng. \n\nVui lòng thử hỏi về một trong các bước như: tiếp nhận khảo sát, họp kick-off bàn giao, điều chỉnh vật tư, thiết kế bản vẽ CAD / mã PLC, hoặc nghiệm thu HDSD.`
       suggestions = [
-        'Nhập lại chênh lệch thông tin dự án sau khi nhận đơn hàng',
+        'Nhập lại chênh lệch thông số dự án sau khi nhận đơn hàng',
         'Soạn biên bản Kick-off bàn giao dự án',
-        'Tạo bản vẽ điện CAD và chương trình PLC'
+        'Xem sơ đồ bản vẽ CAD & mã Structured Text'
       ]
     }
 
@@ -747,8 +1283,8 @@ export default function NotebookWorkspace() {
     setAddSourceOpen(false)
     const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     let aiText: string
-    if (first) { const names = pre.rememberFromContent(); aiText = names.length ? `Đã đọc ${files.length} tài liệu và ghi nhớ: **${names.join(', ')}**.` : `Đã thêm ${files.length} tài liệu.` }
-    else { const d = pre.reExtract(files[0].name); aiText = d.length ? `Đã đọc lại & đối chiếu — cập nhật **${d[0].name}**.` : `Đã thêm ${files.length} tài liệu.` }
+    if (first) { const names = pre.rememberFromContent(); aiText = names.length ? `Đã đọc ${files.length} tài liệu và ghi nhớ: ${names.join(', ')}.` : `Đã thêm ${files.length} tài liệu.` }
+    else { const d = pre.reExtract(files[0].name); aiText = d.length ? `Đã đọc lại & đối chiếu — cập nhật ${d[0].name}.` : `Đã thêm ${files.length} tài liệu.` }
     setMessages(prev => [...prev, { id: `a-${Date.now()}`, sender: 'ai', text: aiText, timestamp: ts }])
     if (activePhase === null) handlePhaseChange(1)
   }
@@ -757,33 +1293,12 @@ export default function NotebookWorkspace() {
     setAddSourceOpen(false)
     const names = pre.rememberFromContent(text)   // AI tự ghi nhớ từ nội dung dán
     const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    setMessages(prev => [...prev, { id: `a-${Date.now()}`, sender: 'ai', text: names.length ? `Đã đọc văn bản và ghi nhớ: **${names.join(', ')}**. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã thêm văn bản làm nguồn.', timestamp: ts }])
+    setMessages(prev => [...prev, { id: `a-${Date.now()}`, sender: 'ai', text: names.length ? `Đã đọc văn bản và ghi nhớ: ${names.join(', ')}. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã thêm văn bản làm nguồn.', timestamp: ts }])
     if (activePhase === null) handlePhaseChange(1)
   }
   const addSourceFromNote = (title: string) => {
     setSources(prev => [...prev, { id: `note-${Date.now()}`, title: title.slice(0, 40) + ' (ghi chú)', type: 'Ghi chú', size: '—', selected: true }])
   }
-
-  const addNote = () => {
-    if (!noteInput.trim()) return
-    const newNote: StickyNote = {
-      id: `note-${Date.now()}`,
-      content: noteInput,
-      color: 'bg-amber-50 border-amber-250 text-amber-800',
-    }
-    setNotes([...notes, newNote])
-    addLog(`Đã thêm ghi chú mới: "${noteInput.slice(0, 30)}${noteInput.length > 30 ? '...' : ''}"`, 8)
-    setNoteInput('')
-  }
-
-  const deleteNote = (noteId: string) => {
-    const note = notes.find((n) => n.id === noteId)
-    setNotes(notes.filter((n) => n.id !== noteId))
-    if (note) {
-      addLog(`Đã xóa ghi chú: "${note.content.slice(0, 30)}${note.content.length > 30 ? '...' : ''}"`, 8)
-    }
-  }
-
 
   return (
     <div className="h-screen w-screen flex flex-col bg-gradient-mesh overflow-hidden text-slate-800 font-sans page-enter-right">
@@ -814,6 +1329,16 @@ export default function NotebookWorkspace() {
 
         {/* Global Toolbar */}
         <div className="flex items-center gap-3.5">
+          <Link 
+            to={`/workspace/${id}/library`}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-extrabold shadow-md shadow-brand-500/15 transition cursor-pointer"
+          >
+            <FolderOpen className="w-4 h-4" />
+            <span>Thư viện dự án</span>
+          </Link>
+
+          <div className="h-5 w-px bg-slate-250" />
+
           {/* Active User Switcher */}
           <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-xl p-1 text-xs">
             <span className="text-[10px] font-bold text-slate-550 uppercase tracking-wider px-1.5 select-none">
@@ -1078,82 +1603,6 @@ export default function NotebookWorkspace() {
                 </div>
               )}
             </div>
-
-            {/* Progress Stepper Timeline */}
-            {isPreSales ? null : (
-              /* ===== Stepper tuyến tính sau nhận đơn (7→13) ===== */
-              <div className="border-t border-slate-100 pt-3.5 flex items-center justify-between w-full max-w-5xl mx-auto px-4 select-none">
-                {stepperSteps.map((step, idx) => {
-                  const StepIcon = step.icon;
-                  const isCompleted = step.order < activeStepIndex;
-                  const isActive = step.order === activeStepIndex;
-                  const isFuture = step.order > activeStepIndex || activeStepIndex === 0;
-
-                  return (
-                    <div key={step.order} className="flex items-center flex-1 last:flex-none">
-                      {/* Step node */}
-                      <div
-                        onClick={() => {
-                          const targetPhase = step.phases[0];
-                          handlePhaseChange(targetPhase);
-                        }}
-                        className="flex flex-col items-center gap-1.5 cursor-pointer group relative"
-                      >
-                        <div className="relative">
-                          {isCompleted && (
-                            <div className="w-8 h-8 rounded-full bg-brand-500 border border-brand-500 flex items-center justify-center text-white shadow-sm transition-all duration-300 group-hover:scale-110">
-                              <Check className="w-4 h-4 stroke-[3]" />
-                            </div>
-                          )}
-
-                          {isActive && (
-                            <div className="relative flex items-center justify-center">
-                              {/* Outer pulsating ring */}
-                              <div className="absolute -inset-1 rounded-full bg-brand-500/25 animate-pulse" />
-                              <div className="relative w-8 h-8 rounded-full bg-white border-2 border-brand-500 flex items-center justify-center text-brand-600 shadow-md transition-all duration-300 group-hover:scale-105">
-                                <StepIcon className="w-4 h-4 text-brand-500 animate-pulse" />
-                              </div>
-                            </div>
-                          )}
-
-                          {isFuture && (
-                            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 transition-all duration-300 group-hover:border-slate-350 group-hover:bg-slate-50">
-                              <StepIcon className="w-4 h-4 text-slate-400/80" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Label text */}
-                        <span
-                          className={`text-[10.5px] font-bold transition-all duration-200 whitespace-nowrap ${
-                            isActive
-                              ? 'text-brand-600 font-extrabold text-shadow-sm'
-                              : isCompleted
-                              ? 'text-slate-800'
-                              : 'text-slate-450 font-medium group-hover:text-slate-600'
-                          }`}
-                        >
-                          {step.label}
-                        </span>
-                      </div>
-
-                      {/* Connection line */}
-                      {idx < stepperSteps.length - 1 && (
-                        <div className="flex-1 mx-4 h-[2px] relative -top-3.5">
-                          <div
-                            className={`absolute inset-0 rounded-full transition-all duration-500 ${
-                              step.order < activeStepIndex
-                                ? 'bg-brand-500 shadow-sm'
-                                : 'bg-slate-200'
-                            }`}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
           {/* Dynamic Component Canvas Rendering */}
@@ -1199,149 +1648,217 @@ export default function NotebookWorkspace() {
                 />
               )}
 
+              {activeRightTab === 'materials' && (
+                <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
+                  <SmartMaterialsTable
+                    projectId={id || 'default'}
+                    currentUser={activeUser}
+                    materialsVersion={materialsVersion}
+                    onAddLog={(action) => addLog(action, 9)}
+                    onMaterialsChange={(_totalPrice) => {
+                      handleProgress9(100)
+                    }}
+                    onUpdateChat={(systemMsg, aiMsg) => {
+                      const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      setMessages(prev => [
+                        ...prev,
+                        { id: `u-${Date.now()}`, sender: 'user', text: systemMsg, timestamp: ts },
+                        { id: `a-${Date.now() + 1}`, sender: 'ai', text: aiMsg, timestamp: ts }
+                      ])
+                      setMaterialsVersion(prev => prev + 1)
+                    }}
+                  />
+                </div>
+              )}
+
+              {activeRightTab === 'design_code' && (
+                <div className="max-w-6xl mx-auto space-y-5 animate-in fade-in duration-300">
+                  {/* Premium Segmented Tab Switcher */}
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-3xs select-none">
+                      <button
+                        onClick={() => setDesignSubTab('cad')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          designSubTab === 'cad'
+                            ? 'bg-brand-500 text-white shadow-xs'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        📐 Bản vẽ sơ đồ mạch CAD
+                      </button>
+                      <button
+                        onClick={() => setDesignSubTab('code')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          designSubTab === 'code'
+                            ? 'bg-brand-500 text-white shadow-xs'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        💻 Mã ST & Sơ đồ khối PLC
+                      </button>
+                    </div>
+
+                    <div className="text-[10px] text-slate-400 font-mono italic">
+                      Giao diện phân tab rộng rãi
+                    </div>
+                  </div>
+
+                  {/* File Downloads Bar */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wide">
+                        Tệp kết quả thiết kế tự động
+                      </h4>
+                      <p className="text-[10px] text-slate-450 mt-0.5">
+                        Sinh bởi AI dựa trên quy chuẩn kỹ thuật (Liên khóa an toàn KA1, Khởi tạo Servo)
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {designSubTab === 'cad' ? (
+                        <button
+                          onClick={() => {
+                            alert('[MOCK DOWNLOAD] Đang tải bản vẽ CAD: Electrical_Layout_v2.0.dwg (1.4 MB)');
+                            handleProgress10(100)
+                            addLog('Đã tải xuống bản vẽ CAD: Electrical_Layout_v2.0.dwg', 10)
+                          }}
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
+                        >
+                          <FolderOpen className="w-3.5 h-3.5" />
+                          <span>Tải Bản vẽ CAD (.dwg)</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            alert('[MOCK DOWNLOAD] Đang tải mã lệnh: PLC_Ladder_Q03UDE.l5k (89 KB)');
+                            handleProgress10(100)
+                            addLog('Đã tải xuống mã lệnh PLC: PLC_Ladder_Q03UDE.l5k', 10)
+                          }}
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
+                        >
+                          <Cpu className="w-3.5 h-3.5" />
+                          <span>Tải Mã PLC (.l5k)</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CAD and ST Code full width tabs */}
+                  <div className="w-full">
+                    {designSubTab === 'cad' ? (
+                      /* CAD Viewer (Full-Width) */
+                      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel flex flex-col w-full animate-in fade-in duration-300">
+                        <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Bản vẽ sơ đồ đấu dây lực</span>
+                          <span className="text-[9px] bg-slate-200 text-slate-650 px-2 py-0.5 rounded font-bold font-mono">AutoCAD DWG Viewer</span>
+                        </div>
+                        <div className="p-4 flex-1 min-h-[460px]">
+                          <CadViewer 
+                            locale={locale} 
+                            currentUser={activeUser}
+                            onProgressChange={(prog) => handleProgress10(Math.max(50, prog))}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      /* Flowchart & ST Code Editor (Full-Width) */
+                      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel flex flex-col w-full animate-in fade-in duration-300">
+                        <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Mã Structured Text (PLC ST) & Sơ đồ khối</span>
+                          <span className="text-[9px] bg-brand-500/10 text-brand-700 border border-brand-500/20 px-2 py-0.5 rounded font-bold font-mono">AI Grounding active</span>
+                        </div>
+                        <div className="p-4 flex-1 min-h-[460px]">
+                          <FlowchartEditor 
+                            locale={locale} 
+                            onProgressChange={(prog) => handleProgress10(Math.max(50, prog))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeRightTab === 'debug_code' && (
+                <div className="max-w-6xl mx-auto animate-in fade-in duration-300">
+                  <DebugCodeStep
+                    projectId={id || 'default'}
+                    onProgressChange={handleProgress12}
+                    onAddLog={(action) => addLog(action, 12)}
+                  />
+                </div>
+              )}
+
               {activeRightTab === 'doc' && (
                 <div className="max-w-4xl mx-auto animate-in fade-in duration-300">
                   <DocumentGenerator 
-                    onProgressChange={handleProgress13}
-                  />
-                </div>
-              )}
-
-              {activeRightTab === 'cad' && (
-                <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel animate-in fade-in duration-300">
-                  <CadViewer 
-                    locale={locale} 
-                    currentUser={activeUser}
-                    onProgressChange={handleProgress12}
-                  />
-                </div>
-              )}
-
-              {activeRightTab === 'gen' && (
-                <div className="max-w-5xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel animate-in fade-in duration-300">
-                  <FlowchartEditor 
-                    locale={locale} 
-                    onProgressChange={handleProgress10}
-                  />
-                </div>
-              )}
-
-              {activeRightTab === 'audit' && (
-                <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel animate-in fade-in duration-300">
-                  <LadderAuditor 
-                    locale={locale} 
                     onProgressChange={handleProgress11}
                   />
                 </div>
               )}
 
               {activeRightTab === 'notes' && (
-                <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-5 shadow-panel animate-in fade-in duration-300 flex flex-col min-h-[450px] justify-between text-slate-800">
-                  <div className="space-y-4 flex-1">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-400 font-mono uppercase tracking-wider">
-                          Biên bản cuộc họp & Ghi chú (Saved Notes)
-                        </h4>
-                        <p className="text-[10px] text-slate-500">Giao việc và đính kèm ghi chú bàn giao cho các bên</p>
+                <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel flex flex-col min-h-[500px] animate-in fade-in duration-300">
+                  {/* File Header Bar */}
+                  <div className="bg-slate-50 border-b border-slate-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-600 shrink-0">
+                        <FileText className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] text-slate-500 font-mono font-bold">{notes.length} notes</span>
-                    </div>
-
-                    {/* Grid of cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                      {notes.map((note) => (
-                        <div
-                          key={note.id}
-                          className={`p-3.5 rounded-2xl border ${note.color} shadow-panel flex flex-col justify-between gap-4 relative group hover:-translate-y-0.5 duration-200 transition-all`}
-                        >
-                          <p className="text-xs text-slate-755 leading-relaxed font-sans select-text">
-                            {note.content}
-                          </p>
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-200/50">
-                            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500">
-                              <span className="w-4 h-4 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-extrabold text-slate-650">
-                                {note.color.includes('emerald') ? 'L' : 'K'}
-                              </span>
-                              <span>{note.color.includes('emerald') ? 'Linh' : 'Kanai'}</span>
-                            </span>
-                            <button
-                              onClick={() => deleteNote(note.id)}
-                              className="text-[10px] font-bold text-rose-600 opacity-0 group-hover:opacity-100 hover:text-rose-700 transition cursor-pointer"
-                            >
-                              Xóa ghi chú
-                            </button>
-                          </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                            Biên bản cuộc họp & Ghi chú bàn giao
+                          </h4>
+                          <span className="text-[10px] font-mono font-bold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
+                            bien_ban_kickoff_ban_giao.txt
+                          </span>
                         </div>
-                      ))}
+                        <p className="text-[10px] text-slate-450 mt-0.5">
+                          Pha 8: Ghi lại thông tin thống nhất giữa Sales, Kỹ sư và Khách hàng
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="pt-4 border-t border-slate-200 mt-5 space-y-2">
-                    <textarea
-                      rows={2}
-                      value={noteInput}
-                      onChange={(e) => setNoteInput(e.target.value)}
-                      placeholder="Nhập nội dung biên bản ghi chú mới..."
-                      className="w-full p-2.5 text-xs border border-slate-250 rounded-xl outline-none focus:ring-1 focus:ring-brand-500 bg-white text-slate-800"
-                    />
                     <button
-                      onClick={addNote}
-                      disabled={!noteInput.trim()}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold bg-brand-500 hover:bg-brand-600 text-white rounded-xl shadow-xs transition disabled:opacity-50 cursor-pointer"
+                      onClick={downloadKickoffText}
+                      disabled={isDownloadingKickoff}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 border border-slate-250 rounded-xl text-xs font-bold transition cursor-pointer"
+                      title="Tải biên bản cuộc họp về máy"
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Lưu ghi chú</span>
+                      {isDownloadingKickoff ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isDownloadingKickoff ? 'Đang tải...' : 'Tải File Text'}</span>
                     </button>
                   </div>
-                </div>
-              )}
 
-              {activeRightTab === 'translate' && (
-                <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-5 shadow-panel space-y-4 animate-in fade-in duration-300 text-slate-800">
-                  <div className="border-b border-slate-200 pb-3">
-                    <h4 className="text-xs font-bold text-slate-850 uppercase tracking-wider">Dịch thuật chú thích chương trình sang tiếng Việt</h4>
-                    <p className="text-[10px] text-slate-450">Pha 9: Thiết kế - dịch chú thích tiếng Nhật trong chương trình điều khiển</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-550 uppercase">Chú thích tiếng Nhật gốc (Original Japanese Comment)</label>
-                      <textarea
-                        rows={6}
-                        value={jpText}
-                        onChange={(e) => setJpText(e.target.value)}
-                        className="w-full p-2.5 text-xs border border-slate-250 focus:border-brand-500 rounded-xl outline-none bg-white text-slate-800"
-                        placeholder="Nhập chú thích tiếng Nhật cần dịch..."
-                      />
-                    </div>
-                    
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-550 uppercase">Bản dịch Tiếng Việt (Vietnamese Translation Output)</label>
-                      <textarea
-                        rows={6}
-                        value={viText}
-                        onChange={(e) => setViText(e.target.value)}
-                        className="w-full p-2.5 text-xs border border-slate-250 focus:border-brand-500 rounded-xl outline-none bg-white text-slate-800"
-                        placeholder="Bản dịch tiếng Việt..."
-                      />
+                  {/* Editor Content Area (Read-Only) */}
+                  <div className="flex-1 p-5 overflow-y-auto max-h-[500px] bg-slate-50/25 select-text">
+                    <div className="bg-white border border-slate-150 rounded-2xl p-5 shadow-sm space-y-4 font-sans text-xs text-slate-755 leading-relaxed whitespace-pre-line font-mono select-all">
+                      {kickoffText}
                     </div>
                   </div>
 
-                  <div className="flex justify-center pt-2">
-                    <button
-                      onClick={() => {
-                        if (jpText.trim() === '自動運転シーケンス初期化完了。サーボアンプ電源投入を確認のこと。') {
-                          setViText('Khởi tạo chuỗi tự động vận hành hoàn tất. Hãy xác nhận nguồn điện động lực cho Servo Drive.')
-                        } else if (!viText.trim()) {
-                          setViText('Bản dịch: ' + jpText)
-                        }
-                        setProgressData(prev => ({ ...prev, 9: 100 }))
-                      }}
-                      className="px-4 py-2 text-xs font-semibold bg-brand-500 hover:bg-brand-600 text-white rounded-xl shadow-xs transition cursor-pointer"
-                    >
-                      Dịch sang Tiếng Việt →
-                    </button>
+                  {/* Bottom Editor Status Bar */}
+                  <div className="bg-slate-50 border-t border-slate-200 px-4 py-2 flex items-center justify-between text-[10px] text-slate-500 font-mono shrink-0">
+                    <div className="flex gap-4">
+                      <span>Kích thước: <strong>{(new Blob([kickoffText]).size / 1024).toFixed(2)} KB</strong></span>
+                      <span>Dòng: <strong>{kickoffText ? kickoffText.split('\n').length : 0}</strong></span>
+                      <span>Từ: <strong>{kickoffText ? kickoffText.split(/\s+/).filter(Boolean).length : 0}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1 text-slate-450">
+                      <span>Định dạng: <strong>Plain Text / MD</strong></span>
+                      <span className="mx-1">•</span>
+                      <span>Mã hóa: <strong>UTF-8</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Guide Banner */}
+                  <div className="p-3.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 leading-relaxed font-sans">
+                    <strong>💡 Hướng dẫn chỉnh sửa:</strong> Biên bản cuộc họp này ở chế độ Chỉ đọc. Để cập nhật nhiệm vụ, tiến độ hoặc bổ sung ghi chú bàn giao mới, vui lòng gửi yêu cầu cho AI ở khung chat bên phải (Ví dụ: <em>"Cập nhật biên bản kick-off: thêm ghi chú kiểm tra lại chống nhiễu cảm biến"</em>). AI sẽ tự động xử lý và cập nhật nội dung tệp tin phía bên trái.
                   </div>
                 </div>
               )}

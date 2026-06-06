@@ -29,15 +29,15 @@ Ngày biên soạn: 04/06/2026
 
 ## 1. GIAO DIỆN MÀN HÌNH CHÍNH (MAIN SCREEN)
 Màn hình chính cho phép giám sát trực quan trạng thái hoạt động thực tế của toàn bộ dây chuyền:
-*   **Trạng thái hệ thống:** Hiển thị Đèn báo AUTO (Xanh lá - hệ thống chạy tự động) và Đèn MANUAL (Vàng - hệ thống chạy bằng tay).
-*   **Giám sát lực kẹp:** Cung cấp thông số đo lực từ cảm biến kẹp phôi dạng đồ thị thời gian thực.
-*   **Điều khiển Servo:** Cài đặt tốc độ hoạt động cho 04 trục Servo từ 0 - 3000 vòng/phút.
+*   Trạng thái hệ thống: Hiển thị Đèn báo AUTO (Xanh lá - hệ thống chạy tự động) và Đèn MANUAL (Vàng - hệ thống chạy bằng tay).
+*   Giám sát lực kẹp: Cung cấp thông số đo lực từ cảm biến kẹp phôi dạng đồ thị thời gian thực.
+*   Điều khiển Servo: Cài đặt tốc độ hoạt động cho 04 trục Servo từ 0 - 3000 vòng/phút.
 
 ## 2. QUY TRÌNH VẬN HÀNH TỰ ĐỘNG (AUTOMATIC SEQUENCE)
 1.  Bật nguồn điện động lực tủ điện điều khiển chính.
-2.  Xác nhận đèn báo **EMERGENCY STOP** ở trạng thái không nhấp nháy.
-3.  Nhấn nút **Auto Start (PB2)** trên màn hình HMI để kích hoạt trình tự gắp phôi và quét laser.
-4.  Để dừng quy trình tự động, nhấn nút **Auto Stop** hoặc nút cơ khẩn cấp (EMS).
+2.  Xác nhận đèn báo EMERGENCY STOP ở trạng thái không nhấp nháy.
+3.  Nhấn nút Auto Start (PB2) trên màn hình HMI để kích hoạt trình tự gắp phôi và quét laser.
+4.  Để dừng quy trình tự động, nhấn nút Auto Stop hoặc nút cơ khẩn cấp (EMS).
 
 ## 3. THÔNG TIN MÀN HÌNH ĐÃ GHI NHẬN
 > *Mô tả nguồn:* ${tpScreenInfo}`
@@ -50,14 +50,14 @@ Mã biên bản: BB-TEST-WW2-2026
 
 ## 1. KẾT QUẢ KIỂM TRA ĐO QUÉT 3D VÀ PHÂN LOẠI
 Dựa trên báo cáo kiểm thử thực tế trên 50 sản phẩm mẫu được đưa vào robot hàn:
-*   **Số lượng phôi đã quét:** 50 phôi mẫu.
-*   **Kết quả phân loại thành công (OK):** 48 sản phẩm được vận chuyển ra băng tải chính.
-*   **Kết quả phôi lỗi (NG):** 02 sản phẩm bị từ chối và đẩy vào khay phế phẩm tự động.
-*   **Hiệu năng đo kiểm:** Tốc độ đo quét cảm biến 3D đạt 1.2 giây/sản phẩm (Đạt yêu cầu specs đề ra < 1.5 giây).
+*   Số lượng phôi đã quét: 50 phôi mẫu.
+*   Kết quả phân loại thành công (OK): 48 sản phẩm được vận chuyển ra băng tải chính.
+*   Kết quả phôi lỗi (NG): 02 sản phẩm bị từ chối và đẩy vào khay phế phẩm tự động.
+*   Hiệu năng đo kiểm: Tốc độ đo quét cảm biến 3D đạt 1.2 giây/sản phẩm (Đạt yêu cầu specs đề ra < 1.5 giây).
 
 ## 2. XÁC NHẬN AN TOÀN LIÊN KHÓA
-*   **Kiểm tra nút nhấn Khẩn cấp (EMS):** [ĐẠT] Van an toàn KA1 ngắt nguồn động lực ngay lập tức.
-*   **Vòng phản khóa liên kết đầu vào X20:** [ĐẠT] Đã kiểm chứng tiếp điểm phụ NC của KA1 liên kết đúng quy định an toàn ISO 13849.
+*   Kiểm tra nút nhấn Khẩn cấp (EMS): [ĐẠT] Van an toàn KA1 ngắt nguồn động lực ngay lập tức.
+*   Vòng phản khóa liên kết đầu vào X20: [ĐẠT] Đã kiểm chứng tiếp điểm phụ NC của KA1 liên kết đúng quy định an toàn ISO 13849.
 
 ## 3. THÔNG TIN THỰC NGHIỆM GHI NHẬN
 > *Mô tả nguồn:* ${testResult}`
