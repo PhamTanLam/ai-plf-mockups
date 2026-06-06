@@ -12,6 +12,8 @@ interface I18nContextValue {
   setLocale: (locale: Locale) => void
   /** Translate a key for the current locale (falls back to ja, then the key itself). */
   t: (key: string) => string
+  /** Like t() but interpolates {name} placeholders from vars. */
+  tf: (key: string, vars: Record<string, string | number>) => string
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null)
@@ -45,7 +47,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     [locale],
   )
 
-  const value = useMemo<I18nContextValue>(() => ({ locale, setLocale, t }), [locale, setLocale, t])
+  const tf = useCallback(
+    (key: string, vars: Record<string, string | number>) =>
+      t(key).replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? '')),
+    [t],
+  )
+
+  const value = useMemo<I18nContextValue>(() => ({ locale, setLocale, t, tf }), [locale, setLocale, t, tf])
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }

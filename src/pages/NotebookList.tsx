@@ -17,6 +17,23 @@ interface CaseItem {
   ownerInitials: string
 }
 
+// 4 case demo cố định (luôn hiển thị). Dự án người dùng tạo được lưu riêng ở localStorage.
+const DEMO_CASES: CaseItem[] = [
+  { id: 'CASE-2026-0245', title: 'WW2 溶接セル (WW2 Welding Cell)', code: 'CASE-2026-0245', status: 'status.debug', pillClass: 'pill-debug', progress: 88, sourcesCount: 5, updatedAt: '10 min ago', owner: 'LINH', ownerInitials: 'L' },
+  { id: 'CASE-2026-0312', title: 'SH1 小型旋回フレーム (SH1 Small Swing Frame)', code: 'CASE-2026-0312', status: 'status.design', pillClass: 'pill-design', progress: 38, sourcesCount: 6, updatedAt: '2 hours ago', owner: 'KANADA', ownerInitials: '金' },
+  { id: 'CASE-2026-0345', title: 'RR4 検査セル 改造 (RR4 Inspection Cell Remodel)', code: 'CASE-2026-0345', status: 'status.pre', pillClass: 'pill-pre', progress: 70, sourcesCount: 4, updatedAt: 'Yesterday', owner: 'ARIMURA', ownerInitials: '有' },
+  { id: 'CASE-2026-0288', title: 'PP4 パレタイザ (PP4 Palletizer)', code: 'CASE-2026-0288', status: 'status.onsite', pillClass: 'pill-onsite', progress: 50, sourcesCount: 3, updatedAt: '3 days ago', owner: 'NISHI', ownerInitials: '西' },
+]
+
+const USER_CASES_KEY = 'aiplf.userCases'
+function loadUserCases(): CaseItem[] {
+  try { const raw = localStorage.getItem(USER_CASES_KEY); if (raw) { const a = JSON.parse(raw); if (Array.isArray(a)) return a as CaseItem[] } } catch { /* ignore */ }
+  return []
+}
+function saveUserCases(list: CaseItem[]) {
+  try { localStorage.setItem(USER_CASES_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+}
+
 export default function NotebookList() {
   const { t, locale, setLocale } = useI18n()
   const [searchQuery, setSearchQuery] = useState('')
@@ -24,56 +41,8 @@ export default function NotebookList() {
   const [newTitle, setNewTitle] = useState('')
   const [newCode, setNewCode] = useState('CASE-2026-')
 
-  const [cases, setCases] = useState<CaseItem[]>([
-    {
-      id: 'CASE-2026-0245',
-      title: 'WW2 溶接セル (WW2 Welding Cell)',
-      code: 'CASE-2026-0245',
-      status: 'status.debug',
-      pillClass: 'pill-debug',
-      progress: 88,
-      sourcesCount: 5,
-      updatedAt: '10 min ago',
-      owner: 'LINH',
-      ownerInitials: 'L',
-    },
-    {
-      id: 'CASE-2026-0312',
-      title: 'SH1 小型旋回フレーム (SH1 Small Swing Frame)',
-      code: 'CASE-2026-0312',
-      status: 'status.design',
-      pillClass: 'pill-design',
-      progress: 38,
-      sourcesCount: 6,
-      updatedAt: '2 hours ago',
-      owner: 'KANADA',
-      ownerInitials: '金',
-    },
-    {
-      id: 'CASE-2026-0345',
-      title: 'RR4 検査セル 改造 (RR4 Inspection Cell Remodel)',
-      code: 'CASE-2026-0345',
-      status: 'status.pre',
-      pillClass: 'pill-pre',
-      progress: 70,
-      sourcesCount: 4,
-      updatedAt: 'Yesterday',
-      owner: 'ARIMURA',
-      ownerInitials: '有',
-    },
-    {
-      id: 'CASE-2026-0288',
-      title: 'PP4 パレタイザ (PP4 Palletizer)',
-      code: 'CASE-2026-0288',
-      status: 'status.onsite',
-      pillClass: 'pill-onsite',
-      progress: 50,
-      sourcesCount: 3,
-      updatedAt: '3 days ago',
-      owner: 'NISHI',
-      ownerInitials: '西',
-    },
-  ])
+  // Dự án người dùng tạo (lưu localStorage) + 4 case demo cố định
+  const [cases, setCases] = useState<CaseItem[]>(() => [...loadUserCases(), ...DEMO_CASES])
 
   const filteredCases = cases.filter(
     (c) =>
@@ -98,6 +67,7 @@ export default function NotebookList() {
       ownerInitials: 'U',
     }
 
+    saveUserCases([newCase, ...loadUserCases()])   // lưu lại để không mất khi reload
     setCases([newCase, ...cases])
     setNewTitle('')
     setNewCode('CASE-2026-')
