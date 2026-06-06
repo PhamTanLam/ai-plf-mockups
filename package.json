@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:web": "tsc -b && vite build --mode web",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:web": "vite preview --outDir dist-web",
+    "deploy:cf": "npm run build:web && npx wrangler pages deploy dist-web --project-name=ai-plf"
   },
   "dependencies": {
     "lucide-react": "^0.475.0",
