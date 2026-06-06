@@ -126,7 +126,7 @@ export default function NotebookList() {
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight text-slate-900 font-sans flex items-center gap-2">
-              PLC Design AI Platform
+              PLC Design AI Platform V2
               <span className="text-[10px] font-semibold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full">
                 IDE Edition
               </span>
