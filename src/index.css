@@ -1,0 +1,550 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+  --font-mono: 'Outfit', 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+
+  /* Brand Colors: Bright Premium Teal for Light Mode */
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-300: #5eead4;
+  --color-brand-400: #2dd4bf;
+  --color-brand-500: #0abab5; /* Primary Premium Teal */
+  --color-brand-600: #099e9a;
+  --color-brand-700: #0f766e;
+  --color-brand-800: #115e59;
+  --color-brand-900: #134e4a;
+
+  /* Light Developer Ink Palette */
+  --color-ink-900: #0f172a; /* Slate 900 text */
+  --color-ink-800: #1e293b;
+  --color-ink-700: #334155;
+  --color-ink-600: #475569;
+  --color-ink-500: #64748b;
+  --color-ink-400: #94a3b8;
+  --color-ink-300: #cbd5e1;
+  --color-ink-200: #e2e8f0;
+  --color-ink-100: #f1f5f9;
+  --color-ink-50: #f8fafc;
+
+  /* Surface and Backgrounds (Light Mode IDE) */
+  --color-surface: #ffffff; /* White panel bg */
+  --color-surface-alt: #f8fafc; /* Slate 50 workspace bg */
+  --color-surface-muted: #f1f5f9; /* Slate 100 input bg */
+  --color-background-app: #f1f5f9; /* Slate 100 app base bg */
+
+  --color-line: #e2e8f0; /* Fine border line */
+
+  --shadow-panel: 0 4px 12px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+  --shadow-card: 0 8px 16px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.03);
+  --shadow-pop: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Base Styles */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink-700);
+  background-color: var(--color-background-app);
+}
+
+/* NotebookLM-specific premium custom styles */
+.ai-grad {
+  background: linear-gradient(135deg, #0abab5 0%, #077d7a 100%);
+}
+
+.ai-grad-text {
+  background: linear-gradient(135deg, #0abab5 0%, #077d7a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-floating {
+  background-color: #0abab5;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(10, 186, 181, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-floating:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(10, 186, 181, 0.35);
+}
+
+.btn-floating:active {
+  transform: translateY(0);
+}
+
+/* Dot pattern like NotebookLM workspace background */
+.bg-notebooklm-dots {
+  background-image: radial-gradient(#cbd2dc 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd2dc;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9aa4b2;
+}
+
+/* Speech bubbles for chatbot */
+.bubble-ai::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 14px;
+  border: 6px solid transparent;
+  border-right-color: #f0fdfa; /* Teal-50 tint */
+  border-left: 0;
+}
+
+.bubble-user::before {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 14px;
+  border: 6px solid transparent;
+  border-left-color: #099e9a;
+  border-right: 0;
+}
+
+/* Citation chip style */
+.cite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #e6f7f7;
+  color: #077d7a;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  margin: 0 2px;
+  cursor: pointer;
+  border: 1px solid #b3ebea;
+  vertical-align: 2px;
+  transition: all 0.15s;
+}
+
+.cite:hover {
+  background: #099e9a;
+  color: white;
+  transform: scale(1.05);
+}
+
+.cite.active {
+  background: #099e9a;
+  color: white;
+}
+
+/* Highlight Source Animation */
+@keyframes sourceHighlight {
+  0% { background-color: rgba(10, 186, 181, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.highlight-source {
+  animation: sourceHighlight 2s ease-out;
+  border-radius: 4px;
+  border: 1px dashed #0abab5;
+  padding: 2px;
+}
+
+/* Shimmer loading skeleton */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #edf1f5 25%, #f5f7fa 50%, #edf1f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Custom switch */
+.switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: #cbd2dc;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.switch.on {
+  background: #0abab5;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.switch.on::after {
+  left: 16px;
+}
+
+/* Status pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.pill-design { background: #e6f7f7; border-color: #b3ebea; color: #077d7a; }
+.pill-kickoff { background: #e6f7f7; border-color: #b3ebea; color: #077d7a; }
+.pill-build { background: #fff8e1; border-color: #ffd54f; color: #f57f17; }
+.pill-onsite { background: #fff3e0; border-color: #ffb74d; color: #e65100; }
+.pill-debug { background: #ffebee; border-color: #ef9a9a; color: #b71c1c; }
+.pill-pre { background: #e8f5e9; border-color: #a5d6a7; color: #1b5e20; }
+.pill-done { background: #e0f7fa; border-color: #b2ebf2; color: #00838f; }
+
+/* Micro-animations and effects */
+.hover-scale {
+  transition: transform 0.2s ease;
+}
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Wave animation for audio overview */
+@keyframes waveGrow {
+  0%, 100% { height: 4px; }
+  50% { height: 28px; }
+}
+
+.wave-bar {
+  width: 3px;
+  background-color: #0abab5;
+  border-radius: 9999px;
+  transition: height 0.1s ease;
+}
+
+.wave-bar-active {
+  animation: waveGrow 1s ease-in-out infinite;
+}
+
+/* Mini CAD Grid background */
+.mini-cad {
+  background-color: #fafbfc;
+  background-image: radial-gradient(circle, #d8dde3 0.8px, transparent 0.8px);
+  background-size: 12px 12px;
+}
+
+/* Flowchart design and styles */
+.flow-canvas {
+  background-color: #fafbfc;
+  background-image: radial-gradient(circle, #d8dde3 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.flow-node {
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.flow-node:hover rect,
+.flow-node:hover circle,
+.flow-node:hover polygon {
+  stroke: #099e9a;
+  stroke-width: 2;
+}
+
+.flow-node.selected rect,
+.flow-node.selected polygon {
+  stroke: #099e9a;
+  stroke-width: 2.5;
+  fill: #e6f7f7;
+}
+
+/* Ladder audit styling in dark mode */
+/* Ladder audit styling in light mode */
+.ladder-bg {
+  background-color: #f8fafc;
+  background-image: linear-gradient(rgba(226, 232, 240, 0.8) 1.5px, transparent 1.5px);
+  background-size: 100% 60px;
+}
+
+.rung {
+  cursor: pointer;
+}
+
+.rung:hover .rung-bg {
+  fill: rgba(0, 0, 0, 0.01);
+}
+
+.rung.selected .rung-bg {
+  fill: rgba(10, 186, 181, 0.04);
+  stroke: #0abab5;
+  stroke-width: 1.5;
+}
+
+.rung.warning .rung-bg {
+  fill: rgba(245, 158, 11, 0.03);
+}
+
+.rung.error .rung-bg {
+  fill: rgba(239, 68, 68, 0.03);
+}
+
+/* Ladder drawing wires */
+.ladder-bg .wire {
+  stroke: #64748b;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.ladder-bg .rail {
+  stroke: #334155;
+  stroke-width: 2.5;
+}
+
+/* Diff viewer inline */
+.diff-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr 36px;
+  min-height: 28px;
+  border-bottom: 1px solid #f0f2f5;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.diff-row:hover {
+  background: #fafbfc;
+}
+
+.diff-row.selected {
+  background: #e6f7f7 !important;
+}
+
+.diff-row.low-conf {
+  background: #fffbeb;
+}
+
+.diff-row.low-conf.selected {
+  background: #fff3c4 !important;
+}
+
+.cell {
+  padding: 4px 10px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.cell.orig {
+  border-right: 1px solid #f0f2f5;
+  color: #1a2233;
+}
+
+.ln {
+  color: #9aa4b2;
+  text-align: right;
+  padding: 4px 8px;
+  border-right: 1px solid #f0f2f5;
+  background: #fafbfc;
+}
+
+/* Premium Glassmorphism and Backdrop Blurs */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.glass-panel-dark {
+  background: rgba(248, 250, 252, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* Beautiful Animated Gradients & Glowing Borders */
+.gradient-primary {
+  background: linear-gradient(135deg, #00f5d4 0%, #0db8a6 50%, #0f766e 100%);
+}
+
+.gradient-warm {
+  background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+}
+
+.gradient-cyber {
+  background: linear-gradient(135deg, #0abab5 0%, #8b5cf6 100%);
+}
+
+.glow-brand {
+  box-shadow: 0 0 15px rgba(10, 186, 181, 0.25);
+}
+
+.glow-brand-hover:hover {
+  box-shadow: 0 0 25px rgba(10, 186, 181, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Dynamic Text Shimmer Effect */
+@keyframes textShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.text-gradient-shimmer {
+  background: linear-gradient(90deg, #0abab5, #a855f7, #f97316, #0abab5);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: textShimmer 8s ease infinite;
+}
+
+/* Slide and Fade transitions for Page Tabs */
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Premium Hover Transitions */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 12px 25px -8px rgba(10, 186, 181, 0.15);
+}
+
+.hover-glow {
+  transition: all 0.25s ease;
+}
+
+.hover-glow:hover {
+  filter: drop-shadow(0 0 8px rgba(10, 186, 181, 0.45));
+}
+
+/* Slow rotate for background decorations */
+@keyframes rotateSlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-rotate-slow {
+  animation: rotateSlow 20s linear infinite;
+}
+
+/* Background animated gradient mesh */
+.bg-gradient-mesh {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.08) 0, transparent 40%),
+    radial-gradient(at 50% 0%, rgba(168, 85, 247, 0.04) 0, transparent 40%),
+    radial-gradient(at 100% 0%, rgba(13, 148, 136, 0.06) 0, transparent 40%);
+}
+
+/* Page Route transitions */
+.page-enter-right {
+  animation: pageEnterRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pageEnterRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.page-enter-fade {
+  animation: pageEnterFade 0.35s ease-out forwards;
+}
+
+@keyframes pageEnterFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* MarkdownLite (view chi tiết đầu ra / bảng trong chat) */
+.ml-body .ml-h { font-weight: 800; color: #0f172a; margin: 12px 0 6px; }
+.ml-body h1.ml-h { font-size: 18px; }
+.ml-body h2.ml-h { font-size: 15px; }
+.ml-body h3.ml-h, .ml-body h4.ml-h { font-size: 13px; }
+.ml-body ul, .ml-body ol { margin: 6px 0 6px 18px; padding: 0; }
+.ml-body li { margin: 3px 0; }
+.ml-body strong { color: #0f172a; font-weight: 700; }
+.ml-body code { background: #f1f5f9; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+.ml-body blockquote, .ml-body em { color: #64748b; }
+.ml-table { overflow-x: auto; margin: 9px 0; }
+.ml-table table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.ml-table th, .ml-table td { border: 1px solid #e2e8f0; padding: 6px 9px; vertical-align: top; text-align: left; }
+.ml-table th { background: #f8fafc; font-weight: 600; color: #334155; }
+.ml-table td { color: #475569; }
