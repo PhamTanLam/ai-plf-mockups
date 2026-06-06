@@ -3,12 +3,11 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
-  pull_request:
   workflow_dispatch: {}
 
-# Một deploy mỗi nhánh tại một thời điểm; huỷ run cũ khi có commit mới
+# Huỷ run cũ khi có commit mới push liên tiếp lên main
 concurrency:
-  group: pages-${{ github.ref }}
+  group: pages-main
   cancel-in-progress: true
 
 jobs:
@@ -36,5 +35,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # push main → branch "main" = production; PR/nhánh khác → preview URL riêng
-          command: pages deploy dist-web --project-name=ai-plf --branch=${{ github.head_ref || github.ref_name }}
+          # luôn deploy production (làm việc trực tiếp trên main)
+          command: pages deploy dist-web --project-name=ai-plf --branch=main

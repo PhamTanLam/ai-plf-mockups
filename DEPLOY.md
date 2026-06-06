@@ -14,9 +14,10 @@ App là SPA tĩnh, dùng **HashRouter** → không cần cấu hình rewrite, ch
 ## CI/CD — GitHub Actions (đang dùng)
 
 Workflow: [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
-- **push `main`** → deploy **production** (`https://ai-plf.pages.dev`).
-- **pull request / nhánh khác** → deploy **preview** (URL riêng theo nhánh, comment vào PR).
+- **push `main`** → tự build & deploy **production** (`https://ai-plf.pages.dev`).
 - chạy tay: tab **Actions** → *Deploy to Cloudflare Pages* → **Run workflow**.
+
+> Demo nên làm việc trực tiếp trên `main`, không dùng PR/preview.
 
 ### Thiết lập 1 lần
 
