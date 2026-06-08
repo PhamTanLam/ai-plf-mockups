@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, FolderOpen, FileText, Download, 
-  Upload, GitCompare, History, Globe2, FileCode, Layers 
+  Upload, GitCompare, History, Globe2, FileCode, Layers
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
+import { LOCALES, LANG_META } from '@/i18n/types'
 
 interface SavedVersion {
   version: string
@@ -28,7 +29,7 @@ interface ProjectFile {
 
 export default function NotebookArchive() {
   const { id } = useParams<{ id: string }>()
-  const { locale, setLocale } = useI18n()
+  const { t, tf, locale, setLocale } = useI18n()
   const [versions, setVersions] = useState<SavedVersion[]>([])
   const [selectedVerA, setSelectedVerA] = useState<string>('')
   const [selectedVerB, setSelectedVerB] = useState<string>('')
@@ -204,7 +205,7 @@ export default function NotebookArchive() {
       setFiles([...files, newFile])
       setUploadName('')
       setIsUploading(false)
-      alert(`Đã nạp tài liệu nguồn thành công: ${newFile.name}`)
+      alert(tf('post.arch.uploadAlert', { name: newFile.name }))
     }, 1000)
   }
 
@@ -217,29 +218,29 @@ export default function NotebookArchive() {
           <Link
             to={`/workspace/${id}`}
             className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition"
-            title="Quay lại không gian làm việc"
+            title={t('post.arch.backToWorkspace')}
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="h-5 w-px bg-slate-200" />
           <div>
             <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              Thư viện & Lịch sử
+              {t('post.arch.pageTitle')}
               <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-brand-500/10 text-brand-700 border border-brand-500/20 uppercase">
-                Thư viện · Library
+                {t('post.arch.libraryBadge')}
               </span>
             </h2>
-            <p className="text-[10px] text-slate-450 font-mono">Dự án: {id || 'CASE-2026-0245'}</p>
+            <p className="text-[10px] text-slate-450 font-mono">{t('post.arch.projectLabel')} {id || 'CASE-2026-0245'}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setLocale(locale === 'vi' ? 'en' : 'vi')}
+            onClick={() => { const i = LOCALES.indexOf(locale); setLocale(LOCALES[(i + 1) % LOCALES.length]) }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 hover:bg-brand-500/5 rounded-xl border border-slate-250 transition cursor-pointer"
           >
             <Globe2 className="w-3.5 h-3.5" />
-            <span>{locale === 'vi' ? 'Tiếng Việt' : 'English'}</span>
+            <span>{LANG_META[locale].label}</span>
           </button>
           <div className="w-9 h-9 rounded-full bg-slate-100 text-brand-700 font-mono font-bold text-sm flex items-center justify-center border border-slate-200">
             A
@@ -257,16 +258,16 @@ export default function NotebookArchive() {
               <History className="w-5 h-5 text-brand-500" />
               <div>
                 <h3 className="text-sm font-extrabold text-slate-900">
-                  Lịch sử lưu trữ & So sánh phiên bản
+                  {t('post.arch.histTitle')}
                 </h3>
                 <p className="text-[10px] text-slate-450">
-                  Đối chiếu chênh lệch số lượng & đơn giá thiết bị giữa các lần thương lượng
+                  {t('post.arch.histSubtitle')}
                 </p>
               </div>
             </div>
             
             <div className="text-xs bg-slate-100 px-3 py-1 rounded-full font-bold text-slate-500 font-mono">
-              Tổng số bản lưu: {versions.length}
+              {t('post.arch.totalSaves')} {versions.length}
             </div>
           </div>
 
@@ -275,7 +276,7 @@ export default function NotebookArchive() {
             <div className="flex items-center gap-3">
               <GitCompare className="w-4 h-4 text-brand-500 shrink-0" />
               <div className="flex items-center gap-2 text-xs">
-                <span className="font-bold text-slate-500">So sánh bản gốc:</span>
+                <span className="font-bold text-slate-500">{t('post.arch.compareOriginal')}</span>
                 <select
                   value={selectedVerA}
                   onChange={(e) => setSelectedVerA(e.target.value)}
@@ -286,7 +287,7 @@ export default function NotebookArchive() {
                   ))}
                 </select>
 
-                <span className="font-bold text-slate-400">với bản sửa:</span>
+                <span className="font-bold text-slate-400">{t('post.arch.withRevision')}</span>
                 
                 <select
                   value={selectedVerB}
@@ -302,7 +303,7 @@ export default function NotebookArchive() {
 
             {verAObj && verBObj && (
               <div className="text-right text-xs font-mono">
-                <span className="text-slate-500 font-bold">Chênh lệch ngân sách: </span>
+                <span className="text-slate-500 font-bold">{t('post.arch.budgetDiff')} </span>
                 <strong className={`font-black text-sm px-2 py-0.5 rounded ${
                   verBObj.total - verAObj.total > 0 
                     ? 'bg-rose-50 text-rose-600 border border-rose-200' 
@@ -323,15 +324,15 @@ export default function NotebookArchive() {
               <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-3 text-xs leading-relaxed">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="px-2 py-0.5 bg-slate-200/80 text-slate-700 font-black rounded font-mono text-[10px]">
-                    BẢN GỐC A ({verAObj.version})
+                    {tf('post.arch.origA', { v: verAObj.version })}
                   </span>
                   <span className="text-[10px] text-slate-450 font-bold font-mono">{verAObj.timestamp}</span>
                 </div>
                 <div className="font-semibold text-slate-600">
-                  Người sửa: <strong className="text-slate-800">{verAObj.editedBy}</strong>
+                  {t('post.arch.editedByLabel')} <strong className="text-slate-800">{verAObj.editedBy}</strong>
                 </div>
                 <div className="text-slate-500 truncate mt-0.5" title={verAObj.changeDescription}>
-                  Mô tả: {verAObj.changeDescription}
+                  {t('post.arch.descLabel')} {verAObj.changeDescription}
                 </div>
               </div>
             )}
@@ -340,15 +341,15 @@ export default function NotebookArchive() {
               <div className="bg-brand-50/20 border border-brand-200/50 rounded-2xl p-3 text-xs leading-relaxed">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="px-2 py-0.5 bg-brand-500 text-white font-black rounded font-mono text-[10px] shadow-3xs">
-                    BẢN SỬA B ({verBObj.version})
+                    {tf('post.arch.origB', { v: verBObj.version })}
                   </span>
                   <span className="text-[10px] text-brand-600 font-bold font-mono">{verBObj.timestamp}</span>
                 </div>
                 <div className="font-semibold text-brand-700">
-                  Người sửa: <strong className="text-brand-900">{verBObj.editedBy}</strong>
+                  {t('post.arch.editedByLabel')} <strong className="text-brand-900">{verBObj.editedBy}</strong>
                 </div>
                 <div className="text-slate-600 truncate mt-0.5" title={verBObj.changeDescription}>
-                  Mô tả: {verBObj.changeDescription}
+                  {t('post.arch.descLabel')} {verBObj.changeDescription}
                 </div>
               </div>
             )}
@@ -359,13 +360,13 @@ export default function NotebookArchive() {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-[9px] text-slate-500 font-bold uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm">
-                  <th className="py-2.5 px-3">Tên thiết bị</th>
-                  <th className="py-2.5 px-3 text-center">{selectedVerA || 'Bản A'} (Qty)</th>
-                  <th className="py-2.5 px-3 text-center">{selectedVerB || 'Bản B'} (Qty)</th>
-                  <th className="py-2.5 px-3 text-right">Đơn giá</th>
-                  <th className="py-2.5 px-3 text-right">Thành tiền A</th>
-                  <th className="py-2.5 px-3 text-right">Thành tiền B</th>
-                  <th className="py-2.5 px-3 text-right">Biến động</th>
+                  <th className="py-2.5 px-3">{t('post.arch.colName')}</th>
+                  <th className="py-2.5 px-3 text-center">{selectedVerA || t('post.arch.verA')} (Qty)</th>
+                  <th className="py-2.5 px-3 text-center">{selectedVerB || t('post.arch.verB')} (Qty)</th>
+                  <th className="py-2.5 px-3 text-right">{t('post.arch.colUnitPrice')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('post.arch.colCostA')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('post.arch.colCostB')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('post.arch.colChange')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -420,10 +421,10 @@ export default function NotebookArchive() {
               <FolderOpen className="w-5 h-5 text-indigo-500" />
               <div>
                 <h3 className="text-sm font-extrabold text-slate-900">
-                  Thư viện file tài liệu dự án
+                  {t('post.arch.fileLibTitle')}
                 </h3>
                 <p className="text-[10px] text-slate-450">
-                  Lưu trữ tập trung tài liệu đầu vào (của KH) và file đầu ra sinh bởi AI
+                  {t('post.arch.fileLibSubtitle')}
                 </p>
               </div>
             </div>
@@ -431,13 +432,13 @@ export default function NotebookArchive() {
 
           {/* Quick upload file simulation */}
           <form onSubmit={handleUploadFile} className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-2xl shrink-0 space-y-2 text-xs">
-            <div className="font-bold text-slate-700 uppercase tracking-wide">Nạp tài liệu kỹ thuật mới (Simulate Input)</div>
+            <div className="font-bold text-slate-700 uppercase tracking-wide">{t('post.arch.uploadTitle')}</div>
             
             <div className="flex gap-2">
               <input
                 type="text"
                 required
-                placeholder="Ví dụ: Specs_Dong_Co_Trục_A5.pdf"
+                placeholder={t('post.arch.uploadPlaceholder')}
                 value={uploadName}
                 onChange={e => setUploadName(e.target.value)}
                 className="flex-1 px-2.5 py-1.5 bg-white border border-slate-250 rounded-lg text-slate-800 focus:outline-none focus:border-brand-500"
@@ -447,8 +448,8 @@ export default function NotebookArchive() {
                 onChange={e => setUploadType(e.target.value)}
                 className="bg-white border border-slate-250 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-500 font-bold"
               >
-                <option value="input">Tài liệu Khách hàng</option>
-                <option value="output">File thiết kế (Output)</option>
+                <option value="input">{t('post.arch.docCustomer')}</option>
+                <option value="output">{t('post.arch.docDesign')}</option>
               </select>
             </div>
 
@@ -459,7 +460,7 @@ export default function NotebookArchive() {
                 className="flex items-center gap-1 px-4 py-1.5 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-300 text-white rounded-lg font-bold shadow-sm transition cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5" />
-                <span>{isUploading ? 'Đang nạp...' : 'Tải lên thư viện'}</span>
+                <span>{isUploading ? t('post.arch.uploading') : t('post.arch.upload')}</span>
               </button>
             </div>
           </form>
@@ -471,7 +472,7 @@ export default function NotebookArchive() {
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                <span>📥 Tài liệu đầu vào từ Khách hàng</span>
+                <span>{t('post.arch.catInput')}</span>
               </div>
 
               <div className="space-y-2">
@@ -491,9 +492,9 @@ export default function NotebookArchive() {
                         <div className="flex items-center gap-2 text-[9px] text-slate-400 mt-0.5 font-mono">
                           <span>{file.size}</span>
                           <span>•</span>
-                          <span>Bản: {file.version}</span>
+                          <span>{t('post.arch.fileVersion')} {file.version}</span>
                           <span>•</span>
-                          <span>Người nạp: {file.author}</span>
+                          <span>{t('post.arch.fileUploader')} {file.author}</span>
                         </div>
                       </div>
                     </div>
@@ -502,7 +503,7 @@ export default function NotebookArchive() {
                       onClick={() => handleDownload(file)}
                       disabled={downloadingFileId !== null}
                       className="p-2 bg-white hover:bg-slate-200 border border-slate-250 text-slate-600 rounded-lg hover:text-slate-900 transition shrink-0 cursor-pointer"
-                      title="Tải file"
+                      title={t('post.arch.downloadFile')}
                     >
                       {downloadingFileId === file.id ? (
                         <span className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin block" />
@@ -519,7 +520,7 @@ export default function NotebookArchive() {
             <div className="space-y-2 pt-2">
               <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-brand-600 uppercase tracking-wider font-mono">
                 <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
-                <span>📤 File CAD & Code sinh bởi AI</span>
+                <span>{t('post.arch.catOutput')}</span>
               </div>
 
               <div className="space-y-2">
@@ -551,9 +552,9 @@ export default function NotebookArchive() {
                           <div className="flex items-center gap-2 text-[9px] text-slate-400 mt-0.5 font-mono">
                             <span>{file.size}</span>
                             <span>•</span>
-                            <span className="text-brand-600 font-extrabold">Bản: {file.version}</span>
+                            <span className="text-brand-600 font-extrabold">{t('post.arch.fileVersion')} {file.version}</span>
                             <span>•</span>
-                            <span>Tạo: {file.createdAt}</span>
+                            <span>{t('post.arch.fileCreated')} {file.createdAt}</span>
                           </div>
                         </div>
                       </div>
@@ -562,7 +563,7 @@ export default function NotebookArchive() {
                         onClick={() => handleDownload(file)}
                         disabled={downloadingFileId !== null}
                         className="p-2 bg-white hover:bg-slate-200 border border-slate-250 text-slate-600 rounded-lg hover:text-slate-900 transition shrink-0 cursor-pointer"
-                        title="Tải file"
+                        title={t('post.arch.downloadFile')}
                       >
                         {downloadingFileId === file.id ? (
                           <span className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin block" />
