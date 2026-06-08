@@ -2310,13 +2310,13 @@ Thành phần tham dự:
               {settingsActiveTab === 'general' && (
                 <div className="space-y-3.5 animate-in fade-in duration-150">
                   <div className="space-y-1">
-                    <label className="font-bold text-slate-500">Tên Nền tảng (Site Title)</label>
+                    <label className="font-bold text-slate-500">Tên project (Project Title)</label>
                     <input
                       type="text"
                       value={siteTitle}
                       onChange={(e) => setSiteTitle(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-800 font-medium"
-                      placeholder="Nhập tên trang web..."
+                      placeholder="Nhập tên dự án..."
                     />
                   </div>
 
