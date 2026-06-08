@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { 
-  Download, RefreshCw, FileText 
+import {
+  Download, RefreshCw, FileText
 } from 'lucide-react'
+import { useI18n } from '@/i18n/I18nProvider'
 
 interface ProjectReentryProps {
   currentUser?: 'Linh' | 'Kanai' | 'AI'
@@ -66,6 +67,7 @@ Hồ sơ này ghi nhận toàn bộ các thay đổi kỹ thuật phát sinh t�
 `
 
 export default function ProjectReentry({ onProgressChange, onAddLog }: ProjectReentryProps) {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const STORAGE_KEY = `aiplf.project_reentry_text.${id || 'default'}`
   const SYNC_KEY = `aiplf.project_reentry_synced.${id || 'default'}`
@@ -146,7 +148,7 @@ export default function ProjectReentry({ onProgressChange, onAddLog }: ProjectRe
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                Nhật ký Khảo sát & Thay đổi Specs
+                {t('post.reentry.title')}
               </h4>
               <span className="text-[10px] font-mono font-bold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
                 khao_sat_thay_doi_specs.txt
@@ -162,7 +164,7 @@ export default function ProjectReentry({ onProgressChange, onAddLog }: ProjectRe
               )}
             </div>
             <p className="text-[10px] text-slate-450 mt-0.5">
-              Pha 7: Bản ghi nhận toàn bộ thay đổi kỹ thuật thực tế sau đơn hàng
+              {t('post.reentry.subtitle')}
             </p>
           </div>
         </div>
@@ -173,14 +175,14 @@ export default function ProjectReentry({ onProgressChange, onAddLog }: ProjectRe
             onClick={handleDownload}
             disabled={isDownloading}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 border border-slate-250 rounded-xl text-xs font-bold transition cursor-pointer"
-            title="Tải tệp nhật ký text về máy"
+            title={t('post.reentry.downloadTitle')}
           >
             {isDownloading ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <Download className="w-3.5 h-3.5" />
             )}
-            <span>{isDownloading ? 'Đang tải...' : 'Tải File Text'}</span>
+            <span>{isDownloading ? t('ws.kickoff.downloading') : t('ws.kickoff.download')}</span>
           </button>
         </div>
       </div>
@@ -195,20 +197,20 @@ export default function ProjectReentry({ onProgressChange, onAddLog }: ProjectRe
       {/* Bottom Editor Status Bar */}
       <div className="bg-slate-50 border-t border-slate-200 px-4 py-2 flex items-center justify-between text-[10px] text-slate-500 font-mono shrink-0">
         <div className="flex gap-4">
-          <span>Kích thước: <strong>{formattedSize}</strong></span>
-          <span>Dòng: <strong>{lineCount}</strong></span>
-          <span>Từ: <strong>{wordCount}</strong></span>
+          <span>{t('ws.kickoff.size')} <strong>{formattedSize}</strong></span>
+          <span>{t('ws.kickoff.lines')} <strong>{lineCount}</strong></span>
+          <span>{t('ws.kickoff.words')} <strong>{wordCount}</strong></span>
         </div>
         <div className="flex items-center gap-1 text-slate-450">
-          <span>Định dạng: <strong>Plain Text / MD</strong></span>
+          <span>{t('ws.kickoff.format')} <strong>Plain Text / MD</strong></span>
           <span className="mx-1">•</span>
-          <span>Mã hóa: <strong>UTF-8</strong></span>
+          <span>{t('ws.kickoff.encoding')} <strong>UTF-8</strong></span>
         </div>
       </div>
 
       {/* Guide Banner */}
       <div className="p-3.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 leading-relaxed font-sans">
-        <strong>💡 Hướng dẫn chỉnh sửa:</strong> Để chỉnh sửa hoặc cập nhật Nhật ký khảo sát hiện trường, vui lòng trò chuyện và gửi yêu cầu cho AI ở khung chat bên phải (Ví dụ: <em>"Cập nhật nhật ký khảo sát: thay đổi PLC sang dòng Q03UDE và nâng cấp màn hình lên GOT2000 10-inch"</em>). AI sẽ tự động xử lý và cập nhật nội dung tệp tin phía bên trái.
+        <strong>{t('ws.kickoff.guideLabel')}</strong> {t('post.reentry.guide')}
       </div>
 
     </div>

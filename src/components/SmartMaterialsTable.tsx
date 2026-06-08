@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Save, ShoppingCart } from 'lucide-react'
+import { useI18n } from '@/i18n/I18nProvider'
 
 export interface MaterialItem {
   id: string
@@ -39,6 +40,7 @@ export default function SmartMaterialsTable({
   onAddLog,
   onMaterialsChange
 }: SmartMaterialsTableProps) {
+  const { t, tf } = useI18n()
   const [materials, setMaterials] = useState<MaterialItem[]>([])
 
   const MATERIALS_STORAGE_KEY = `aiplf.materials.${projectId}`
@@ -115,10 +117,10 @@ export default function SmartMaterialsTable({
         onAddLog(`Đã lưu phiên bản dự toán mới ${newVersion.version} với tổng tiền $${totalPrice.toLocaleString()}`, 9)
       }
 
-      alert(`Đã lưu thành công phiên bản ${newVersion.version} vào Thư viện & Lịch sử phiên bản (Trang 3)!`)
+      alert(tf('post.mat.savedAlert', { v: newVersion.version }))
     } catch (e) {
       console.error(e)
-      alert('Đã xảy ra lỗi khi lưu phiên bản.')
+      alert(t('post.mat.saveError'))
     }
   }
 
@@ -133,10 +135,10 @@ export default function SmartMaterialsTable({
           </div>
           <div>
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-              Bảng vật tư & Đơn giá thông minh
+              {t('post.mat.title')}
             </h4>
             <p className="text-[10px] text-slate-450 mt-0.5">
-              Pha 9: Xem kết quả danh mục vật tư sau khi điều chỉnh
+              {t('post.mat.subtitle')}
             </p>
           </div>
         </div>
@@ -146,7 +148,7 @@ export default function SmartMaterialsTable({
           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/15 transition cursor-pointer"
         >
           <Save className="w-3.5 h-3.5" />
-          <span>Lưu phiên bản vào Thư viện</span>
+          <span>{t('post.mat.saveVersion')}</span>
         </button>
       </div>
 
@@ -155,12 +157,12 @@ export default function SmartMaterialsTable({
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-              <th className="py-2.5 px-3">Tên thiết bị / Mô tả</th>
-              <th className="py-2.5 px-3">Hãng</th>
-              <th className="py-2.5 px-3 text-center">Số lượng</th>
-              <th className="py-2.5 px-3">Đơn vị</th>
-              <th className="py-2.5 px-3">Đơn giá ($)</th>
-              <th className="py-2.5 px-3 text-right">Thành tiền ($)</th>
+              <th className="py-2.5 px-3">{t('post.mat.colName')}</th>
+              <th className="py-2.5 px-3">{t('post.mat.colMaker')}</th>
+              <th className="py-2.5 px-3 text-center">{t('post.mat.colQty')}</th>
+              <th className="py-2.5 px-3">{t('post.mat.colUnit')}</th>
+              <th className="py-2.5 px-3">{t('post.mat.colPrice')}</th>
+              <th className="py-2.5 px-3 text-right">{t('post.mat.colTotal')}</th>
             </tr>
           </thead>
           <tbody>
@@ -198,7 +200,7 @@ export default function SmartMaterialsTable({
       <div className="gradient-primary text-white rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-md shadow-brand-500/15">
         <div className="space-y-1">
           <div className="text-[10px] text-brand-100 font-extrabold uppercase tracking-wider font-mono">
-            Tổng chi phí ngân sách vật tư (Báo giá ước tính)
+            {t('post.mat.totalLabel')}
           </div>
           <div className="text-2xl font-black tracking-tight font-mono">
             ${totalPrice.toLocaleString()} USD
@@ -207,10 +209,10 @@ export default function SmartMaterialsTable({
         
         <div className="text-right">
           <span className="text-[10px] bg-white/20 border border-white/20 px-2.5 py-1 rounded-full font-bold">
-            Đồng bộ thời gian thực sang Trang 3 (Thư viện)
+            {t('post.mat.syncBadge')}
           </span>
           <p className="text-[9px] text-brand-200 mt-1 font-mono">
-            Tự động tính lại chi phí khi nhận yêu cầu thay đổi từ chat
+            {t('post.mat.autoRecalc')}
           </p>
         </div>
       </div>
