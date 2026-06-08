@@ -208,7 +208,7 @@ export default function SmartMaterialsTable({
         </div>
         
         <div className="text-right">
-          <span className="text-[10px] bg-white/20 border border-white/20 px-2.5 py-1 rounded-full font-bold">
+          <span className="text-[10px] bg-white/20 border border-white/20 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">
             {t('post.mat.syncBadge')}
           </span>
           <p className="text-[9px] text-brand-200 mt-1 font-mono">

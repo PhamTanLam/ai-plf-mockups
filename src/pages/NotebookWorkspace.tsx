@@ -12,7 +12,15 @@ import {
   FolderOpen,
   Download,
   RefreshCw,
-  Globe2
+  Globe2,
+  Check,
+  CheckSquare,
+  TrendingUp,
+  ClipboardList,
+  Users,
+  ShoppingCart,
+  Bug,
+  FileCheck
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { LOCALES, LANG_META } from '@/i18n/types'
@@ -191,7 +199,30 @@ const phasesInfo: PhaseDetail[] = [
   }
 ]
 
-
+const getPhaseIcon = (phaseNum: number, className: string = "w-2.5 h-2.5") => {
+  switch (phaseNum) {
+    case 1:
+      return <FileText className={className} />
+    case 2:
+      return <CheckSquare className={className} />
+    case 3:
+      return <TrendingUp className={className} />
+    case 7:
+      return <ClipboardList className={className} />
+    case 8:
+      return <Users className={className} />
+    case 9:
+      return <ShoppingCart className={className} />
+    case 10:
+      return <Cpu className={className} />
+    case 12:
+      return <Bug className={className} />
+    case 11:
+      return <FileCheck className={className} />
+    default:
+      return <FileText className={className} />
+  }
+}
 
 // Pre-sales (trước nhận đơn) = CHU TRÌNH LẶP 3 hoạt động: Nhập/Sửa → Kiểm tra → Dự toán.
 // Thực tế lặp lại nhiều vòng (sửa thông tin → dự toán lại) đến khi chốt đơn → mô hình "Vòng N".
@@ -1402,7 +1433,7 @@ Thành phần tham dự:
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
-            <span>{t('ws.header.config')}</span>
+            <span>Setting</span>
           </button>
         </div>
       </header>
@@ -1534,7 +1565,7 @@ Thành phần tham dự:
           <div className="h-[280px] flex flex-col min-h-0 bg-slate-50/50 border-t border-slate-200">
             <div className="p-3 border-b border-slate-200 bg-slate-100/50 shrink-0">
               <h3 className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">
-                {t('ws.panel.process')}
+                Setting
               </h3>
             </div>
 
@@ -1558,15 +1589,18 @@ Thành phần tham dự:
                           ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
                           : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
                       }`}
+                      title={`Giai đoạn: ${p.title}\nNhân sự: ${p.users}\n${p.desc}`}
                     >
                       <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[9px] border transition shrink-0 ${
+                        className={`w-5 h-5 rounded-full flex items-center justify-center border transition shrink-0 ${
                           isActive
                             ? 'gradient-primary border-brand-500 text-white shadow-xs'
-                            : 'bg-brand-50 border-brand-200 text-brand-600'
+                            : progress === 100
+                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs'
+                            : 'bg-slate-100 border-slate-200 text-slate-400'
                         }`}
                       >
-                        {progress === 100 ? '✓' : phaseNum}
+                        {getPhaseIcon(phaseNum, "w-2.5 h-2.5")}
                       </div>
 
                       <div className="text-left min-w-0 flex-1">
@@ -1576,9 +1610,10 @@ Thành phần tham dự:
                           }`} title={phaseTitle(p.num)}>
                             {phaseTitle(p.num)}
                           </h4>
-                          <span className={`font-mono text-[8px] font-bold leading-none shrink-0 ${
+                          <span className={`font-mono text-[8px] font-bold leading-none shrink-0 flex items-center gap-0.5 ${
                             progress === 100 ? 'text-emerald-600' : 'text-slate-500'
                           }`}>
+                            {progress === 100 && <Check className="w-2 h-2 text-emerald-600" />}
                             {progress}%
                           </span>
                         </div>
@@ -2110,7 +2145,8 @@ Thành phần tham dự:
           <div className="bg-white rounded-2xl border border-slate-200 p-6 w-[480px] space-y-4 shadow-pop animate-in zoom-in-95 duration-200 text-slate-800">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <h3 className="text-sm font-bold text-slate-950 font-mono uppercase tracking-wider flex items-center gap-1.5">
-                <span>{t('ws.config.title')}</span>
+                <Settings className="w-4 h-4 text-brand-500" />
+                <span>Setting</span>
               </h3>
               <button onClick={() => setIsConfigOpen(false)} className="text-slate-500 hover:text-slate-800 cursor-pointer">
                 <X className="w-5 h-5" />
@@ -2119,22 +2155,62 @@ Thành phần tham dự:
             
             <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
               {phases.map((p) => (
-                <div key={p.num} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 transition">
-                  <div className="flex items-center gap-2.5">
-                    <input
-                      type="checkbox"
-                      checked={p.isVisible !== false}
-                      onChange={() => {
-                        setPhases(phases.map(item => item.num === p.num ? { ...item, isVisible: !item.isVisible } : item))
-                      }}
-                      className="w-4 h-4 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-white cursor-pointer"
-                    />
-                    <div className="text-xs">
-                      <span className="font-mono font-bold text-slate-500 mr-1.5">{t('ws.phaseShort')} {p.num}</span>
-                      <span className="font-bold text-slate-800">{phaseTitle(p.num)}</span>
+                <div key={p.num} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 transition flex flex-col gap-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={p.isVisible !== false}
+                        onChange={() => {
+                          setPhases(phases.map(item => item.num === p.num ? { ...item, isVisible: !item.isVisible } : item))
+                        }}
+                        className="w-4 h-4 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-white cursor-pointer shrink-0"
+                      />
+                      <div className="text-xs flex items-center gap-1.5 flex-1 min-w-0">
+                        <span className="text-slate-400 shrink-0">
+                          {getPhaseIcon(p.num, "w-3.5 h-3.5")}
+                        </span>
+                        <span className="font-mono font-bold text-slate-500 shrink-0">{t('ws.phaseShort')} {p.num}</span>
+                        <input
+                          type="text"
+                          value={p.title}
+                          onChange={(e) => {
+                            setPhases(phases.map(item => item.num === p.num ? { ...item, title: e.target.value } : item))
+                          }}
+                          className="font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-slate-300 focus:outline-none focus:bg-slate-150 px-1.5 py-0.5 rounded flex-1 min-w-0"
+                        />
+                      </div>
+                    </div>
+                    <span className="text-[9px] bg-slate-200/60 text-slate-600 border border-slate-300/40 px-2 py-0.5 rounded font-mono uppercase shrink-0">{p.tab}</span>
+                  </div>
+
+                  {/* Additional customizable user settings: Description & Assigned User Role */}
+                  <div className="pl-6.5 space-y-2 border-t border-slate-200/60 pt-2 text-[10px]">
+                    <div className="flex gap-2 items-start">
+                      <span className="font-bold text-slate-400 mt-1 shrink-0 w-12 text-right">Mô tả:</span>
+                      <textarea
+                        rows={2}
+                        value={p.desc}
+                        onChange={(e) => {
+                          setPhases(phases.map(item => item.num === p.num ? { ...item, desc: e.target.value } : item))
+                        }}
+                        className="text-[10px] text-slate-600 bg-transparent border border-slate-200/40 focus:border-slate-300 focus:outline-none focus:bg-slate-150 px-2 py-1 rounded w-full resize-none leading-relaxed"
+                        placeholder="Mô tả giai đoạn..."
+                      />
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="font-bold text-slate-400 shrink-0 w-12 text-right">Nhân sự:</span>
+                      <input
+                        type="text"
+                        value={p.users}
+                        onChange={(e) => {
+                          setPhases(phases.map(item => item.num === p.num ? { ...item, users: e.target.value } : item))
+                        }}
+                        className="text-[10px] text-slate-600 bg-transparent border border-slate-200/40 focus:border-slate-300 focus:outline-none focus:bg-slate-150 px-2 py-1 rounded w-full font-medium"
+                        placeholder="Vai trò / Nhân sự phụ trách..."
+                      />
                     </div>
                   </div>
-                  <span className="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded font-mono uppercase">{p.tab}</span>
                 </div>
               ))}
             </div>
@@ -2144,7 +2220,7 @@ Thành phần tham dự:
                 onClick={() => setIsConfigOpen(false)}
                 className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm"
               >
-                {t('ws.config.done')}
+                Lưu Setting
               </button>
             </div>
           </div>
