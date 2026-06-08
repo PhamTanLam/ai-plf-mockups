@@ -15,9 +15,10 @@ import { gen } from './gen'
 import { workspace } from './workspace'
 import { presales } from './presales'
 import { postsales } from './postsales'
+import { chatdyn } from './chatdyn'
 
 /** Add every screen dictionary here; they are merged per-locale at load. */
-const TABLES: Dictionary[] = [common, login, dashboard, caseList, caseDetail, caseInput, qa, elec, prog, lang, refData, gen, workspace, presales, postsales]
+const TABLES: Dictionary[] = [common, login, dashboard, caseList, caseDetail, caseInput, qa, elec, prog, lang, refData, gen, workspace, presales, postsales, chatdyn]
 
 function merge(tables: Dictionary[]): Dictionary {
   const out = { ja: {}, en: {}, vi: {} } as Dictionary

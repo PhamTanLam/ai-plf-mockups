@@ -36,6 +36,9 @@ interface Message {
   id: string
   sender: 'ai' | 'user'
   text: string
+  /** Nếu có: render bằng tf(tkey, tvars) — dịch lại theo ngôn ngữ hiện tại (cho message động). */
+  tkey?: string
+  tvars?: Record<string, string | number>
   citations?: { id: number; sourceId: string; phrase?: string; tab?: string }[]
   timestamp: string
 }
@@ -811,13 +814,14 @@ Thành phần tham dự:
 
   // Design Phase 9 States
 
-  // đẩy 1 cặp tin nhắn (người dùng + AI) vào chat
-  const pushChat = (userText: string, aiText: string, sugg?: string[]) => {
+  // đẩy 1 cặp tin nhắn (người dùng + AI) vào chat.
+  // tkey/tvars (tuỳ chọn): message AI động — render bằng tf() để dịch lại theo ngôn ngữ.
+  const pushChat = (userText: string, aiText: string, sugg?: string[], tkey?: string, tvars?: Record<string, string | number>) => {
     const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     setMessages(prev => [
       ...prev,
       { id: `u-${Date.now()}`, sender: 'user', text: userText, timestamp: ts },
-      { id: `a-${Date.now() + 1}`, sender: 'ai', text: aiText, timestamp: ts },
+      { id: `a-${Date.now() + 1}`, sender: 'ai', text: aiText, tkey, tvars, timestamp: ts },
     ])
     if (sugg) setActiveSuggestions(sugg)
     setInputVal('')
@@ -835,27 +839,37 @@ Thành phần tham dự:
   const handlePresalesChat = (text: string) => {
     // "Nhãn: giá trị" → ghi nhớ một thông tin
     const mm = text.match(/^\s*(?:thêm|ghi chú)?\s*(.{2,40}?)\s*[:：]\s*(.+)$/)
-    if (mm) { pre.addField(mm[1].trim(), mm[2].trim()); pushChat(text, `✓ Đã ghi nhớ ${mm[1].trim()}: ${mm[2].trim()}`, PRE_SUGG); return }
-    // ý định sinh đầu ra
-    let genMsg = ''
-    if (text === 'Soạn nội dung tài liệu dự toán') { pre.generate('doc'); genMsg = ' Đã sinh Nội dung tài liệu dự toán ✓.' }
-    else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') { pre.generate('config'); genMsg = ' Đã sinh Cấu thành hệ thống (đơn giản) ✓.' }
-    else if (text === 'Lập dự toán khái quát') { pre.generate('estimate'); genMsg = ' Đã sinh Dự toán khái quát ✓.' }
-    else if (text === 'Lập lịch trình khái quát') { pre.generate('schedule'); genMsg = ' Đã sinh Lịch trình khái quát ✓.' }
-    else if (text === 'Soạn tài liệu nền đề xuất') { pre.generate('proposal'); genMsg = ' Đã sinh Tài liệu nền đề xuất ✓.' }
-    else if (/dự toán|báo giá|estimate/i.test(text)) { pre.generate('estimate'); genMsg = ' Đã sinh Dự toán khái quát ✓ (xem ở "Đã tạo").' }
-    else if (/lịch trình|timeline|schedule/i.test(text)) { pre.generate('schedule'); genMsg = ' Đã sinh Lịch trình khái quát ✓.' }
-    else if (/cấu thành/i.test(text)) { pre.generate('config'); genMsg = ' Đã sinh Cấu thành đơn giản ✓.' }
-    else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) { pre.generate('proposal'); genMsg = ' Đã sinh Tài liệu nền đề xuất ✓.' }
-    // trả lời
-    let aiText: string
-    if (/tóm tắt|xem dữ liệu|dữ liệu đã|đã ghi|nhớ gì|thông tin dự án/i.test(text)) {
-      aiText = 'Dữ liệu dự án mình đang ghi nhớ:\n' + pre.summaryText()
-    } else {
-      const added = pre.rememberFromContent(text)
-      aiText = added.length ? `Mình đã ghi nhớ thêm: ${added.join(', ')}. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã hiểu. Bạn kể thêm chi tiết, hoặc gõ "tóm tắt dự án" để xem mình đang nhớ gì.'
+    if (mm) {
+      const label = mm[1].trim(), value = mm[2].trim()
+      pre.addField(label, value)
+      pushChat(text, `✓ Đã ghi nhớ ${label}: ${value}`, PRE_SUGG, 'chat.ps.recorded', { label, value })
+      return
     }
-    pushChat(text, (aiText + genMsg).trim(), PRE_SUGG)
+    // ý định sinh đầu ra
+    let gen = ''
+    if (text === 'Soạn nội dung tài liệu dự toán') gen = 'doc'
+    else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') gen = 'config'
+    else if (text === 'Lập dự toán khái quát') gen = 'estimate'
+    else if (text === 'Lập lịch trình khái quát') gen = 'schedule'
+    else if (text === 'Soạn tài liệu nền đề xuất') gen = 'proposal'
+    else if (/dự toán|báo giá|estimate/i.test(text)) gen = 'estimate'
+    else if (/lịch trình|timeline|schedule/i.test(text)) gen = 'schedule'
+    else if (/cấu thành/i.test(text)) gen = 'config'
+    else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) gen = 'proposal'
+    if (gen) {
+      pre.generate(gen)
+      pushChat(text, 'Đã sinh tài liệu ✓ (xem ở mục "Đã tạo").', PRE_SUGG, 'chat.ps.generated')
+      return
+    }
+    // trả lời
+    if (/tóm tắt|xem dữ liệu|dữ liệu đã|đã ghi|nhớ gì|thông tin dự án/i.test(text)) {
+      const data = pre.summaryText()
+      pushChat(text, 'Dữ liệu dự án mình đang ghi nhớ:\n' + data, PRE_SUGG, 'chat.ps.summary', { data })
+      return
+    }
+    const added = pre.rememberFromContent(text)
+    if (added.length) pushChat(text, `Mình đã ghi nhớ thêm: ${added.join(', ')}.`, PRE_SUGG, 'chat.ps.remembered', { names: added.join(', ') })
+    else pushChat(text, 'Đã hiểu.', PRE_SUGG, 'chat.ps.understood')
   }
 
   const parseChatForMaterials = (chatText: string) => {
@@ -1047,8 +1061,10 @@ Thành phần tham dự:
               item.category.toLowerCase().includes(matchedKeyword)
             )
             const itemName = matchedItem ? matchedItem.name : matchedKeyword
-            const aiText = `Đã ghi nhận điều chỉnh vật tư từ chat: ${itemName} được ${quantityChange > 0 ? 'tăng thêm' : 'giảm bớt'} ${Math.abs(quantityChange)} cái. \n\nTổng giá trị vật tư đã được cập nhật tương ứng. Phiên bản mới này đã được đồng bộ để lưu lại tại Thư viện.`
-            pushChat(text, aiText)
+            const dir = quantityChange > 0 ? 'tăng thêm' : 'giảm bớt'
+            const qty = Math.abs(quantityChange)
+            const aiText = `Đã ghi nhận điều chỉnh vật tư từ chat: ${itemName} được ${dir} ${qty} cái. \n\nTổng giá trị vật tư đã được cập nhật tương ứng. Phiên bản mới này đã được đồng bộ để lưu lại tại Thư viện.`
+            pushChat(text, aiText, undefined, quantityChange > 0 ? 'chat.materials.inc' : 'chat.materials.dec', { item: itemName, qty })
             return
           }
         } catch (e) {
@@ -1218,8 +1234,10 @@ Thành phần tham dự:
       }
     }
 
+    let fallbackVars: Record<string, string | number> | undefined
     if (!isMatched) {
       explanationText = `Dựa trên câu hỏi "${text}" của bạn và các tài liệu nguồn đã nạp, tôi chưa tìm thấy từ khóa trùng khớp với 5 bước thiết kế sau đơn hàng. \n\nVui lòng thử hỏi về một trong các bước như: tiếp nhận khảo sát, họp kick-off bàn giao, điều chỉnh vật tư, thiết kế bản vẽ CAD / mã PLC, hoặc nghiệm thu HDSD.`
+      fallbackVars = { q: text }
       suggestions = [
         'Nhập lại chênh lệch thông số dự án sau khi nhận đơn hàng',
         'Soạn biên bản Kick-off bàn giao dự án',
@@ -1235,6 +1253,8 @@ Thành phần tham dự:
       id: `a-${Date.now()}`,
       sender: 'ai',
       text: explanationText,
+      tkey: fallbackVars ? 'chat.fallback' : undefined,
+      tvars: fallbackVars,
       citations: phaseCitations,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
@@ -1976,7 +1996,7 @@ Thành phần tham dự:
                       >
                         {msg.sender === 'ai' ? (
                           <div>
-                            {tc(msg.text).split(/(\[\d+\])/g).map((part, index) => {
+                            {(msg.tkey ? tf(msg.tkey, msg.tvars ?? {}) : tc(msg.text)).split(/(\[\d+\])/g).map((part, index) => {
                               const match = part.match(/\[(\d+)\]/)
                               if (match && msg.citations) {
                                 const citNum = parseInt(match[1])
