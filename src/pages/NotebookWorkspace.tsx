@@ -12,7 +12,6 @@ import {
   FolderOpen,
   Download,
   RefreshCw,
-  Globe2,
   Check,
   CheckSquare,
   TrendingUp,
@@ -23,7 +22,6 @@ import {
   FileCheck
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
-import { LOCALES, LANG_META } from '@/i18n/types'
 import { tcText } from '@/i18n/chat'
 
 // Import components
@@ -1529,16 +1527,6 @@ Thành phần tham dự:
             ))}
           </div>
 
-          <div className="h-5 w-px bg-slate-200" />
-
-          <button
-            onClick={() => { const i = LOCALES.indexOf(locale); setLocale(LOCALES[(i + 1) % LOCALES.length]) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-brand-500/5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition cursor-pointer"
-            title="Đổi ngôn ngữ / Change language"
-          >
-            <Globe2 className="w-3.5 h-3.5" />
-            <span>{LANG_META[locale].label}</span>
-          </button>
 
           <button
             onClick={() => setIsConfigOpen(true)}
