@@ -55,14 +55,14 @@ const DEMO_FIELDS: { name: string; value: string }[] = [
 
 function buildOutputMarkdown(id: string, fields: ProjectField[]): string {
   const get = (kw: RegExp) => fields.find(f => kw.test(f.name))?.value || '(chưa có)'
-  const list = fields.length ? fields.map(f => `- **${f.name}:** ${f.value}`).join('\n') : '- (chưa có dữ liệu)'
+  const list = fields.length ? fields.map(f => `- ${f.name}: ${f.value}`).join('\n') : '- (chưa có dữ liệu)'
   const head = `# ${OUTPUTS.find(o => o.id === id)?.name}\n\n> Bản nháp sinh tự động từ thông tin đã ghi nhận — cần kỹ sư rà soát.\n`
   switch (id) {
     case 'doc': return head + `\n## Tóm tắt kỹ thuật\n${list}\n`
     case 'config': return head + `\n## Cấu thành hệ thống (đơn giản)\n- Điều khiển: ${get(/điều khiển/i)}\n- Mạng: ${get(/mạng/i)}\n- Liên động: ${get(/liên động/i)}\n- Chủng loại: ${get(/chủng loại/i)}\n`
-    case 'estimate': return head + `\n## Dự toán khái quát (ước tính)\n\n| Hạng mục | Ước tính |\n| :--- | ---: |\n| Thiết kế điện & phần mềm | ¥3.2M |\n| Vật tư điều khiển | ¥4.1M |\n| Lắp đặt & debug | ¥2.0M |\n| **Tổng** | **¥9.3M** |\n\n- Thời gian ~16 tuần · Độ tin cậy 75%.\n`
+    case 'estimate': return head + `\n## Dự toán khái quát (ước tính)\n\n| Hạng mục | Ước tính |\n| :--- | ---: |\n| Thiết kế điện & phần mềm | ¥3.2M |\n| Vật tư điều khiển | ¥4.1M |\n| Lắp đặt & debug | ¥2.0M |\n| Tổng | ¥9.3M |\n\n- Thời gian ~16 tuần · Độ tin cậy 75%.\n`
     case 'schedule': return head + `\n## Lịch trình khái quát\n\n| Pha | Nội dung | Thời lượng |\n| :--- | :--- | :---: |\n| 1. Thiết kế | Bản vẽ điện, kiến trúc PM | 8 tuần |\n| 2. Chế tạo | Tủ điện, lập trình PLC/HMI | 6 tuần |\n| 3. Lắp đặt & Debug | takt ${get(/takt/i)} | 4 tuần |\n| 4. Bàn giao | Nghiệm thu | 2 tuần |\n`
-    case 'proposal': return head + `\n## Tài liệu nền đề xuất\n**Bối cảnh:** ${get(/bối cảnh/i)}.\n\n**Mục tiêu:** tự động hoá ${get(/hoạt động/i)}, takt ${get(/takt/i)}.\n\n**Phạm vi:** ${get(/phạm vi/i)}.\n\n**An toàn:** ${get(/an toàn/i)}.\n`
+    case 'proposal': return head + `\n## Tài liệu nền đề xuất\nBối cảnh: ${get(/bối cảnh/i)}.\n\nMục tiêu: tự động hoá ${get(/hoạt động/i)}, takt ${get(/takt/i)}.\n\nPhạm vi: ${get(/phạm vi/i)}.\n\nAn toàn: ${get(/an toàn/i)}.\n`
     default: return head + '\n' + list
   }
 }

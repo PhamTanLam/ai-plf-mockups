@@ -19,63 +19,94 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
   const [selectedNode, setSelectedNode] = useState<string>('step4')
   const [copied, setCopied] = useState(false)
 
+  // Page 4 Tri thức rules state
+  const [ruleInterlock, setRuleInterlock] = useState(true)
+  const [ruleServoInit, setRuleServoInit] = useState(true)
+  const [ruleRegisterOpt, setRuleRegisterOpt] = useState(false)
+
+  useEffect(() => {
+    try {
+      const ri = localStorage.getItem('aiplf.rule_interlock')
+      if (ri !== null) setRuleInterlock(JSON.parse(ri))
+      const rsi = localStorage.getItem('aiplf.rule_servo_init')
+      if (rsi !== null) setRuleServoInit(JSON.parse(rsi))
+      const rro = localStorage.getItem('aiplf.rule_register_opt')
+      if (rro !== null) setRuleRegisterOpt(JSON.parse(rro))
+    } catch {}
+  }, [])
+
   useEffect(() => {
     if (onProgressChange) {
       onProgressChange(activeTab === 'st' ? 100 : 80)
     }
   }, [activeTab, onProgressChange])
 
-  const nodes: Record<string, NodeItem> = {
-    start: {
-      id: 'start',
-      label: '▶ Auto Start',
-      address: 'M70',
-      description: 'Khởi động chế độ tự động vận hành (Automatic mode trigger).',
-      stCode: 'IF START_PB AND NOT EMERGENCY_STOP THEN\n  AUTO_MODE := TRUE;\n  STEP_NUMBER := 1;\nEND_IF;',
-    },
-    step1: {
-      id: 'step1',
-      label: '① Work Grip',
-      address: 'M71 / Y40',
-      description: 'Kích hoạt xi-lanh kẹp phôi vật liệu (Workpiece gripping cylinder).',
-      stCode: 'IF AUTO_MODE AND STEP_NUMBER = 1 THEN\n  GRIP_CYLINDER_OUT := TRUE;\n  IF GRIP_LIMIT_SWITCH THEN\n    STEP_NUMBER := 2;\n  END_IF;\nEND_IF;',
-    },
-    step2: {
-      id: 'step2',
-      label: '② Move to Inspect',
-      address: 'M72 / Axis 1-3',
-      description: 'Điều khiển 3 trục Servo di chuyển phôi vào tâm đo quét (Move to inspection position).',
-      stCode: 'IF AUTO_MODE AND STEP_NUMBER = 2 THEN\n  SERVO_TARGET_X := 150.0;\n  SERVO_TARGET_Y := 280.0;\n  SERVO_START := TRUE;\n  IF SERVO_IN_POSITION THEN\n    STEP_NUMBER := 3;\n  END_IF;\nEND_IF;',
-    },
-    step3: {
-      id: 'step3',
-      label: '③ 3D Dimension Scan',
-      address: 'M73 / Y50',
-      description: 'Kích hoạt cảm biến laser đo quét 3D kích thước (Trigger 3D scan).',
-      stCode: 'IF AUTO_MODE AND STEP_NUMBER = 3 THEN\n  LASER_SCAN_TRIGGER := TRUE;\n  IF SCAN_COMPLETE THEN\n    STEP_NUMBER := 4;\n  END_IF;\nEND_IF;',
-    },
-    step4: {
-      id: 'step4',
-      label: '④ AI Judgment',
-      address: 'M74 / Branch',
-      description: 'Phân tích dữ liệu đo quét bằng thuật toán kiểm định chất lượng (AI classification analysis).',
-      stCode: 'IF AUTO_MODE AND STEP_NUMBER = 4 THEN\n  AI_RUN_INFERENCE := TRUE;\n  IF AI_RESULT_READY THEN\n    IF AI_RESULT_OK THEN\n      STEP_NUMBER := 5; // Go to OK discharge\n    ELSE\n      STEP_NUMBER := 6; // Go to NG recycle\n    END_IF;\n  END_IF;\nEND_IF;',
-    },
-    step5a: {
-      id: 'step5a',
-      label: '⑤a Discharge OK',
-      address: 'M75 / Y60',
-      description: 'Đẩy phôi đạt chuẩn ra băng tải thành phẩm (Discharge OK product).',
-      stCode: 'IF AUTO_MODE AND STEP_NUMBER = 5 THEN\n  DISCHARGE_OK_GATE := TRUE;\n  IF GATE_OPEN_LIMIT THEN\n    STEP_NUMBER := 7; // Done\n  END_IF;\nEND_IF;',
-    },
-    step6: {
-      id: 'step6',
-      label: '⑤b NG Retry/Recycle',
-      address: 'M76 / Y61',
-      description: 'Đẩy phôi lỗi vào khay xử lý lại (Recycle and tag defect).',
-      stCode: 'IF AUTO_MODE AND STEP_NUMBER = 6 THEN\n  DISCHARGE_NG_GATE := TRUE;\n  REJECT_COUNT := REJECT_COUNT + 1;\n  IF NG_GATE_LIMIT THEN\n    STEP_NUMBER := 7; // Done\n  END_IF;\nEND_IF;',
-    },
+  const getDynamicNodes = (): Record<string, NodeItem> => {
+    const startCode = [
+      ruleInterlock ? '// Tri thức Page 4: Khóa cứng tiếp điểm NC KA1\nIF NOT SAFETY_RELAY_KA1_OK THEN\n  EMERGENCY_STOP := TRUE;\n  AUTO_MODE := FALSE;\nEND_IF;' : '',
+      ruleServoInit ? '// Tri thức Page 4: Khối khởi tạo Servo trục A1, A2, A3\nCALL SERVO_AXIS_1_INIT();\nCALL SERVO_AXIS_2_INIT();\nCALL SERVO_AXIS_3_INIT();' : '',
+      'IF START_PB AND NOT EMERGENCY_STOP THEN\n  AUTO_MODE := TRUE;\n  STEP_NUMBER := 1;\nEND_IF;'
+    ].filter(Boolean).join('\n')
+
+    const step2Code = [
+      ruleRegisterOpt ? '// Tối ưu thanh ghi D Mitsubishi\nSERVO_TARGET_X := D1000;\nSERVO_TARGET_Y := D1002;\nSERVO_TARGET_Z := D1004;' : 'SERVO_TARGET_X := 150.0;\nSERVO_TARGET_Y := 280.0;\nSERVO_TARGET_Z := 50.0;',
+      'IF AUTO_MODE AND STEP_NUMBER = 2 THEN\n  SERVO_START := TRUE;\n  IF SERVO_IN_POSITION THEN\n    STEP_NUMBER := 3;\n  END_IF;\nEND_IF;'
+    ].join('\n')
+
+    return {
+      start: {
+        id: 'start',
+        label: '▶ Auto Start',
+        address: 'M70',
+        description: 'Khởi động chế độ tự động vận hành (Automatic mode trigger).',
+        stCode: startCode,
+      },
+      step1: {
+        id: 'step1',
+        label: '① Work Grip',
+        address: 'M71 / Y40',
+        description: 'Kích hoạt xi-lanh kẹp phôi vật liệu (Workpiece gripping cylinder).',
+        stCode: 'IF AUTO_MODE AND STEP_NUMBER = 1 THEN\n  GRIP_CYLINDER_OUT := TRUE;\n  IF GRIP_LIMIT_SWITCH THEN\n    STEP_NUMBER := 2;\n  END_IF;\nEND_IF;',
+      },
+      step2: {
+        id: 'step2',
+        label: '② Move to Inspect',
+        address: 'M72 / Axis 1-3',
+        description: 'Điều khiển 3 trục Servo di chuyển phôi vào tâm đo quét (Move to inspection position).',
+        stCode: step2Code,
+      },
+      step3: {
+        id: 'step3',
+        label: '③ 3D Dimension Scan',
+        address: 'M73 / Y50',
+        description: 'Kích hoạt cảm biến laser đo quét 3D kích thước (Trigger 3D scan).',
+        stCode: 'IF AUTO_MODE AND STEP_NUMBER = 3 THEN\n  LASER_SCAN_TRIGGER := TRUE;\n  IF SCAN_COMPLETE THEN\n    STEP_NUMBER := 4;\n  END_IF;\nEND_IF;',
+      },
+      step4: {
+        id: 'step4',
+        label: '④ AI Judgment',
+        address: 'M74 / Branch',
+        description: 'Phân tích dữ liệu đo quét bằng thuật toán kiểm định chất lượng (AI classification analysis).',
+        stCode: 'IF AUTO_MODE AND STEP_NUMBER = 4 THEN\n  AI_RUN_INFERENCE := TRUE;\n  IF AI_RESULT_READY THEN\n    IF AI_RESULT_OK THEN\n      STEP_NUMBER := 5; // Go to OK discharge\n    ELSE\n      STEP_NUMBER := 6; // Go to NG recycle\n    END_IF;\n  END_IF;\nEND_IF;',
+      },
+      step5a: {
+        id: 'step5a',
+        label: '⑤a Discharge OK',
+        address: 'M75 / Y60',
+        description: 'Đẩy phôi đạt chuẩn ra băng tải thành phẩm (Discharge OK product).',
+        stCode: 'IF AUTO_MODE AND STEP_NUMBER = 5 THEN\n  DISCHARGE_OK_GATE := TRUE;\n  IF GATE_OPEN_LIMIT THEN\n    STEP_NUMBER := 7; // Done\n  END_IF;\nEND_IF;',
+      },
+      step6: {
+        id: 'step6',
+        label: '⑤b NG Retry/Recycle',
+        address: 'M76 / Y61',
+        description: 'Đẩy phôi lỗi vào khay xử lý lại (Recycle and tag defect).',
+        stCode: 'IF AUTO_MODE AND STEP_NUMBER = 6 THEN\n  DISCHARGE_NG_GATE := TRUE;\n  REJECT_COUNT := REJECT_COUNT + 1;\n  IF NG_GATE_LIMIT THEN\n    STEP_NUMBER := 7; // Done\n  END_IF;\nEND_IF;',
+      },
+    }
   }
+
+  const nodes = getDynamicNodes()
 
   const handleCopy = () => {
     navigator.clipboard.writeText(nodes[selectedNode].stCode)
@@ -264,26 +295,45 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
             </svg>
           </div>
         ) : (
-          <div className="flex-1 overflow-auto p-4 bg-slate-50 border-b border-slate-200 flex flex-col font-mono text-sm leading-relaxed max-h-[380px] min-h-[300px]">
-            <div className="flex-1 text-slate-700 overflow-y-auto whitespace-pre p-2 rounded-lg bg-white border border-slate-200">
-              {nodes[selectedNode].stCode.split('\n').map((line, idx) => (
-                <div key={idx} className="flex hover:bg-slate-50 px-2 py-0.5 rounded">
-                  <span className="w-8 shrink-0 text-slate-400 text-xs text-right pr-3 select-none">{idx + 1}</span>
-                  <span className="text-teal-600 font-semibold">
-                    {line.includes('IF') || line.includes('THEN') || line.includes('END_IF') || line.includes('ELSE')
-                      ? line.split(' ').map((w, wi) => (
-                          <span key={wi}>
-                            {w === 'IF' || w === 'THEN' || w === 'END_IF' || w === 'ELSE' || w === 'AND' || w === 'OR' || w === 'NOT' ? (
-                              <span className="text-brand-600">{w} </span>
-                            ) : (
-                              <span>{w} </span>
-                            )}
-                          </span>
-                        ))
-                      : line}
-                  </span>
-                </div>
-              ))}
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-50 border-b border-slate-200">
+            {/* Grounding banner */}
+            <div className="bg-indigo-50 border-b border-indigo-200 px-3 py-2 text-[11px] text-indigo-800 flex items-center justify-between font-sans shrink-0 select-none">
+              <div className="flex items-center gap-1.5 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span>
+                  Áp dụng tri thức Page 4:
+                  {ruleInterlock && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">Liên khóa KA1</span>}
+                  {ruleServoInit && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">Khởi tạo Servo</span>}
+                  {ruleRegisterOpt && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">Tối ưu ghi D</span>}
+                  {!ruleInterlock && !ruleServoInit && !ruleRegisterOpt && <span className="ml-1 text-slate-500">Mặc định</span>}
+                </span>
+              </div>
+              <span className="text-[8.5px] bg-indigo-500/10 border border-indigo-300/50 px-2 py-0.5 rounded font-mono font-bold text-indigo-700">
+                Core Rules Compiled
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4 flex flex-col font-mono text-sm leading-relaxed max-h-[300px]">
+              <div className="flex-1 text-slate-700 overflow-y-auto whitespace-pre p-2 rounded-lg bg-white border border-slate-200">
+                {nodes[selectedNode].stCode.split('\n').map((line, idx) => (
+                  <div key={idx} className="flex hover:bg-slate-50 px-2 py-0.5 rounded">
+                    <span className="w-8 shrink-0 text-slate-400 text-xs text-right pr-3 select-none">{idx + 1}</span>
+                    <span className="text-teal-600 font-semibold">
+                      {line.includes('IF') || line.includes('THEN') || line.includes('END_IF') || line.includes('ELSE')
+                        ? line.split(' ').map((w, wi) => (
+                            <span key={wi}>
+                              {w === 'IF' || w === 'THEN' || w === 'END_IF' || w === 'ELSE' || w === 'AND' || w === 'OR' || w === 'NOT' ? (
+                                <span className="text-brand-600">{w} </span>
+                              ) : (
+                                <span>{w} </span>
+                              )}
+                            </span>
+                          ))
+                        : line}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
