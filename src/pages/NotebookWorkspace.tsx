@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { LOCALES, LANG_META } from '@/i18n/types'
+import { tcText } from '@/i18n/chat'
 
 // Import components
 import CadViewer from '@/components/CadViewer'
@@ -227,6 +228,8 @@ export default function NotebookWorkspace() {
   const { id } = useParams<{ id: string }>()
   const { t, tf, locale, setLocale } = useI18n()
   const phaseTitle = (num: number | null | undefined) => (num != null ? t(`ws.phase.${num}.title`) : '')
+  // dịch hiển thị cho hội thoại AI mô phỏng (logic vẫn khớp theo chuỗi VN)
+  const tc = (s: string) => tcText(s, locale)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
 
@@ -1973,7 +1976,7 @@ Thành phần tham dự:
                       >
                         {msg.sender === 'ai' ? (
                           <div>
-                            {msg.text.split(/(\[\d+\])/g).map((part, index) => {
+                            {tc(msg.text).split(/(\[\d+\])/g).map((part, index) => {
                               const match = part.match(/\[(\d+)\]/)
                               if (match && msg.citations) {
                                 const citNum = parseInt(match[1])
@@ -2029,7 +2032,7 @@ Thành phần tham dự:
                         className="w-full px-2.5 py-1 text-left text-[10px] font-medium text-slate-700 bg-white hover:bg-brand-500/5 hover:text-brand-700 border border-slate-200 hover:border-brand-500/15 rounded-lg transition duration-150 shadow-3xs flex items-center gap-1.5 cursor-pointer group"
                       >
                         <span className="text-[9px] select-none group-hover:scale-110 transition-transform">💬</span>
-                        <span className="flex-1 truncate leading-normal">{prompt}</span>
+                        <span className="flex-1 truncate leading-normal">{tc(prompt)}</span>
                         <span className="text-slate-300 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all text-[9px] shrink-0">→</span>
                       </button>
                     ))}
