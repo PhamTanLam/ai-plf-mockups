@@ -400,7 +400,7 @@ body {
 
 /* Beautiful Animated Gradients & Glowing Borders */
 .gradient-primary {
-  background: linear-gradient(135deg, #00f5d4 0%, #0db8a6 50%, #0f766e 100%);
+  background: linear-gradient(135deg, var(--color-brand-300) 0%, var(--color-brand-500) 50%, var(--color-brand-700) 100%);
 }
 
 .gradient-warm {

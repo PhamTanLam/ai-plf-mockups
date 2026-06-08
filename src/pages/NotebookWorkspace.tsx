@@ -1677,7 +1677,7 @@ Thành phần tham dự:
           <div className="h-[280px] flex flex-col min-h-0 bg-slate-50/50 border-t border-slate-200">
             <div className="p-3 border-b border-slate-200 bg-slate-100/50 shrink-0">
               <h3 className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">
-                Setting
+                {t('ws.panel.process')}
               </h3>
             </div>
 
@@ -1708,7 +1708,7 @@ Thành phần tham dự:
                           isActive
                             ? 'gradient-primary border-brand-500 text-white shadow-xs'
                             : progress === 100
-                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs'
+                            ? 'bg-brand-500 border-brand-500 text-white shadow-xs'
                             : 'bg-slate-100 border-slate-200 text-slate-400'
                         }`}
                       >
@@ -1723,9 +1723,9 @@ Thành phần tham dự:
                             {phaseTitle(p.num)}
                           </h4>
                           <span className={`font-mono text-[8px] font-bold leading-none shrink-0 flex items-center gap-0.5 ${
-                            progress === 100 ? 'text-emerald-600' : 'text-slate-500'
+                            progress === 100 ? 'text-brand-600' : 'text-slate-500'
                           }`}>
-                            {progress === 100 && <Check className="w-2 h-2 text-emerald-600" />}
+                            {progress === 100 && <Check className="w-2 h-2 text-brand-600" />}
                             {progress}%
                           </span>
                         </div>
