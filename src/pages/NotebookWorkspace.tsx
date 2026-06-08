@@ -1694,7 +1694,7 @@ Thành phần tham dự:
                             : 'text-slate-500 hover:text-slate-800'
                         }`}
                       >
-                        📐 Bản vẽ sơ đồ mạch CAD
+                        {t('ws.design.tabCad')}
                       </button>
                       <button
                         onClick={() => setDesignSubTab('code')}
@@ -1704,12 +1704,12 @@ Thành phần tham dự:
                             : 'text-slate-500 hover:text-slate-800'
                         }`}
                       >
-                        💻 Mã ST & Sơ đồ khối PLC
+                        {t('ws.design.tabCode')}
                       </button>
                     </div>
 
                     <div className="text-[10px] text-slate-400 font-mono italic">
-                      Giao diện phân tab rộng rãi
+                      {t('ws.design.wideHint')}
                     </div>
                   </div>
 
@@ -1717,10 +1717,10 @@ Thành phần tham dự:
                   <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div>
                       <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wide">
-                        Tệp kết quả thiết kế tự động
+                        {t('ws.design.filesTitle')}
                       </h4>
                       <p className="text-[10px] text-slate-450 mt-0.5">
-                        Sinh bởi AI dựa trên quy chuẩn kỹ thuật (Liên khóa an toàn KA1, Khởi tạo Servo)
+                        {t('ws.design.filesSubtitle')}
                       </p>
                     </div>
 
@@ -1735,7 +1735,7 @@ Thành phần tham dự:
                           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
                         >
                           <FolderOpen className="w-3.5 h-3.5" />
-                          <span>Tải Bản vẽ CAD (.dwg)</span>
+                          <span>{t('ws.design.dlCad')}</span>
                         </button>
                       ) : (
                         <button
@@ -1747,7 +1747,7 @@ Thành phần tham dự:
                           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
                         >
                           <Cpu className="w-3.5 h-3.5" />
-                          <span>Tải Mã PLC (.l5k)</span>
+                          <span>{t('ws.design.dlPlc')}</span>
                         </button>
                       )}
                     </div>
@@ -1759,7 +1759,7 @@ Thành phần tham dự:
                       /* CAD Viewer (Full-Width) */
                       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel flex flex-col w-full animate-in fade-in duration-300">
                         <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Bản vẽ sơ đồ đấu dây lực</span>
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">{t('ws.design.cadHeader')}</span>
                           <span className="text-[9px] bg-slate-200 text-slate-650 px-2 py-0.5 rounded font-bold font-mono">AutoCAD DWG Viewer</span>
                         </div>
                         <div className="p-4 flex-1 min-h-[460px]">
@@ -1774,7 +1774,7 @@ Thành phần tham dự:
                       /* Flowchart & ST Code Editor (Full-Width) */
                       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel flex flex-col w-full animate-in fade-in duration-300">
                         <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Mã Structured Text (PLC ST) & Sơ đồ khối</span>
+                          <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">{t('ws.design.codeHeader')}</span>
                           <span className="text-[9px] bg-brand-500/10 text-brand-700 border border-brand-500/20 px-2 py-0.5 rounded font-bold font-mono">AI Grounding active</span>
                         </div>
                         <div className="p-4 flex-1 min-h-[460px]">
@@ -1818,14 +1818,14 @@ Thành phần tham dự:
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                            Biên bản cuộc họp & Ghi chú bàn giao
+                            {t('ws.kickoff.title')}
                           </h4>
                           <span className="text-[10px] font-mono font-bold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
                             bien_ban_kickoff_ban_giao.txt
                           </span>
                         </div>
                         <p className="text-[10px] text-slate-450 mt-0.5">
-                          Pha 8: Ghi lại thông tin thống nhất giữa Sales, Kỹ sư và Khách hàng
+                          {t('ws.kickoff.subtitle')}
                         </p>
                       </div>
                     </div>
@@ -1834,14 +1834,14 @@ Thành phần tham dự:
                       onClick={downloadKickoffText}
                       disabled={isDownloadingKickoff}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 border border-slate-250 rounded-xl text-xs font-bold transition cursor-pointer"
-                      title="Tải biên bản cuộc họp về máy"
+                      title={t('ws.kickoff.downloadTitle')}
                     >
                       {isDownloadingKickoff ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       ) : (
                         <Download className="w-3.5 h-3.5" />
                       )}
-                      <span>{isDownloadingKickoff ? 'Đang tải...' : 'Tải File Text'}</span>
+                      <span>{isDownloadingKickoff ? t('ws.kickoff.downloading') : t('ws.kickoff.download')}</span>
                     </button>
                   </div>
 
@@ -1855,20 +1855,20 @@ Thành phần tham dự:
                   {/* Bottom Editor Status Bar */}
                   <div className="bg-slate-50 border-t border-slate-200 px-4 py-2 flex items-center justify-between text-[10px] text-slate-500 font-mono shrink-0">
                     <div className="flex gap-4">
-                      <span>Kích thước: <strong>{(new Blob([kickoffText]).size / 1024).toFixed(2)} KB</strong></span>
-                      <span>Dòng: <strong>{kickoffText ? kickoffText.split('\n').length : 0}</strong></span>
-                      <span>Từ: <strong>{kickoffText ? kickoffText.split(/\s+/).filter(Boolean).length : 0}</strong></span>
+                      <span>{t('ws.kickoff.size')} <strong>{(new Blob([kickoffText]).size / 1024).toFixed(2)} KB</strong></span>
+                      <span>{t('ws.kickoff.lines')} <strong>{kickoffText ? kickoffText.split('\n').length : 0}</strong></span>
+                      <span>{t('ws.kickoff.words')} <strong>{kickoffText ? kickoffText.split(/\s+/).filter(Boolean).length : 0}</strong></span>
                     </div>
                     <div className="flex items-center gap-1 text-slate-450">
-                      <span>Định dạng: <strong>Plain Text / MD</strong></span>
+                      <span>{t('ws.kickoff.format')} <strong>Plain Text / MD</strong></span>
                       <span className="mx-1">•</span>
-                      <span>Mã hóa: <strong>UTF-8</strong></span>
+                      <span>{t('ws.kickoff.encoding')} <strong>UTF-8</strong></span>
                     </div>
                   </div>
 
                   {/* Guide Banner */}
                   <div className="p-3.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 leading-relaxed font-sans">
-                    <strong>💡 Hướng dẫn chỉnh sửa:</strong> Biên bản cuộc họp này ở chế độ Chỉ đọc. Để cập nhật nhiệm vụ, tiến độ hoặc bổ sung ghi chú bàn giao mới, vui lòng gửi yêu cầu cho AI ở khung chat bên phải (Ví dụ: <em>"Cập nhật biên bản kick-off: thêm ghi chú kiểm tra lại chống nhiễu cảm biến"</em>). AI sẽ tự động xử lý và cập nhật nội dung tệp tin phía bên trái.
+                    <strong>{t('ws.kickoff.guideLabel')}</strong> {t('ws.kickoff.guide')}
                   </div>
                 </div>
               )}
