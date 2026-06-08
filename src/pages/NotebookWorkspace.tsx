@@ -2025,7 +2025,7 @@ Thành phần tham dự:
                             })}
                           </div>
                         ) : (
-                          <span>{msg.text}</span>
+                          <span>{tc(msg.text)}</span>
                         )}
                       </div>
                     </div>
