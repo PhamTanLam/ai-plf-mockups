@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Pencil, Trash2, MoreVertical, Download, Share2, FilePlus2, Sparkles, RefreshCw, ArrowRight } from 'lucide-react'
 import type { PresalesApi, SavedOutput } from '@/hooks/usePresalesState'
 import MarkdownLite from '@/components/MarkdownLite'
+import { useI18n } from '@/i18n/I18nProvider'
 
 
 export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdvance }: {
@@ -11,6 +12,7 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
   onToast?: (msg: string) => void
   onAdvance?: () => void
 }) {
+  const { t, tf } = useI18n()
   const [menuOid, setMenuOid] = useState<string | null>(null)
   const [renameOid, setRenameOid] = useState<string | null>(null)
   const [renameVal, setRenameVal] = useState('')
@@ -19,8 +21,8 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
   const toast = (m: string) => onToast?.(m)
   const fmtAgo = (ts: number) => {
     const m = Math.floor(Math.max(0, Date.now() - ts) / 60000)
-    if (m < 1) return 'vừa xong'; if (m < 60) return m + ' phút trước'
-    const h = Math.floor(m / 60); return h < 24 ? h + ' giờ trước' : Math.floor(h / 24) + ' ngày trước'
+    if (m < 1) return t('ps.time.justNow'); if (m < 60) return m + ' ' + t('ps.time.minAgo')
+    const h = Math.floor(m / 60); return h < 24 ? h + ' ' + t('ps.time.hrAgo') : Math.floor(h / 24) + ' ' + t('ps.time.dayAgo')
   }
 
   if (detail) {
@@ -28,11 +30,11 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
       <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 shadow-panel space-y-4 animate-in fade-in duration-300">
         <div className="flex items-center justify-between border-b border-slate-200 pb-3">
           <button onClick={() => setDetail(null)} className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition flex items-center gap-1 cursor-pointer">
-            ← Quay lại danh sách
+            {t('ps.common.backToList')}
           </button>
           <strong className="text-sm text-slate-800 truncate max-w-[250px]">{detail.title}</strong>
           <button onClick={() => pre.downloadOutput(detail.oid)} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
-            <Download className="w-3 h-3" /> Tải .md
+            <Download className="w-3 h-3" /> {t('ps.common.downloadMd')}
           </button>
         </div>
         <div className="prose prose-slate max-w-none text-slate-800 select-text">
@@ -47,20 +49,20 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
       {mode === 'reentry' && (
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-xs">
           <RefreshCw className="w-3.5 h-3.5 shrink-0" />
-          <span><strong>Sửa / bổ sung:</strong> thêm nguồn / trao đổi với AI để cập nhật thông tin, rồi dự toán lại.</span>
+          <span><strong>{t('ps.input.reentryLabel')}</strong> {t('ps.input.reentryDesc')}</span>
         </div>
       )}
 
       {/* Trạng thái dữ liệu (bộ nhớ AI) — gọn, không phải bảng */}
       <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">
         <Sparkles className="w-3.5 h-3.5 text-brand-500 shrink-0" />
-        <span>AI đang ghi nhớ <strong className="text-slate-800">{pre.total}</strong> thông tin của dự án. Thêm nguồn hoặc trao đổi ở khung chat để bổ sung; hỏi <em>“tóm tắt dự án”</em> để AI hiển thị.</span>
+        <span>{tf('ps.input.status', { n: pre.total })}</span>
       </div>
 
       {/* ---- Đầu ra đã tạo ---- */}
       {pre.savedOutputs.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-panel">
-          <div className="text-xs font-bold text-slate-500 font-mono uppercase tracking-wider mb-3">Đã tạo ({pre.savedOutputs.length})</div>
+          <div className="text-xs font-bold text-slate-500 font-mono uppercase tracking-wider mb-3">{tf('ps.input.createdN', { n: pre.savedOutputs.length })}</div>
           <div className="space-y-2">
             {pre.savedOutputs.map(e => {
               const isNote = e.kind === 'note'
@@ -76,7 +78,7 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
                     ) : (
                       <span className="flex-1 min-w-0">
                         <span className="block text-xs font-semibold text-slate-800 truncate group-hover:text-brand-700 transition-colors">{e.title}</span>
-                        <span className="block text-[10px] text-slate-400 mt-0.5">{isNote ? 'Ghi chú từ chat' : 'Đầu ra'} · {fmtAgo(e.ts)}</span>
+                        <span className="block text-[10px] text-slate-400 mt-0.5">{isNote ? t('ps.input.noteFromChat') : t('ps.input.outputLabel')} · {fmtAgo(e.ts)}</span>
                       </span>
                     )}
                   </div>
@@ -85,11 +87,11 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
                   </button>
                   {menuOid === e.oid && (
                     <div className="absolute right-2 top-11 z-20 bg-white border border-slate-200 rounded-lg shadow-pop py-1 min-w-[170px] text-xs">
-                      <button onClick={() => { setRenameOid(e.oid); setRenameVal(e.title); setMenuOid(null) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><Pencil className="w-3.5 h-3.5" />Đổi tên</button>
-                      <button onClick={() => { setMenuOid(null); toast('Đã sao chép liên kết chia sẻ (demo)') }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><Share2 className="w-3.5 h-3.5" />Chia sẻ</button>
-                      {isNote && <button onClick={() => { setMenuOid(null); onConvertToSource?.(e.title); toast('Đã thêm vào Nguồn') }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><FilePlus2 className="w-3.5 h-3.5" />Chuyển thành nguồn</button>}
-                      <button onClick={() => { setMenuOid(null); pre.downloadOutput(e.oid) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><Download className="w-3.5 h-3.5" />Tải .md</button>
-                      <button onClick={() => { setMenuOid(null); pre.deleteOutput(e.oid) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 cursor-pointer text-rose-600"><Trash2 className="w-3.5 h-3.5" />Xoá</button>
+                      <button onClick={() => { setRenameOid(e.oid); setRenameVal(e.title); setMenuOid(null) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><Pencil className="w-3.5 h-3.5" />{t('ps.common.rename')}</button>
+                      <button onClick={() => { setMenuOid(null); toast(t('ps.input.toastShare')) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><Share2 className="w-3.5 h-3.5" />{t('ps.common.share')}</button>
+                      {isNote && <button onClick={() => { setMenuOid(null); onConvertToSource?.(e.title); toast(t('ps.input.toastToSource')) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><FilePlus2 className="w-3.5 h-3.5" />{t('ps.input.toSource')}</button>}
+                      <button onClick={() => { setMenuOid(null); pre.downloadOutput(e.oid) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><Download className="w-3.5 h-3.5" />{t('ps.common.downloadMd')}</button>
+                      <button onClick={() => { setMenuOid(null); pre.deleteOutput(e.oid) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 cursor-pointer text-rose-600"><Trash2 className="w-3.5 h-3.5" />{t('ps.common.delete')}</button>
                     </div>
                   )}
                 </div>
@@ -100,11 +102,11 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
       )}
 
       {onAdvance && (
-        <button 
-          onClick={onAdvance} 
+        <button
+          onClick={onAdvance}
           className="w-full inline-flex items-center justify-center gap-2 py-3 text-xs font-bold border border-brand-200 bg-brand-50/20 text-brand-700 hover:bg-brand-500 hover:text-white hover:border-brand-500 rounded-xl shadow-sm transition-all duration-300 active:scale-[0.99] cursor-pointer group hover:shadow-md hover:shadow-brand-500/10"
         >
-          <span>Tiếp tục: Kiểm tra</span>
+          <span>{t('ps.input.continueReview')}</span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
         </button>
       )}
