@@ -9,6 +9,7 @@ export const workspace: Dictionary = {
     // Header
     'ws.header.engineer': '担当者:',
     'ws.header.config': '⚙ 業務フロー設定',
+    'ws.header.library': 'プロジェクトライブラリ',
     // Left panel
     'ws.panel.sources': 'ソース資料',
     'ws.panel.history': '履歴',
@@ -17,6 +18,8 @@ export const workspace: Dictionary = {
     'ws.panel.process': '業務フロー',
     'ws.panel.noPhase': '有効な工程がありません。AIに質問して開始してください。',
     'ws.phaseShort': '工程',
+    'ws.sourceViewer': 'ソース資料を読む (Source Viewer)',
+    'ws.close': '閉じる',
     // Canvas badges / title
     'ws.badge.preOrder': '受注前',
     'ws.badge.postOrder': '工程 {n}・受注後',
@@ -99,6 +102,7 @@ export const workspace: Dictionary = {
   en: {
     'ws.header.engineer': 'Engineer:',
     'ws.header.config': '⚙ Configure workflow',
+    'ws.header.library': 'Project library',
     'ws.panel.sources': 'Source documents',
     'ws.panel.history': 'History',
     'ws.panel.addSource': 'Add source',
@@ -106,6 +110,8 @@ export const workspace: Dictionary = {
     'ws.panel.process': 'Business workflow',
     'ws.panel.noPhase': 'No phase activated. Ask the AI a question to start.',
     'ws.phaseShort': 'PHASE',
+    'ws.sourceViewer': 'Read source document (Source Viewer)',
+    'ws.close': 'Close',
     'ws.badge.preOrder': 'PRE-ORDER',
     'ws.badge.postOrder': 'PHASE {n} · POST-ORDER',
     'ws.badge.pipeline': 'BUSINESS PIPELINE',
@@ -178,6 +184,7 @@ export const workspace: Dictionary = {
   vi: {
     'ws.header.engineer': 'Kỹ sư:',
     'ws.header.config': '⚙ Cấu hình Quy trình',
+    'ws.header.library': 'Thư viện dự án',
     'ws.panel.sources': 'Tài liệu nguồn',
     'ws.panel.history': 'Lịch sử',
     'ws.panel.addSource': 'Thêm nguồn',
@@ -185,6 +192,8 @@ export const workspace: Dictionary = {
     'ws.panel.process': 'Quy trình Nghiệp vụ',
     'ws.panel.noPhase': 'Chưa có quy trình nào được kích hoạt. Hãy đặt câu hỏi cho AI để bắt đầu.',
     'ws.phaseShort': 'PHA',
+    'ws.sourceViewer': 'Đọc tài liệu nguồn (Source Viewer)',
+    'ws.close': 'Đóng',
     'ws.badge.preOrder': 'TRƯỚC NHẬN ĐƠN',
     'ws.badge.postOrder': 'PHA {n} · SAU NHẬN ĐƠN',
     'ws.badge.pipeline': 'DÂY CHUYỀN NGHIỆP VỤ',

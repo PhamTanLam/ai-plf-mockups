@@ -11,9 +11,11 @@ import {
   Cpu,
   FolderOpen,
   Download,
-  RefreshCw
+  RefreshCw,
+  Globe2
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
+import { LOCALES, LANG_META } from '@/i18n/types'
 
 // Import components
 import CadViewer from '@/components/CadViewer'
@@ -223,7 +225,8 @@ const DEMO_SOURCES: SourceFile[] = [
 
 export default function NotebookWorkspace() {
   const { id } = useParams<{ id: string }>()
-  const { locale } = useI18n()
+  const { t, tf, locale, setLocale } = useI18n()
+  const phaseTitle = (num: number | null | undefined) => (num != null ? t(`ws.phase.${num}.title`) : '')
   const chatEndRef = useRef<HTMLDivElement>(null)
 
 
@@ -625,7 +628,7 @@ export default function NotebookWorkspace() {
     {
       id: 'm1',
       sender: 'ai',
-      text: 'Xin chào! Tôi là Trợ lý AI Kỹ thuật cho dự án này.\n\nLuồng nghiệp vụ gồm giai đoạn TRƯỚC nhận đơn — chu trình lặp 3 hoạt động *Nhập/Sửa → Kiểm tra → Trình dự toán* (cập nhật đến khi chốt đơn) — và giai đoạn SAU nhận đơn (Pha 7–13). Hãy thêm nguồn hoặc kể về dự án để mình trích dữ liệu, hoặc chọn hoạt động trên thanh chu trình.',
+      text: t('ws.greeting'),
       timestamp: '10:00 AM',
     },
   ])
@@ -1334,7 +1337,7 @@ Thành phần tham dự:
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-extrabold shadow-md shadow-brand-500/15 transition cursor-pointer"
           >
             <FolderOpen className="w-4 h-4" />
-            <span>Thư viện dự án</span>
+            <span>{t('ws.header.library')}</span>
           </Link>
 
           <div className="h-5 w-px bg-slate-250" />
@@ -1342,7 +1345,7 @@ Thành phần tham dự:
           {/* Active User Switcher */}
           <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-xl p-1 text-xs">
             <span className="text-[10px] font-bold text-slate-550 uppercase tracking-wider px-1.5 select-none">
-              Kỹ sư:
+              {t('ws.header.engineer')}
             </span>
             {(['Linh', 'Kanai', 'AI'] as const).map((user) => (
               <button
@@ -1361,13 +1364,22 @@ Thành phần tham dự:
           </div>
 
           <div className="h-5 w-px bg-slate-200" />
-          
-          <button 
+
+          <button
+            onClick={() => { const i = LOCALES.indexOf(locale); setLocale(LOCALES[(i + 1) % LOCALES.length]) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-brand-500/5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition cursor-pointer"
+            title="Đổi ngôn ngữ / Change language"
+          >
+            <Globe2 className="w-3.5 h-3.5" />
+            <span>{LANG_META[locale].label}</span>
+          </button>
+
+          <button
             onClick={() => setIsConfigOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
-            <span>⚙ Cấu hình Quy trình</span>
+            <span>{t('ws.header.config')}</span>
           </button>
         </div>
       </header>
@@ -1389,7 +1401,7 @@ Thành phần tham dự:
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Tài liệu nguồn
+                {t('ws.panel.sources')}
               </button>
               <button
                 onClick={() => setLeftActiveTab('history')}
@@ -1399,7 +1411,7 @@ Thành phần tham dự:
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Lịch sử
+                {t('ws.panel.history')}
               </button>
             </div>
 
@@ -1407,7 +1419,7 @@ Thành phần tham dự:
               {leftActiveTab === 'sources' ? (
                 <>
                   <button onClick={() => setAddSourceOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 mb-1 text-[11px] font-bold border border-slate-200 bg-white rounded-xl text-slate-700 hover:bg-slate-50 cursor-pointer">
-                    <Plus className="w-3 h-3" />Thêm nguồn
+                    <Plus className="w-3 h-3" />{t('ws.panel.addSource')}
                   </button>
                   {sources.map((src) => (
                   <div
@@ -1453,7 +1465,7 @@ Thành phần tham dự:
               ) : (
                 historyLogs.length === 0 ? (
                   <div className="text-[10px] text-slate-400 text-center py-6 px-3">
-                    Chưa có lịch sử chỉnh sửa nào.
+                    {t('ws.panel.noHistory')}
                   </div>
                 ) : (
                   historyLogs.map((log) => (
@@ -1483,7 +1495,7 @@ Thành phần tham dự:
                       </p>
                       <div className="flex items-center gap-1 mt-0.5">
                         <span className="text-[7.5px] px-1.5 py-0.2 bg-brand-500/10 text-brand-700 border border-brand-500/20 rounded font-bold font-mono">
-                          PHA {log.phaseNum}
+                          {t('ws.phaseShort')} {log.phaseNum}
                         </span>
                       </div>
                     </div>
@@ -1499,14 +1511,14 @@ Thành phần tham dự:
           <div className="h-[280px] flex flex-col min-h-0 bg-slate-50/50 border-t border-slate-200">
             <div className="p-3 border-b border-slate-200 bg-slate-100/50 shrink-0">
               <h3 className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">
-                Quy trình Nghiệp vụ
+                {t('ws.panel.process')}
               </h3>
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
               {phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).length === 0 ? (
                 <div className="text-[10px] text-slate-400 text-center py-6 px-3 leading-relaxed">
-                  Chưa có quy trình nào được kích hoạt. Hãy đặt câu hỏi cho AI để bắt đầu.
+                  {t('ws.panel.noPhase')}
                 </div>
               ) : (
                 phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).map((p) => {
@@ -1538,8 +1550,8 @@ Thành phần tham dự:
                         <div className="flex items-center justify-between gap-1">
                           <h4 className={`text-[10px] font-bold leading-tight truncate flex-1 ${
                             isActive ? 'text-brand-700 font-extrabold' : 'text-slate-800'
-                          }`} title={p.title}>
-                            {p.title}
+                          }`} title={phaseTitle(p.num)}>
+                            {phaseTitle(p.num)}
                           </h4>
                           <span className={`font-mono text-[8px] font-bold leading-none shrink-0 ${
                             progress === 100 ? 'text-emerald-600' : 'text-slate-500'
@@ -1574,21 +1586,19 @@ Thành phần tham dự:
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-extrabold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full tracking-wider font-mono">
-                      {activePhase !== null ? `${activePhase <= 3 ? 'TRƯỚC NHẬN ĐƠN' : `PHA ${activePhase} · SAU NHẬN ĐƠN`}` : 'DÂY CHUYỀN NGHIỆP VỤ'}
+                      {activePhase !== null ? (activePhase <= 3 ? t('ws.badge.preOrder') : tf('ws.badge.postOrder', { n: activePhase })) : t('ws.badge.pipeline')}
                     </span>
                     <h1 className="text-sm font-extrabold text-slate-900">
-                      {activePhase !== null
-                        ? phases.find(p => p.num === activePhase)?.title
-                        : 'Khu vực chi tiết dự án'}
+                      {activePhase !== null ? phaseTitle(activePhase) : t('ws.canvas.detailArea')}
                     </h1>
                   </div>
                   {activePhase !== null ? (
                     <p className="mt-0.5 text-xs text-slate-500 leading-normal">
-                      {phases.find(p => p.num === activePhase)?.desc}
+                      {t(`ws.phase.${activePhase}.desc`)}
                     </p>
                   ) : (
                     <p className="mt-0.5 text-xs text-slate-500 leading-normal">
-                      Hệ thống thiết kế tự động hóa từ khảo sát đến sinh mã lệnh PLC. Hãy chọn bước hoặc gửi câu hỏi để bắt đầu.
+                      {t('ws.canvas.intro')}
                     </p>
                   )}
                 </div>
@@ -1597,9 +1607,9 @@ Thành phần tham dự:
               {activePhase !== null && (
                 <div className="flex items-center gap-2 text-xs text-slate-600 font-mono shrink-0">
                   <span className="font-semibold bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-3xs">
-                    Tiến độ dự án: <strong className="font-bold text-brand-600">{projectProgress}%</strong>
+                    {t('ws.canvas.projectProgress')} <strong className="font-bold text-brand-600">{projectProgress}%</strong>
                   </span>
-                  <span className="text-[10px] text-slate-400">Bước/Pha {activePhase}: {progressData[activePhase] ?? 0}%</span>
+                  <span className="text-[10px] text-slate-400">{tf('ws.canvas.stepPhase', { n: activePhase ?? 0 })} {progressData[activePhase] ?? 0}%</span>
                 </div>
               )}
             </div>
@@ -1611,9 +1621,9 @@ Thành phần tham dự:
               {activePhase === null ? (
                 <div className="max-w-5xl mx-auto h-full flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-xs">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-800 font-mono">Chưa có output</h2>
-                    <p className="mt-2 text-sm text-slate-600">Khu vực chi tiết dự án sẽ hiển thị nội dung khi bạn nhập câu hỏi phía bên phải.</p>
-                    <p className="mt-4 text-xs text-slate-400 font-mono">Mở rộng AI chatbot nếu cần và gửi câu hỏi để bắt đầu.</p>
+                    <h2 className="text-lg font-bold text-slate-800 font-mono">{t('ws.canvas.noOutput')}</h2>
+                    <p className="mt-2 text-sm text-slate-600">{t('ws.canvas.noOutputDesc')}</p>
+                    <p className="mt-4 text-xs text-slate-400 font-mono">{t('ws.canvas.noOutputHint')}</p>
                   </div>
                 </div>
               ) : activeRightTab === 'reentry' && (
@@ -1870,7 +1880,7 @@ Thành phần tham dự:
             <div className="absolute top-0 bottom-0 left-0 w-[450px] bg-white shadow-2xl border-r border-slate-250 flex flex-col z-20 animate-in slide-in-from-left duration-300">
               <div className="flex-none p-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
-                  Đọc tài liệu nguồn (Source Viewer)
+                  {t('ws.sourceViewer')}
                 </span>
                 <button
                   onClick={() => {
@@ -1879,12 +1889,12 @@ Thành phần tham dự:
                   }}
                   className="text-slate-500 hover:text-slate-800 text-xs font-semibold px-2 py-1 hover:bg-slate-100 rounded-lg transition flex items-center gap-1 cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" /> Đóng
+                  <X className="w-3.5 h-3.5" /> {t('ws.close')}
                 </button>
               </div>
               <div className="flex-1 p-2 min-h-0">
                 <SourceViewer
-                  title={sources.find((s) => s.id === activeViewerSource)?.title || 'Tài liệu nguồn'}
+                  title={sources.find((s) => s.id === activeViewerSource)?.title || t('ws.panel.sources')}
                   contentId={activeViewerSource}
                   highlightedPhrase={highlightedPhrase}
                 />
@@ -1907,13 +1917,13 @@ Thành phần tham dự:
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-brand-550" />
                   <span className="text-xs font-mono font-extrabold text-slate-800 uppercase">
-                    AI chatbot
+                    {t('ws.copilot.title')}
                   </span>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsCopilotExpanded(false)}
                   className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition cursor-pointer"
-                  title="Thu nhỏ trợ lý"
+                  title={t('ws.copilot.collapse')}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1922,9 +1932,9 @@ Thành phần tham dự:
               {/* Dynamic Context Banner */}
               <div className="px-3.5 py-2.5 bg-brand-500/10 border-b border-brand-500/20 text-[10px] text-brand-700 leading-relaxed select-none">
                 {activePhase !== null ? (
-                  <>💡 Hỗ trợ: <strong className="font-bold">Pha {activePhase} - {phases.find(p => p.num === activePhase)?.title}</strong>. Đã sẵn sàng xử lý dữ liệu và trả lời câu hỏi của kỹ sư.</>
+                  <>{tf('ws.copilot.ctxPhase', { n: activePhase, title: phaseTitle(activePhase) })}</>
                 ) : (
-                  <>💡 Hỗ trợ: Chưa có pha kích hoạt. Nhập câu hỏi để AI chọn giai đoạn phù hợp và hiển thị output.</>
+                  <>{t('ws.copilot.ctxNone')}</>
                 )}
               </div>
 
@@ -2007,7 +2017,7 @@ Thành phần tham dự:
               {/* Suggestions */}
               <div className="p-2 bg-slate-100/60 border-t border-slate-200 flex-none space-y-1">
                 <div className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 select-none px-1">
-                  <span>💡 Gợi ý câu hỏi tiếp theo</span>
+                  <span>{t('ws.copilot.suggest')}</span>
                 </div>
                 <div className="max-h-[140px] overflow-y-auto space-y-1 pr-1 scrollbar-thin">
                   {activeSuggestions
@@ -2033,7 +2043,7 @@ Thành phần tham dự:
                     rows={1}
                     value={inputVal}
                     onChange={(e) => setInputVal(e.target.value)}
-                    placeholder="Đặt câu hỏi cho AI Copilot..."
+                    placeholder={t('ws.copilot.placeholder')}
                     className="flex-1 bg-transparent text-xs focus:outline-none resize-none py-1 px-1.5 text-slate-800"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -2059,7 +2069,7 @@ Thành phần tham dự:
             >
               <Sparkles className="w-4 h-4 text-brand-500" />
               <span className="writing-vertical font-extrabold text-[10px] uppercase tracking-wider mt-2 font-mono">
-                Mở AI chatbot
+                {t('ws.copilot.open')}
               </span>
             </button>
           )}
@@ -2077,7 +2087,7 @@ Thành phần tham dự:
           <div className="bg-white rounded-2xl border border-slate-200 p-6 w-[480px] space-y-4 shadow-pop animate-in zoom-in-95 duration-200 text-slate-800">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <h3 className="text-sm font-bold text-slate-950 font-mono uppercase tracking-wider flex items-center gap-1.5">
-                <span>⚙ Cấu hình Quy trình Nghiệp vụ</span>
+                <span>{t('ws.config.title')}</span>
               </h3>
               <button onClick={() => setIsConfigOpen(false)} className="text-slate-500 hover:text-slate-800 cursor-pointer">
                 <X className="w-5 h-5" />
@@ -2097,15 +2107,8 @@ Thành phần tham dự:
                       className="w-4 h-4 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-white cursor-pointer"
                     />
                     <div className="text-xs">
-                      <span className="font-mono font-bold text-slate-500 mr-1.5">Pha {p.num}</span>
-                      <input
-                        type="text"
-                        value={p.title}
-                        onChange={(e) => {
-                          setPhases(phases.map(item => item.num === p.num ? { ...item, title: e.target.value } : item))
-                        }}
-                        className="font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-slate-300 focus:outline-none focus:bg-slate-100 px-1 py-0.5 rounded"
-                      />
+                      <span className="font-mono font-bold text-slate-500 mr-1.5">{t('ws.phaseShort')} {p.num}</span>
+                      <span className="font-bold text-slate-800">{phaseTitle(p.num)}</span>
                     </div>
                   </div>
                   <span className="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded font-mono uppercase">{p.tab}</span>
@@ -2118,7 +2121,7 @@ Thành phần tham dự:
                 onClick={() => setIsConfigOpen(false)}
                 className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm"
               >
-                Hoàn tất cấu hình
+                {t('ws.config.done')}
               </button>
             </div>
           </div>
