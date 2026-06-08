@@ -12,6 +12,7 @@ import {
   Terminal, 
   AlertCircle
 } from 'lucide-react'
+import { useI18n } from '@/i18n/I18nProvider'
 
 interface DebugCodeStepProps {
   projectId: string
@@ -306,6 +307,7 @@ END_IF;
 END_PROGRAM`;
 
 export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }: DebugCodeStepProps) {
+  const { t } = useI18n()
   const STORAGE_KEY = `aiplf.plc_st_code.${projectId}`
   const [code, setCode] = useState<string>('')
   const [copied, setCopied] = useState(false)
@@ -542,7 +544,7 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Đã sao chép!' : 'Copy Toàn bộ Code'}</span>
+            <span>{copied ? t('post.debug.copied') : t('post.debug.copyAll')}</span>
           </button>
         </div>
       </div>
@@ -587,7 +589,7 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
                 onChange={(e) => handleCodeChange(e.target.value)}
                 className="absolute inset-0 w-full h-full bg-transparent text-slate-200 border-none outline-none resize-none font-mono text-xs pl-3.5 py-1.5 focus:ring-0 leading-6 whitespace-pre overflow-y-auto select-text selection:bg-brand-500/30"
                 spellCheck={false}
-                placeholder="// Nhập mã Structured Text tại đây..."
+                placeholder={t('post.debug.placeholder')}
               />
             </div>
           </div>
@@ -600,7 +602,7 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
             </div>
             <div className="flex items-center gap-1.5 text-slate-400 font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span>Chỉnh sửa trực tiếp được bật</span>
+              <span>{t('post.debug.editEnabled')}</span>
             </div>
           </div>
         </div>
@@ -613,7 +615,7 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <Terminal className="w-4 h-4 text-violet-650" />
               <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                Trung tâm Phân tích & Biên dịch
+                {t('post.debug.analysisCenter')}
               </h5>
             </div>
 
@@ -625,12 +627,12 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
               {syntaxStatus === 'checking' ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Đang kiểm tra...</span>
+                  <span>{t('post.debug.checking')}</span>
                 </>
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5" />
-                  <span>Chạy kiểm tra cú pháp</span>
+                  <span>{t('post.debug.runCheck')}</span>
                 </>
               )}
             </button>
@@ -639,16 +641,16 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
             {syntaxStatus === 'idle' && (
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-center text-slate-500 text-xs flex flex-col items-center gap-1.5 py-5 select-none">
                 <AlertCircle className="w-6 h-6 text-slate-400" />
-                <div className="font-bold">Chưa kiểm tra</div>
-                <p className="text-[10px] text-slate-400">Nhấn nút chạy để biên dịch thử và tìm lỗi cú pháp.</p>
+                <div className="font-bold">{t('post.debug.notChecked')}</div>
+                <p className="text-[10px] text-slate-400">{t('post.debug.notCheckedDesc')}</p>
               </div>
             )}
 
             {syntaxStatus === 'checking' && (
               <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-4 text-center text-amber-700 text-xs flex flex-col items-center gap-2 py-5 animate-pulse">
                 <RefreshCw className="w-6 h-6 text-amber-500 animate-spin" />
-                <div className="font-bold">Đang biên dịch...</div>
-                <p className="text-[10px] text-amber-500/80">AI đang phân tích các khối logic và dấu chấm phẩy...</p>
+                <div className="font-bold">{t('post.debug.compiling')}</div>
+                <p className="text-[10px] text-amber-500/80">{t('post.debug.compilingDesc')}</p>
               </div>
             )}
 
@@ -656,10 +658,10 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
               <div className="bg-emerald-50 border border-emerald-250 rounded-xl p-3.5 text-emerald-800 text-xs space-y-2.5 animate-in zoom-in duration-200">
                 <div className="flex items-center gap-2 font-bold">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <span>Cú pháp hoàn toàn hợp lệ!</span>
+                  <span>{t('post.debug.valid')}</span>
                 </div>
                 <p className="text-[10px] text-emerald-700 leading-relaxed">
-                  Không phát hiện lỗi cú pháp biên dịch trong chương trình. Mã nguồn đã sẵn sàng nạp vào PLC Melsec Q.
+                  {t('post.debug.validDesc')}
                 </p>
                 <div className="text-[9px] font-mono bg-emerald-100 border border-emerald-200/50 rounded px-2 py-1 flex items-center justify-between text-emerald-600 select-none">
                   <span>Errors: 0</span>
@@ -673,7 +675,7 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
               <div className="bg-rose-50 border border-rose-250 rounded-xl p-3.5 text-rose-800 text-xs space-y-2.5 animate-in shake duration-300">
                 <div className="flex items-center gap-2 font-bold">
                   <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
-                  <span>Phát hiện lỗi cú pháp!</span>
+                  <span>{t('post.debug.errorFound')}</span>
                 </div>
                 <div className="text-[10.5px] font-mono bg-white border border-rose-150 rounded p-2 text-rose-700 whitespace-pre-wrap leading-relaxed">
                   {errorMessage}
@@ -684,7 +686,7 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
                   className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold transition cursor-pointer"
                 >
                   <Wand2 className="w-3.5 h-3.5" />
-                  <span>Sửa lỗi nhanh bằng AI</span>
+                  <span>{t('post.debug.quickFix')}</span>
                 </button>
               </div>
             )}
@@ -695,12 +697,12 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <Wand2 className="w-4 h-4 text-amber-500" />
               <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                AI Paraphrase & Tối ưu hóa
+                {t('post.debug.paraphraseTitle')}
               </h5>
             </div>
 
             <p className="text-[10px] text-slate-450 leading-relaxed">
-              Tái tạo cấu trúc mã nguồn theo các phong cách kỹ nghệ hoặc tối ưu hóa biến số tự động.
+              {t('post.debug.paraphraseDesc')}
             </p>
 
             <div className="space-y-2">
@@ -713,8 +715,8 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
                 }`}
               >
                 <div>
-                  <div className="font-bold">Tối ưu gọn mã nguồn</div>
-                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">Sử dụng cấu trúc CASE..OF thay cho các khối IF lồng nhau phức tạp.</div>
+                  <div className="font-bold">{t('post.debug.optimize')}</div>
+                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.optimizeDesc')}</div>
                 </div>
               </button>
 
@@ -727,8 +729,8 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
                 }`}
               >
                 <div>
-                  <div className="font-bold">Ghi chú chuẩn IEC & CASE</div>
-                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">Phân khúc sơ đồ khối rõ ràng và chú giải chi tiết từng biến số.</div>
+                  <div className="font-bold">{t('post.debug.iecNotes')}</div>
+                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.iecNotesDesc')}</div>
                 </div>
               </button>
 
@@ -741,8 +743,8 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
                 }`}
               >
                 <div>
-                  <div className="font-bold">Khôi phục mã mặc định</div>
-                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">Tải lại mã Structured Text nguyên bản tự động sinh.</div>
+                  <div className="font-bold">{t('post.debug.restore')}</div>
+                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.restoreDesc')}</div>
                 </div>
               </button>
             </div>
@@ -753,7 +755,7 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <History className="w-4 h-4 text-teal-600" />
               <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                Lịch sử hiệu chỉnh mã
+                {t('post.debug.revisionTitle')}
               </h5>
             </div>
 
