@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle2, AlertTriangle, ShieldAlert, BadgeInfo, Play, Check } from 'lucide-react'
+import { useI18n } from '@/i18n/I18nProvider'
 
 interface AuditItem {
   id: string
@@ -17,6 +18,8 @@ interface LadderAuditorProps {
 }
 
 export default function LadderAuditor({ locale, onProgressChange }: LadderAuditorProps) {
+  void locale
+  const { t } = useI18n()
   const [selectedRung, setSelectedRung] = useState<number>(81)
   const [solvedItems, setSolvedItems] = useState<string[]>([])
 
@@ -89,7 +92,7 @@ export default function LadderAuditor({ locale, onProgressChange }: LadderAudito
         </div>
         <button className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl shadow-xs transition cursor-pointer">
           <Play className="w-3 h-3 fill-current" />
-          <span>{locale === 'ja' ? '安全スキャン実行' : locale === 'vi' ? 'QUÉT AN TOÀN' : 'RUN SAFETY SCAN'}</span>
+          <span>{t('post.ladder.scanBtn')}</span>
         </button>
       </div>
 
@@ -239,7 +242,7 @@ export default function LadderAuditor({ locale, onProgressChange }: LadderAudito
                   <p className="text-[11px] text-slate-600 leading-relaxed">{log.description}</p>
 
                   <div className="pt-2 mt-2 border-t border-slate-200 space-y-1 text-[11px]">
-                    <span className="font-bold text-slate-550 font-mono">Đề xuất sửa lỗi:</span>
+                    <span className="font-bold text-slate-550 font-mono">{t('post.ladder.fixSuggestion')}</span>
                     <p className="text-slate-700 font-mono bg-slate-50 p-2.5 rounded border border-slate-200 mt-1 leading-relaxed">{log.solution}</p>
                   </div>
 
@@ -256,7 +259,7 @@ export default function LadderAuditor({ locale, onProgressChange }: LadderAudito
                       }`}
                     >
                       {isSolved ? <Check className="w-3 h-3" /> : null}
-                      <span>{isSolved ? 'Đã sửa đổi (Applied)' : 'Áp dụng sửa tự động'}</span>
+                      <span>{isSolved ? t('post.ladder.applied') : t('post.ladder.applyFix')}</span>
                     </button>
                   </div>
                 </div>

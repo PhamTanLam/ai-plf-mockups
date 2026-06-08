@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { FileDown, Award } from 'lucide-react'
+import { useI18n } from '@/i18n/I18nProvider'
 
 type LayerKey = 'main' | 'control' | 'network' | 'safety'
 
@@ -11,6 +12,7 @@ interface CadViewerProps {
 }
 
 export default function CadViewer({ locale, currentUser = 'Linh', onProgressChange, onSelectComponent }: CadViewerProps) {
+  const { t, tf } = useI18n()
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     main: true,
     control: true,
@@ -237,17 +239,17 @@ export default function CadViewer({ locale, currentUser = 'Linh', onProgressChan
         {/* Onsite Adjustment Form (STT 12) */}
         <div className="pt-2 border-t border-slate-200 mt-2 space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase block">Hiệu chỉnh phần cứng tại hiện trường (STT 12)</label>
+            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase block">{t('post.cad.onsiteLabel')}</label>
             {isSaved && savedBy && (
               <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">
-                ✓ Đã lưu bởi {savedBy}
+                ✓ {tf('post.cad.savedBy', { name: savedBy })}
               </span>
             )}
           </div>
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Nhập nội dung sửa phần cứng... (VD: Đấu nối KA1 NC vào PLC X20)"
+              placeholder={t('post.cad.placeholder')}
               className="flex-1 px-3 py-1.5 text-xs border border-slate-250 rounded-xl outline-none focus:border-brand-500 bg-white text-slate-800"
               value={onsiteAdjustText}
               onChange={(e) => setOnsiteAdjustText(e.target.value)}
@@ -262,7 +264,7 @@ export default function CadViewer({ locale, currentUser = 'Linh', onProgressChan
               }}
               className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer shrink-0"
             >
-              Cập nhật CAD
+              {t('post.cad.updateBtn')}
             </button>
           </div>
         </div>

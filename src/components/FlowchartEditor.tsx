@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Code, Copy, RefreshCw, Layers, Check } from 'lucide-react'
+import { useI18n } from '@/i18n/I18nProvider'
 
 interface NodeItem {
   id: string
@@ -15,6 +16,8 @@ interface FlowchartEditorProps {
 }
 
 export default function FlowchartEditor({ locale, onProgressChange }: FlowchartEditorProps) {
+  void locale
+  const { t } = useI18n()
   const [activeTab, setActiveTab] = useState<'flow' | 'st'>('flow')
   const [selectedNode, setSelectedNode] = useState<string>('step4')
   const [copied, setCopied] = useState(false)
@@ -133,7 +136,7 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>{locale === 'ja' ? 'フローチャート' : locale === 'vi' ? 'Sơ đồ khối' : 'Flowchart'}</span>
+            <span>{t('post.flow.tabFlow')}</span>
           </button>
           <button
             onClick={() => setActiveTab('st')}
@@ -301,11 +304,11 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
               <div className="flex items-center gap-1.5 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                 <span>
-                  Áp dụng tri thức Page 4:
-                  {ruleInterlock && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">Liên khóa KA1</span>}
-                  {ruleServoInit && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">Khởi tạo Servo</span>}
-                  {ruleRegisterOpt && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">Tối ưu ghi D</span>}
-                  {!ruleInterlock && !ruleServoInit && !ruleRegisterOpt && <span className="ml-1 text-slate-500">Mặc định</span>}
+                  {t('post.flow.applyKnowledge')}
+                  {ruleInterlock && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">{t('post.flow.presetSafety')}</span>}
+                  {ruleServoInit && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">{t('post.flow.presetServo')}</span>}
+                  {ruleRegisterOpt && <span className="ml-1 px-1.5 py-0.2 bg-indigo-100 border border-indigo-200 rounded text-[9.5px]">{t('post.flow.presetReg')}</span>}
+                  {!ruleInterlock && !ruleServoInit && !ruleRegisterOpt && <span className="ml-1 text-slate-500">{t('post.flow.presetDefault')}</span>}
                 </span>
               </div>
               <span className="text-[8.5px] bg-indigo-500/10 border border-indigo-300/50 px-2 py-0.5 rounded font-mono font-bold text-indigo-700">

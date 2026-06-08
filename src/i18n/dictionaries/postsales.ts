@@ -1,0 +1,88 @@
+import type { Dictionary } from '@/i18n/types'
+
+/**
+ * postsales — NHÃN UI cho các màn sau nhận đơn (Cad/Flowchart/Ladder/Doc/Reentry/Materials/DebugCode/Archive).
+ * Chỉ dịch nhãn/nút/tiêu đề; nội dung kỹ thuật (mã ST, địa chỉ, mô tả lỗi, tài liệu sinh ra) giữ nguyên.
+ * JA/EN là bản dịch nháp — cần native review.
+ */
+export const postsales: Dictionary = {
+  ja: {
+    // DocumentGenerator (phase 13/11)
+    'post.doc.title': '検収書・取扱説明書の生成',
+    'post.doc.subtitle': '運用・検査ドキュメントを自動出力 (STT 13)',
+    'post.doc.tabManual': '取扱説明書 (HMI)',
+    'post.doc.tabProtocol': '検収記録',
+    'post.doc.labelTp': 'TP / HMI 画面情報',
+    'post.doc.labelResult': '検収テスト結果',
+    'post.doc.generating': 'AI が資料を生成中...',
+    'post.doc.generate': '資料を自動生成',
+    // CadViewer
+    'post.cad.exportDxf': 'DXF出力',
+    'post.cad.onsiteLabel': '現地ハード調整 (STT 12)',
+    'post.cad.placeholder': 'ハード修正内容を入力...（例: KA1 NC を PLC X20 に配線）',
+    'post.cad.updateBtn': 'CAD を更新',
+    'post.cad.savedBy': '{name} が保存',
+    // LadderAuditor
+    'post.ladder.scanBtn': '安全スキャン実行',
+    'post.ladder.fixSuggestion': '修正提案:',
+    'post.ladder.applied': '適用済 (Applied)',
+    'post.ladder.applyFix': '自動修正を適用',
+    // FlowchartEditor
+    'post.flow.tabFlow': 'フローチャート',
+    'post.flow.presetSafety': 'KA1 インターロック',
+    'post.flow.presetServo': 'サーボ初期化',
+    'post.flow.presetReg': 'D レジスタ最適化',
+    'post.flow.presetDefault': 'デフォルト',
+    'post.flow.applyKnowledge': 'Page 4 の知識を適用:',
+  },
+  en: {
+    'post.doc.title': 'Generate acceptance docs & manual',
+    'post.doc.subtitle': 'Auto-export operation & inspection documents (STT 13)',
+    'post.doc.tabManual': 'User manual (HMI)',
+    'post.doc.tabProtocol': 'Acceptance record',
+    'post.doc.labelTp': 'TP / HMI screen info',
+    'post.doc.labelResult': 'Acceptance test result',
+    'post.doc.generating': 'Generating document with AI...',
+    'post.doc.generate': 'Auto-generate document',
+    'post.cad.exportDxf': 'Export DXF',
+    'post.cad.onsiteLabel': 'On-site hardware adjustment (STT 12)',
+    'post.cad.placeholder': 'Enter hardware change... (e.g. wire KA1 NC to PLC X20)',
+    'post.cad.updateBtn': 'Update CAD',
+    'post.cad.savedBy': 'Saved by {name}',
+    'post.ladder.scanBtn': 'Run safety scan',
+    'post.ladder.fixSuggestion': 'Fix suggestion:',
+    'post.ladder.applied': 'Applied',
+    'post.ladder.applyFix': 'Apply auto-fix',
+    'post.flow.tabFlow': 'Flowchart',
+    'post.flow.presetSafety': 'KA1 interlock',
+    'post.flow.presetServo': 'Servo init',
+    'post.flow.presetReg': 'Optimize D-reg',
+    'post.flow.presetDefault': 'Default',
+    'post.flow.applyKnowledge': 'Applying Page 4 knowledge:',
+  },
+  vi: {
+    'post.doc.title': 'Tạo tài liệu nghiệm thu & HDSD',
+    'post.doc.subtitle': 'Tự động kết xuất tài liệu vận hành và kiểm tra (STT 13)',
+    'post.doc.tabManual': 'Hướng dẫn sử dụng (HMI)',
+    'post.doc.tabProtocol': 'Biên bản nghiệm thu',
+    'post.doc.labelTp': 'Thông tin màn hình TP / HMI',
+    'post.doc.labelResult': 'Kết quả kiểm tra nghiệm thu',
+    'post.doc.generating': 'Đang tạo tài liệu bằng AI...',
+    'post.doc.generate': 'Tự động tạo tài liệu',
+    'post.cad.exportDxf': 'Xuất DXF',
+    'post.cad.onsiteLabel': 'Hiệu chỉnh phần cứng tại hiện trường (STT 12)',
+    'post.cad.placeholder': 'Nhập nội dung sửa phần cứng... (VD: Đấu nối KA1 NC vào PLC X20)',
+    'post.cad.updateBtn': 'Cập nhật CAD',
+    'post.cad.savedBy': 'Đã lưu bởi {name}',
+    'post.ladder.scanBtn': 'QUÉT AN TOÀN',
+    'post.ladder.fixSuggestion': 'Đề xuất sửa lỗi:',
+    'post.ladder.applied': 'Đã sửa đổi (Applied)',
+    'post.ladder.applyFix': 'Áp dụng sửa tự động',
+    'post.flow.tabFlow': 'Sơ đồ khối',
+    'post.flow.presetSafety': 'Liên khóa KA1',
+    'post.flow.presetServo': 'Khởi tạo Servo',
+    'post.flow.presetReg': 'Tối ưu ghi D',
+    'post.flow.presetDefault': 'Mặc định',
+    'post.flow.applyKnowledge': 'Áp dụng tri thức Page 4:',
+  },
+}

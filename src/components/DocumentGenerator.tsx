@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { FileText, FileSpreadsheet, Sparkles, Printer, Download, CheckCircle } from 'lucide-react'
+import { useI18n } from '@/i18n/I18nProvider'
 
 interface DocumentGeneratorProps {
   onProgressChange?: (progress: number) => void
 }
 
 export default function DocumentGenerator({ onProgressChange }: DocumentGeneratorProps) {
+  const { t } = useI18n()
   const [docType, setDocType] = useState<'manual' | 'protocol'>('manual')
   const [tpScreenInfo, setTpScreenInfo] = useState('Màn hình chính HMI hiển thị: Nút nhấn Chạy tự động (Auto), Dừng khẩn cấp (EMS), Điều chỉnh thông số tốc độ Servo (0 - 3000 rpm), và đồ thị giám sát lực kẹp xi-lanh.')
   const [testResult, setTestResult] = useState('Đã kiểm tra 50 phôi. Kết quả: 48 phôi OK chuyển qua băng tải thành phẩm, 02 phôi NG kích hoạt xi lanh đẩy lỗi và còi báo động. Thời gian đo quét 3D trung bình 1.2 giây/phôi. Đạt chuẩn chất lượng.')
@@ -71,8 +73,8 @@ Dựa trên báo cáo kiểm thử thực tế trên 50 sản phẩm mẫu đư�
     <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 text-slate-700 shadow-panel">
       <div className="flex items-center justify-between border-b border-slate-200 pb-3">
         <div>
-          <h4 className="text-xs font-mono font-bold text-slate-850 uppercase tracking-wider">Tạo tài liệu nghiệm thu & HDSD</h4>
-          <p className="text-[10px] text-slate-450">Tự động kết xuất tài liệu vận hành và kiểm tra (STT 13)</p>
+          <h4 className="text-xs font-mono font-bold text-slate-850 uppercase tracking-wider">{t('post.doc.title')}</h4>
+          <p className="text-[10px] text-slate-450">{t('post.doc.subtitle')}</p>
         </div>
       </div>
 
@@ -90,7 +92,7 @@ Dựa trên báo cáo kiểm thử thực tế trên 50 sản phẩm mẫu đư�
           }`}
         >
           <FileText className="w-5 h-5" />
-          <span className="text-xs">Hướng dẫn sử dụng (HMI)</span>
+          <span className="text-xs">{t('post.doc.tabManual')}</span>
         </button>
 
         <button
@@ -105,7 +107,7 @@ Dựa trên báo cáo kiểm thử thực tế trên 50 sản phẩm mẫu đư�
           }`}
         >
           <FileSpreadsheet className="w-5 h-5" />
-          <span className="text-xs">Biên bản nghiệm thu</span>
+          <span className="text-xs">{t('post.doc.tabProtocol')}</span>
         </button>
       </div>
 
@@ -113,7 +115,7 @@ Dựa trên báo cáo kiểm thử thực tế trên 50 sản phẩm mẫu đư�
       <div className="space-y-3">
         {docType === 'manual' ? (
           <div className="space-y-1.5">
-            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase">Thông tin màn hình TP / HMI</label>
+            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase">{t('post.doc.labelTp')}</label>
             <textarea
               rows={2}
               value={tpScreenInfo}
@@ -123,7 +125,7 @@ Dựa trên báo cáo kiểm thử thực tế trên 50 sản phẩm mẫu đư�
           </div>
         ) : (
           <div className="space-y-1.5">
-            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase">Kết quả kiểm tra nghiệm thu</label>
+            <label className="text-[10px] font-mono font-bold text-slate-500 uppercase">{t('post.doc.labelResult')}</label>
             <textarea
               rows={2}
               value={testResult}
@@ -139,7 +141,7 @@ Dựa trên báo cáo kiểm thử thực tế trên 50 sản phẩm mẫu đư�
           className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-brand-500 hover:bg-brand-600 text-white rounded-xl shadow-md transition disabled:opacity-50 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
-          <span>{isGenerating ? 'Đang tạo tài liệu bằng AI...' : 'Tự động tạo tài liệu'}</span>
+          <span>{isGenerating ? t('post.doc.generating') : t('post.doc.generate')}</span>
         </button>
       </div>
 
