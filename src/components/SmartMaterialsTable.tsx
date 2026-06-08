@@ -20,6 +20,7 @@ interface SmartMaterialsTableProps {
   onAddLog?: (action: string, phaseNum: number) => void
   onMaterialsChange?: (totalPrice: number) => void
   onUpdateChat?: (userMsg: string, aiMsg: string) => void
+  showSyncBadge?: boolean
 }
 
 const DEFAULT_MATERIALS: MaterialItem[] = [
@@ -38,7 +39,8 @@ export default function SmartMaterialsTable({
   currentUser = 'Linh',
   materialsVersion,
   onAddLog,
-  onMaterialsChange
+  onMaterialsChange,
+  showSyncBadge = true
 }: SmartMaterialsTableProps) {
   const { t, tf } = useI18n()
   const [materials, setMaterials] = useState<MaterialItem[]>([])
@@ -207,14 +209,16 @@ export default function SmartMaterialsTable({
           </div>
         </div>
         
-        <div className="text-right">
-          <span className="text-[10px] bg-white/20 border border-white/20 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">
-            {t('post.mat.syncBadge')}
-          </span>
-          <p className="text-[9px] text-brand-200 mt-1 font-mono">
-            {t('post.mat.autoRecalc')}
-          </p>
-        </div>
+        {showSyncBadge && (
+          <div className="text-right">
+            <span className="text-[10px] bg-white/20 border border-white/20 px-2.5 py-1 rounded-full font-bold whitespace-nowrap">
+              {t('post.mat.syncBadge')}
+            </span>
+            <p className="text-[9px] text-brand-200 mt-1 font-mono">
+              {t('post.mat.autoRecalc')}
+            </p>
+          </div>
+        )}
       </div>
 
     </div>

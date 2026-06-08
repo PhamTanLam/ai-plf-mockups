@@ -274,7 +274,7 @@ export default function NotebookWorkspace() {
   const initialPhase = statusToPhase(caseStatus)
   const providedProgress = navState?.progress ?? DEMO_PROGRESS[id || '']
   const [activePhase, setActivePhase] = useState<number | null>(initialPhase)
-  const [phases, setPhases] = useState<(PhaseDetail & { isVisible?: boolean })[]>(
+  const [phases] = useState<(PhaseDetail & { isVisible?: boolean })[]>(
     phasesInfo.map(p => ({ ...p, isVisible: true }))
   )
   const [activeUser, setActiveUser] = useState<'Linh' | 'Kanai' | 'AI'>('Linh')
@@ -302,6 +302,116 @@ export default function NotebookWorkspace() {
   const [materialsVersion, setMaterialsVersion] = useState(0)
   const [kickoffText, setKickoffText] = useState('')
   const [designSubTab, setDesignSubTab] = useState<'cad' | 'code'>('cad')
+
+  // Basic Web Application Settings
+  const [siteTitle, setSiteTitle] = useState(() => localStorage.getItem('aiplf.settings.siteTitle') || 'Cowatech AI Platform')
+  const [themeColor, setThemeColor] = useState(() => localStorage.getItem('aiplf.settings.themeColor') || 'teal')
+  const [fontSize, setFontSize] = useState(() => localStorage.getItem('aiplf.settings.fontSize') || 'medium')
+  const [showLibraryBtn, setShowLibraryBtn] = useState(() => localStorage.getItem('aiplf.settings.showLibraryBtn') !== 'false')
+  const [showChatbot, setShowChatbot] = useState(() => localStorage.getItem('aiplf.settings.showChatbot') !== 'false')
+  const [showSyncBadge, setShowSyncBadge] = useState(() => localStorage.getItem('aiplf.settings.showSyncBadge') !== 'false')
+  const [showCadTab, setShowCadTab] = useState(() => localStorage.getItem('aiplf.settings.showCadTab') !== 'false')
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('aiplf.settings.isDarkMode') === 'true')
+  const [settingsActiveTab, setSettingsActiveTab] = useState<'general' | 'appearance' | 'features'>('general')
+
+  // Apply theme color changes dynamically
+  useEffect(() => {
+    const root = document.documentElement;
+    const themes: Record<string, Record<string, string>> = {
+      teal: {
+        '50': '#f0fdfa', '100': '#ccfbf1', '200': '#99f6e4', '300': '#5eead4',
+        '400': '#2dd4bf', '500': '#0abab5', '600': '#099e9a', '700': '#0f766e',
+        '800': '#115e59', '900': '#134e4a'
+      },
+      blue: {
+        '50': '#eff6ff', '100': '#dbeafe', '200': '#bfdbfe', '300': '#93c5fd',
+        '400': '#60a5fa', '500': '#3b82f6', '600': '#2563eb', '700': '#1d4ed8',
+        '800': '#1e40af', '900': '#1e3a8a'
+      },
+      indigo: {
+        '50': '#eef2ff', '100': '#e0e7ff', '200': '#c7d2fe', '300': '#a5b4fc',
+        '400': '#818cf8', '500': '#6366f1', '600': '#4f46e5', '700': '#4338ca',
+        '800': '#3730a3', '900': '#312e81'
+      },
+      emerald: {
+        '50': '#ecfdf5', '100': '#d1fae5', '200': '#a7f3d0', '300': '#6ee7b7',
+        '400': '#34d399', '500': '#10b981', '600': '#059669', '700': '#047857',
+        '800': '#065f46', '900': '#064e3b'
+      },
+      orange: {
+        '50': '#fff7ed', '100': '#ffedd5', '200': '#fed7aa', '300': '#fdbb2d',
+        '400': '#fb923c', '500': '#f97316', '600': '#ea580c', '700': '#c2410c',
+        '800': '#9a3412', '900': '#7c2d12'
+      }
+    };
+    const colorSet = themes[themeColor] || themes.teal;
+    Object.entries(colorSet).forEach(([shade, hex]) => {
+      root.style.setProperty(`--color-brand-${shade}`, hex);
+    });
+    localStorage.setItem('aiplf.settings.themeColor', themeColor);
+  }, [themeColor]);
+
+  // Apply font size changes dynamically
+  useEffect(() => {
+    const root = document.documentElement;
+    const sizes: Record<string, string> = {
+      small: '14px',
+      medium: '15px',
+      large: '16px'
+    };
+    root.style.fontSize = sizes[fontSize] || '15px';
+    localStorage.setItem('aiplf.settings.fontSize', fontSize);
+  }, [fontSize]);
+
+  // Apply dark mode styling dynamically on document element
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.style.setProperty('--color-surface', '#1e293b');
+      root.style.setProperty('--color-surface-alt', '#0f172a');
+      root.style.setProperty('--color-surface-muted', '#334155');
+      root.style.setProperty('--color-background-app', '#020617');
+      root.style.setProperty('--color-line', '#334155');
+      root.classList.add('dark');
+    } else {
+      root.style.removeProperty('--color-surface');
+      root.style.removeProperty('--color-surface-alt');
+      root.style.removeProperty('--color-surface-muted');
+      root.style.removeProperty('--color-background-app');
+      root.style.removeProperty('--color-line');
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('aiplf.settings.isDarkMode', String(isDarkMode));
+  }, [isDarkMode]);
+
+  // Sync state options to localStorage
+  useEffect(() => {
+    localStorage.setItem('aiplf.settings.siteTitle', siteTitle);
+  }, [siteTitle]);
+
+  useEffect(() => {
+    localStorage.setItem('aiplf.settings.showLibraryBtn', String(showLibraryBtn));
+  }, [showLibraryBtn]);
+
+  useEffect(() => {
+    localStorage.setItem('aiplf.settings.showChatbot', String(showChatbot));
+  }, [showChatbot]);
+
+  useEffect(() => {
+    localStorage.setItem('aiplf.settings.showSyncBadge', String(showSyncBadge));
+    setMaterialsVersion(prev => prev + 1); // trigger materials table update
+  }, [showSyncBadge]);
+
+  useEffect(() => {
+    localStorage.setItem('aiplf.settings.showCadTab', String(showCadTab));
+  }, [showCadTab]);
+
+  useEffect(() => {
+    if (!showCadTab && designSubTab === 'cad') {
+      setDesignSubTab('code');
+    }
+  }, [showCadTab, designSubTab]);
+
   const KICKOFF_STORAGE_KEY = `aiplf.kickoff_notes_text.${id || 'default'}`
 
   useEffect(() => {
@@ -1386,15 +1496,17 @@ Thành phần tham dự:
 
         {/* Global Toolbar */}
         <div className="flex items-center gap-3.5">
-          <Link 
-            to={`/workspace/${id}/library`}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-extrabold shadow-md shadow-brand-500/15 transition cursor-pointer"
-          >
-            <FolderOpen className="w-4 h-4" />
-            <span>{t('ws.header.library')}</span>
-          </Link>
+          {showLibraryBtn && (
+            <Link 
+              to={`/workspace/${id}/library`}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-extrabold shadow-md shadow-brand-500/15 transition cursor-pointer"
+            >
+              <FolderOpen className="w-4 h-4" />
+              <span>{t('ws.header.library')}</span>
+            </Link>
+          )}
 
-          <div className="h-5 w-px bg-slate-250" />
+          {showLibraryBtn && <div className="h-5 w-px bg-slate-250" />}
 
           {/* Active User Switcher */}
           <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-xl p-1 text-xs">
@@ -1722,6 +1834,7 @@ Thành phần tham dự:
                     projectId={id || 'default'}
                     currentUser={activeUser}
                     materialsVersion={materialsVersion}
+                    showSyncBadge={showSyncBadge}
                     onAddLog={(action) => addLog(action, 9)}
                     onMaterialsChange={(_totalPrice) => {
                       handleProgress9(100)
@@ -1744,16 +1857,18 @@ Thành phần tham dự:
                   {/* Premium Segmented Tab Switcher */}
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                     <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-3xs select-none">
-                      <button
-                        onClick={() => setDesignSubTab('cad')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          designSubTab === 'cad'
-                            ? 'bg-brand-500 text-white shadow-xs'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        {t('ws.design.tabCad')}
-                      </button>
+                      {showCadTab && (
+                        <button
+                          onClick={() => setDesignSubTab('cad')}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            designSubTab === 'cad'
+                              ? 'bg-brand-500 text-white shadow-xs'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          {t('ws.design.tabCad')}
+                        </button>
+                      )}
                       <button
                         onClick={() => setDesignSubTab('code')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -1963,106 +2078,106 @@ Thành phần tham dự:
         </main>
 
         {/* COLUMN 3: RIGHT SIDEBAR - Collapsible AI Copilot Panel (Width: 420px) */}
-        <aside 
-          className={`shrink-0 bg-slate-50/90 backdrop-blur-md border-l border-slate-200 flex flex-col h-full z-10 transition-all duration-300 relative ${
-            isCopilotExpanded ? 'w-[420px]' : 'w-10'
-          }`}
-        >
-          {isCopilotExpanded ? (
-            <>
-              {/* Copilot Header */}
-              <div className="p-3 border-b border-slate-200 bg-slate-100/50 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-brand-550" />
-                  <span className="text-xs font-mono font-extrabold text-slate-800 uppercase">
-                    {t('ws.copilot.title')}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setIsCopilotExpanded(false)}
-                  className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition cursor-pointer"
-                  title={t('ws.copilot.collapse')}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Dynamic Context Banner */}
-              <div className="px-3.5 py-2.5 bg-brand-500/10 border-b border-brand-500/20 text-[10px] text-brand-700 leading-relaxed select-none">
-                {activePhase !== null ? (
-                  <>{tf('ws.copilot.ctxPhase', { n: activePhase, title: phaseTitle(activePhase) })}</>
-                ) : (
-                  <>{t('ws.copilot.ctxNone')}</>
-                )}
-              </div>
-
-              {/* Chat thread */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/40">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex gap-2.5 max-w-full ${
-                      msg.sender === 'user' ? 'flex-row-reverse' : ''
-                    }`}
+        {showChatbot && (
+          <aside 
+            className={`shrink-0 bg-slate-50/90 backdrop-blur-md border-l border-slate-200 flex flex-col h-full z-10 transition-all duration-300 relative ${
+              isCopilotExpanded ? 'w-[420px]' : 'w-10'
+            }`}
+          >
+            {isCopilotExpanded ? (
+              <>
+                {/* Copilot Header */}
+                <div className="p-3 border-b border-slate-200 bg-slate-100/50 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-brand-550" />
+                    <span className="text-xs font-mono font-extrabold text-slate-800 uppercase">
+                      {t('ws.copilot.title')}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIsCopilotExpanded(false)}
+                    className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+                    title={t('ws.copilot.collapse')}
                   >
-                    {/* Avatar */}
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Dynamic Context Banner */}
+                <div className="px-3.5 py-2.5 bg-brand-500/10 border-b border-brand-500/20 text-[10px] text-brand-700 leading-relaxed select-none">
+                  {activePhase !== null ? (
+                    <>{tf('ws.copilot.ctxPhase', { n: activePhase, title: phaseTitle(activePhase) })}</>
+                  ) : (
+                    <>{t('ws.copilot.ctxNone')}</>
+                  )}
+                </div>
+
+                {/* Chat thread */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/40">
+                  {messages.map((msg) => (
                     <div
-                      className={`w-7.5 h-7.5 rounded-xl flex items-center justify-center font-bold text-[9px] shrink-0 shadow-md select-none transition hover:scale-105 duration-200 ${
-                        msg.sender === 'ai'
-                          ? 'gradient-primary text-white glow-brand font-black'
-                          : activeUser === 'Linh'
-                          ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border border-emerald-400'
-                          : activeUser === 'Kanai'
-                          ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white border border-amber-400'
-                          : 'bg-gradient-to-br from-indigo-500 to-sky-500 text-white border border-indigo-400'
+                      key={msg.id}
+                      className={`flex gap-2.5 max-w-full ${
+                        msg.sender === 'user' ? 'flex-row-reverse' : ''
                       }`}
                     >
-                      {msg.sender === 'ai' ? 'AI' : activeUser}
-                    </div>
-
-                    <div className="space-y-0.5 max-w-[85%]">
-                      {/* Bubble content */}
+                      {/* Avatar */}
                       <div
-                        className={`p-3 rounded-2xl border leading-relaxed text-xs whitespace-pre-line relative shadow-3xs bubble-ai ${
+                        className={`w-7.5 h-7.5 rounded-xl flex items-center justify-center font-bold text-[9px] shrink-0 shadow-md select-none transition hover:scale-105 duration-200 ${
                           msg.sender === 'ai'
-                            ? 'bg-white border-slate-200 text-slate-800'
-                            : 'bg-brand-500 border-brand-600 text-white font-medium bubble-user'
+                            ? 'gradient-primary text-white glow-brand font-black'
+                            : activeUser === 'Linh'
+                            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border border-emerald-400'
+                            : activeUser === 'Kanai'
+                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white border border-amber-400'
+                            : 'bg-gradient-to-br from-indigo-500 to-sky-500 text-white border border-indigo-400'
                         }`}
                       >
-                        {msg.sender === 'ai' ? (
-                          <div>
-                            {(msg.tkey ? tf(msg.tkey, msg.tvars ?? {}) : tc(msg.text)).split(/(\[\d+\])/g).map((part, index) => {
-                              const match = part.match(/\[(\d+)\]/)
-                              if (match && msg.citations) {
-                                const citNum = parseInt(match[1])
-                                const citObj = msg.citations.find((c) => c.id === citNum)
-                                if (citObj) {
-                                  return (
-                                    <span
-                                      key={index}
-                                      onClick={() => handleCitationClick(citObj)}
-                                      className="cite cursor-pointer font-bold mx-0.5 bg-brand-500/10 text-brand-700 border border-brand-500/25 hover:bg-brand-500 hover:text-white px-1 py-0.2 rounded font-mono"
-                                    >
-                                      {citNum}
-                                    </span>
-                                  )
-                                }
-                              }
-                              // Render **đậm** (chat dùng text thuần) cho phần không phải trích dẫn
-                              return (
-                                <span key={index}>
-                                  {part.split(/(\*\*[^*]+\*\*)/g).map((seg, j) => {
-                                    const b = seg.match(/^\*\*([^*]+)\*\*$/)
-                                    return b ? <strong key={j} className="font-semibold text-slate-900">{b[1]}</strong> : <span key={j}>{seg}</span>
-                                  })}
-                                </span>
-                              )
-                            })}
-                          </div>
-                        ) : (
-                          <span>{tc(msg.text)}</span>
-                        )}
+                        {msg.sender === 'ai' ? 'AI' : activeUser}
                       </div>
+
+                      <div className="space-y-0.5 max-w-[85%]">
+                        {/* Bubble content */}
+                        <div
+                          className={`p-3 rounded-2xl border leading-relaxed text-xs whitespace-pre-line relative shadow-3xs bubble-ai ${
+                            msg.sender === 'ai'
+                              ? 'bg-white border-slate-200 text-slate-800'
+                              : 'bg-brand-500 border-brand-600 text-white font-medium bubble-user'
+                          }`}
+                        >
+                          {msg.sender === 'ai' ? (
+                            <div>
+                              {(msg.tkey ? tf(msg.tkey, msg.tvars ?? {}) : tc(msg.text)).split(/(\[\d+\])/g).map((part, index) => {
+                                const match = part.match(/\[(\d+)\]/)
+                                if (match && msg.citations) {
+                                  const citNum = parseInt(match[1])
+                                  const citObj = msg.citations.find((c) => c.id === citNum)
+                                  if (citObj) {
+                                    return (
+                                      <span
+                                        key={index}
+                                        onClick={() => handleCitationClick(citObj)}
+                                        className="cite cursor-pointer font-bold mx-0.5 bg-brand-500/10 text-brand-700 border border-brand-500/25 hover:bg-brand-500 hover:text-white px-1 py-0.2 rounded font-mono"
+                                      >
+                                        {citNum}
+                                      </span>
+                                    )
+                                  }
+                                }
+                                return (
+                                  <span key={index}>
+                                    {part.split(/(\*\*[^*]+\*\*)/g).map((seg, j) => {
+                                      const b = seg.match(/^\*\*([^*]+)\*\*$/)
+                                      return b ? <strong key={j} className="font-semibold text-slate-900">{b[1]}</strong> : <span key={j}>{seg}</span>
+                                    })}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <span>{tc(msg.text)}</span>
+                          )}
+                        </div>
                     </div>
                   </div>
                 ))}
@@ -2131,7 +2246,8 @@ Thành phần tham dự:
               </span>
             </button>
           )}
-        </aside>
+          </aside>
+        )}
 
       </div>
 
@@ -2139,86 +2255,220 @@ Thành phần tham dự:
 
 
 
-      {/* Dynamic Stepper configuration modal */}
+      {/* Basic Web configuration modal */}
       {isConfigOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 w-[480px] space-y-4 shadow-pop animate-in zoom-in-95 duration-200 text-slate-800">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <h3 className="text-sm font-bold text-slate-950 font-mono uppercase tracking-wider flex items-center gap-1.5">
                 <Settings className="w-4 h-4 text-brand-500" />
-                <span>Setting</span>
+                <span>Cấu hình Hệ thống (Setting)</span>
               </h3>
               <button onClick={() => setIsConfigOpen(false)} className="text-slate-500 hover:text-slate-800 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Tabs Selector */}
+            <div className="flex gap-4 border-b border-slate-100 pb-2 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setSettingsActiveTab('general')}
+                className={`pb-1 px-1 border-b-2 cursor-pointer transition ${
+                  settingsActiveTab === 'general'
+                    ? 'border-brand-500 text-brand-600 font-extrabold'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Cấu hình chung
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettingsActiveTab('appearance')}
+                className={`pb-1 px-1 border-b-2 cursor-pointer transition ${
+                  settingsActiveTab === 'appearance'
+                    ? 'border-brand-500 text-brand-600 font-extrabold'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Giao diện & Chủ đề
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettingsActiveTab('features')}
+                className={`pb-1 px-1 border-b-2 cursor-pointer transition ${
+                  settingsActiveTab === 'features'
+                    ? 'border-brand-500 text-brand-600 font-extrabold'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Quản lý tính năng
+              </button>
+            </div>
             
-            <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
-              {phases.map((p) => (
-                <div key={p.num} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 transition flex flex-col gap-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <input
-                        type="checkbox"
-                        checked={p.isVisible !== false}
-                        onChange={() => {
-                          setPhases(phases.map(item => item.num === p.num ? { ...item, isVisible: !item.isVisible } : item))
-                        }}
-                        className="w-4 h-4 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-white cursor-pointer shrink-0"
-                      />
-                      <div className="text-xs flex items-center gap-1.5 flex-1 min-w-0">
-                        <span className="text-slate-400 shrink-0">
-                          {getPhaseIcon(p.num, "w-3.5 h-3.5")}
-                        </span>
-                        <span className="font-mono font-bold text-slate-500 shrink-0">{t('ws.phaseShort')} {p.num}</span>
-                        <input
-                          type="text"
-                          value={p.title}
-                          onChange={(e) => {
-                            setPhases(phases.map(item => item.num === p.num ? { ...item, title: e.target.value } : item))
-                          }}
-                          className="font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-slate-300 focus:outline-none focus:bg-slate-150 px-1.5 py-0.5 rounded flex-1 min-w-0"
-                        />
-                      </div>
-                    </div>
-                    <span className="text-[9px] bg-slate-200/60 text-slate-600 border border-slate-300/40 px-2 py-0.5 rounded font-mono uppercase shrink-0">{p.tab}</span>
+            <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1 text-xs">
+              {settingsActiveTab === 'general' && (
+                <div className="space-y-3.5 animate-in fade-in duration-150">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-500">Tên Nền tảng (Site Title)</label>
+                    <input
+                      type="text"
+                      value={siteTitle}
+                      onChange={(e) => setSiteTitle(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-800 font-medium"
+                      placeholder="Nhập tên trang web..."
+                    />
                   </div>
 
-                  {/* Additional customizable user settings: Description & Assigned User Role */}
-                  <div className="pl-6.5 space-y-2 border-t border-slate-200/60 pt-2 text-[10px]">
-                    <div className="flex gap-2 items-start">
-                      <span className="font-bold text-slate-400 mt-1 shrink-0 w-12 text-right">Mô tả:</span>
-                      <textarea
-                        rows={2}
-                        value={p.desc}
-                        onChange={(e) => {
-                          setPhases(phases.map(item => item.num === p.num ? { ...item, desc: e.target.value } : item))
-                        }}
-                        className="text-[10px] text-slate-600 bg-transparent border border-slate-200/40 focus:border-slate-300 focus:outline-none focus:bg-slate-150 px-2 py-1 rounded w-full resize-none leading-relaxed"
-                        placeholder="Mô tả giai đoạn..."
-                      />
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <span className="font-bold text-slate-400 shrink-0 w-12 text-right">Nhân sự:</span>
-                      <input
-                        type="text"
-                        value={p.users}
-                        onChange={(e) => {
-                          setPhases(phases.map(item => item.num === p.num ? { ...item, users: e.target.value } : item))
-                        }}
-                        className="text-[10px] text-slate-600 bg-transparent border border-slate-200/40 focus:border-slate-300 focus:outline-none focus:bg-slate-150 px-2 py-1 rounded w-full font-medium"
-                        placeholder="Vai trò / Nhân sự phụ trách..."
-                      />
-                    </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-500">Ngôn ngữ Hệ thống (System Language)</label>
+                    <select
+                      value={locale}
+                      onChange={(e) => setLocale(e.target.value as any)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-850 font-medium cursor-pointer"
+                    >
+                      <option value="vi">Tiếng Việt (Vietnamese)</option>
+                      <option value="en">English (US)</option>
+                      <option value="ja">日本語 (Japanese)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-500">Vai trò Đăng nhập (Active Role)</label>
+                    <select
+                      value={activeUser}
+                      onChange={(e) => setActiveUser(e.target.value as any)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-850 font-medium cursor-pointer"
+                    >
+                      <option value="Linh">Linh (Kỹ sư Việt Nam)</option>
+                      <option value="Kanai">Kanai (Chuyên gia Nhật Bản)</option>
+                      <option value="AI">AI Agent (Trợ lý tự động)</option>
+                    </select>
                   </div>
                 </div>
-              ))}
+              )}
+
+              {settingsActiveTab === 'appearance' && (
+                <div className="space-y-4 animate-in fade-in duration-150">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-500 block mb-1">Tông màu chủ đạo (Brand Theme Color)</label>
+                    <div className="grid grid-cols-5 gap-2.5">
+                      {[
+                        { name: 'teal', label: 'Teal', color: '#0abab5' },
+                        { name: 'blue', label: 'Blue', color: '#3b82f6' },
+                        { name: 'indigo', label: 'Indigo', color: '#6366f1' },
+                        { name: 'emerald', label: 'Green', color: '#10b981' },
+                        { name: 'orange', label: 'Orange', color: '#f97316' }
+                      ].map((theme) => (
+                        <button
+                          key={theme.name}
+                          type="button"
+                          onClick={() => setThemeColor(theme.name)}
+                          className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition cursor-pointer ${
+                            themeColor === theme.name
+                              ? 'border-brand-500 bg-brand-500/5 font-bold text-brand-650'
+                              : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                          }`}
+                        >
+                          <span
+                            className="w-6 h-6 rounded-full shadow-sm flex items-center justify-center text-white text-[10px]"
+                            style={{ backgroundColor: theme.color }}
+                          >
+                            {themeColor === theme.name && "✓"}
+                          </span>
+                          <span className="text-[10px] text-slate-600">{theme.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-slate-500 block">Kích thước chữ (App Font Size)</label>
+                    <div className="flex gap-2">
+                      {(['small', 'medium', 'large'] as const).map((sz) => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setFontSize(sz)}
+                          className={`flex-1 py-2 border rounded-xl font-bold transition cursor-pointer ${
+                            fontSize === sz
+                              ? 'border-brand-500 bg-brand-500/5 text-brand-600 font-extrabold'
+                              : 'border-slate-200 hover:bg-slate-50 text-slate-655'
+                          }`}
+                        >
+                          {sz === 'small' ? 'Nhỏ (14px)' : sz === 'medium' ? 'Vừa (15px)' : 'Lớn (16px)'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-slate-700">Chế độ tối (Dark IDE Theme)</p>
+                      <p className="text-[10px] text-slate-450">Thay đổi hình nền tối chuẩn Lập trình viên</p>
+                    </div>
+                    <div
+                      onClick={() => setIsDarkMode(!isDarkMode)}
+                      className={`switch ${isDarkMode ? 'on' : ''}`}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {settingsActiveTab === 'features' && (
+                <div className="space-y-3.5 animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-slate-700">Thư viện dự án (Project Library)</p>
+                      <p className="text-[10px] text-slate-450">Hiển thị nút lưu trữ/comparative library ở header</p>
+                    </div>
+                    <div
+                      onClick={() => setShowLibraryBtn(!showLibraryBtn)}
+                      className={`switch ${showLibraryBtn ? 'on' : ''}`}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-slate-700">Trợ lý AI Copilot (AI Chatbot Pane)</p>
+                      <p className="text-[10px] text-slate-450">Hiển thị khung chat trợ lý bên tay phải</p>
+                    </div>
+                    <div
+                      onClick={() => setShowChatbot(!showChatbot)}
+                      className={`switch ${showChatbot ? 'on' : ''}`}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-slate-700">Đồng bộ Thời gian thực (Realtime Sync)</p>
+                      <p className="text-[10px] text-slate-450">Hiện badge đồng bộ trực tiếp ở bảng vật tư</p>
+                    </div>
+                    <div
+                      onClick={() => setShowSyncBadge(!showSyncBadge)}
+                      className={`switch ${showSyncBadge ? 'on' : ''}`}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-slate-700">Tab Sơ đồ Mạch CAD (CAD Viewer)</p>
+                      <p className="text-[10px] text-slate-450">Mở khóa tab xem bản vẽ DWG tại Bước 4</p>
+                    </div>
+                    <div
+                      onClick={() => setShowCadTab(!showCadTab)}
+                      className={`switch ${showCadTab ? 'on' : ''}`}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 text-xs">
               <button
+                type="button"
                 onClick={() => setIsConfigOpen(false)}
-                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm"
+                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm animate-pulse-slow"
               >
                 Lưu Setting
               </button>

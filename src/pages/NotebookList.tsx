@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, BookOpen, FileText, Search, Globe2, X } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
@@ -36,6 +36,60 @@ function saveUserCases(list: CaseItem[]) {
 
 export default function NotebookList() {
   const { t, locale, setLocale } = useI18n()
+  const [siteTitle, setSiteTitle] = useState(() => localStorage.getItem('aiplf.settings.siteTitle') || 'Cowatech AI Platform')
+  
+  useEffect(() => {
+    const applyConfig = () => {
+      setSiteTitle(localStorage.getItem('aiplf.settings.siteTitle') || 'Cowatech AI Platform')
+      
+      const themeColor = localStorage.getItem('aiplf.settings.themeColor') || 'teal';
+      const root = document.documentElement;
+      const themes: Record<string, Record<string, string>> = {
+        teal: {
+          '50': '#f0fdfa', '100': '#ccfbf1', '200': '#99f6e4', '300': '#5eead4',
+          '400': '#2dd4bf', '500': '#0abab5', '600': '#099e9a', '700': '#0f766e',
+          '800': '#115e59', '900': '#134e4a'
+        },
+        blue: {
+          '50': '#eff6ff', '100': '#dbeafe', '200': '#bfdbfe', '300': '#93c5fd',
+          '400': '#60a5fa', '500': '#3b82f6', '600': '#2563eb', '700': '#1d4ed8',
+          '800': '#1e40af', '900': '#1e3a8a'
+        },
+        indigo: {
+          '50': '#eef2ff', '100': '#e0e7ff', '200': '#c7d2fe', '300': '#a5b4fc',
+          '400': '#818cf8', '500': '#6366f1', '600': '#4f46e5', '700': '#4338ca',
+          '800': '#3730a3', '900': '#312e81'
+        },
+        emerald: {
+          '50': '#ecfdf5', '100': '#d1fae5', '200': '#a7f3d0', '300': '#6ee7b7',
+          '400': '#34d399', '500': '#10b981', '600': '#059669', '700': '#047857',
+          '800': '#065f46', '900': '#064e3b'
+        },
+        orange: {
+          '50': '#fff7ed', '100': '#ffedd5', '200': '#fed7aa', '300': '#fdbb2d',
+          '400': '#fb923c', '500': '#f97316', '600': '#ea580c', '700': '#c2410c',
+          '800': '#9a3412', '900': '#7c2d12'
+        }
+      };
+      const colorSet = themes[themeColor] || themes.teal;
+      Object.entries(colorSet).forEach(([shade, hex]) => {
+        root.style.setProperty(`--color-brand-${shade}`, hex);
+      });
+
+      const fontSize = localStorage.getItem('aiplf.settings.fontSize') || 'medium';
+      const sizes: Record<string, string> = {
+        small: '14px',
+        medium: '15px',
+        large: '16px'
+      };
+      root.style.fontSize = sizes[fontSize] || '15px';
+    }
+
+    applyConfig()
+    window.addEventListener('storage', applyConfig)
+    return () => window.removeEventListener('storage', applyConfig)
+  }, [])
+
   const [searchQuery, setSearchQuery] = useState('')
   const [showNewModal, setShowNewModal] = useState(false)
   const [newTitle, setNewTitle] = useState('')
@@ -96,7 +150,7 @@ export default function NotebookList() {
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight text-slate-900 font-sans flex items-center gap-2">
-              Cowatech AI Platform
+              {siteTitle}
               <span className="text-[10px] font-semibold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full">
                 IDE Edition
               </span>
@@ -141,7 +195,7 @@ export default function NotebookList() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl -z-10 animate-pulse-slow" />
           <div className="space-y-2">
             <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-brand-700 via-brand-500 to-indigo-600 bg-clip-text text-transparent">
-              {locale === 'ja' ? 'ようこそ、Cowatech AI Platform へ' : locale === 'vi' ? 'Chào mừng đến với Cowatech AI Platform' : 'Welcome to Cowatech AI Platform'}
+              {locale === 'ja' ? `ようこそ、${siteTitle} へ` : locale === 'vi' ? `Chào mừng đến với ${siteTitle}` : `Welcome to ${siteTitle}`}
             </h2>
             <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
               {locale === 'ja'
