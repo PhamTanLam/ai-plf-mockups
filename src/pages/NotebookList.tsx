@@ -96,7 +96,7 @@ export default function NotebookList() {
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight text-slate-900 font-sans flex items-center gap-2">
-              PLC Design AI Platform V2
+              Cowatech AI Platform
               <span className="text-[10px] font-semibold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full">
                 IDE Edition
               </span>
@@ -141,7 +141,7 @@ export default function NotebookList() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl -z-10 animate-pulse-slow" />
           <div className="space-y-2">
             <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-brand-700 via-brand-500 to-indigo-600 bg-clip-text text-transparent">
-              {locale === 'ja' ? 'ようこそ、PLCエンジニアリングAIへ' : locale === 'vi' ? 'Hệ thống Thiết kế & Kiểm định PLC (AI Platform)' : 'Welcome to PLC Engineering AI'}
+              {locale === 'ja' ? 'ようこそ、Cowatech AI Platform へ' : locale === 'vi' ? 'Chào mừng đến với Cowatech AI Platform' : 'Welcome to Cowatech AI Platform'}
             </h2>
             <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
               {locale === 'ja'
