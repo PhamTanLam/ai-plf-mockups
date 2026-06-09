@@ -311,6 +311,7 @@ export default function NotebookWorkspace() {
   const [showCadTab, setShowCadTab] = useState(() => localStorage.getItem('aiplf.settings.showCadTab') !== 'false')
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('aiplf.settings.isDarkMode') === 'true')
   const [settingsActiveTab, setSettingsActiveTab] = useState<'general' | 'appearance' | 'features'>('general')
+  const [tempLocale, setTempLocale] = useState(locale)
 
   // Apply theme color changes dynamically
   useEffect(() => {
@@ -1529,7 +1530,7 @@ Thành phần tham dự:
 
 
           <button
-            onClick={() => setIsConfigOpen(true)}
+            onClick={() => { setIsConfigOpen(true); setTempLocale(locale); }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
@@ -2252,7 +2253,13 @@ Thành phần tham dự:
                 <Settings className="w-4 h-4 text-brand-500" />
                 <span>Cấu hình Hệ thống (Setting)</span>
               </h3>
-              <button onClick={() => setIsConfigOpen(false)} className="text-slate-500 hover:text-slate-800 cursor-pointer">
+              <button
+                onClick={() => {
+                  setIsConfigOpen(false);
+                  setTempLocale(locale);
+                }}
+                className="text-slate-500 hover:text-slate-800 cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -2311,8 +2318,8 @@ Thành phần tham dự:
                   <div className="space-y-1">
                     <label className="font-bold text-slate-500">Ngôn ngữ Hệ thống (System Language)</label>
                     <select
-                      value={locale}
-                      onChange={(e) => setLocale(e.target.value as any)}
+                      value={tempLocale}
+                      onChange={(e) => setTempLocale(e.target.value as any)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-850 font-medium cursor-pointer"
                     >
                       <option value="vi">Tiếng Việt (Vietnamese)</option>
@@ -2455,7 +2462,10 @@ Thành phần tham dự:
             <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 text-xs">
               <button
                 type="button"
-                onClick={() => setIsConfigOpen(false)}
+                onClick={() => {
+                  setLocale(tempLocale);
+                  setIsConfigOpen(false);
+                }}
                 className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm animate-pulse-slow"
               >
                 Lưu Setting
