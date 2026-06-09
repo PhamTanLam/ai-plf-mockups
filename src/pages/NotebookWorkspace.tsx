@@ -140,8 +140,8 @@ const phasesInfo: PhaseDetail[] = [
   },
   {
     num: 9,
-    title: 'Điều chỉnh vật tư',
-    desc: 'Điều chỉnh thiết bị, số lượng và đơn giá thông minh qua lại giữa Chat và Bảng vật tư. Lịch sử lưu tại Thư viện.',
+    title: 'Thiết kế',
+    desc: '※Tạm thời tập trung vào điện\n①Thiết kế phần cứng\n②Thiết kế PLC, TP',
     prompts: [
       'Thêm 2 cảm biến quang',
       'Nâng cấp lên HMI GOT2000 10-inch',
@@ -149,8 +149,8 @@ const phasesInfo: PhaseDetail[] = [
     ],
     tab: 'materials',
     sourcesToSelect: ['spec'],
-    inputs: ['Yêu cầu điều chỉnh'],
-    outputs: ['Bảng vật tư thông minh V2'],
+    inputs: ['①Tài liệu thông số điện', '②Tài liệu thông số phần mềm'],
+    outputs: ['①Tổng hợp thông số (văn bản)'],
     users: 'Kỹ sư thiết kế / Sales',
   },
   {
