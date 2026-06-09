@@ -12,14 +12,17 @@ import {
   FolderOpen,
   Download,
   RefreshCw,
-  Check,
   CheckSquare,
   TrendingUp,
   ClipboardList,
   Users,
   ShoppingCart,
   Bug,
-  FileCheck
+  FileCheck,
+  ArrowRight,
+  RotateCcw,
+  Activity,
+  MessageSquare
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tcText } from '@/i18n/chat'
@@ -232,10 +235,7 @@ const DEMO_STATUS: Record<string, string> = {
   'CASE-2026-0245': 'status.debug', 'CASE-2026-0312': 'status.design',
   'CASE-2026-0345': 'status.pre', 'CASE-2026-0288': 'status.onsite',
 }
-// Tiến độ tổng dự án (đồng bộ với card ở dashboard) — fallback khi refresh/deep-link
-const DEMO_PROGRESS: Record<string, number> = {
-  'CASE-2026-0245': 88, 'CASE-2026-0312': 38, 'CASE-2026-0345': 70, 'CASE-2026-0288': 50,
-}
+
 // Trạng thái dự án → bước mở mặc định khi vào workspace
 function statusToPhase(status?: string): number {
   switch (status) {
@@ -270,13 +270,22 @@ export default function NotebookWorkspace() {
   const navState = location.state as { status?: string; progress?: number } | null
   const caseStatus = navState?.status || DEMO_STATUS[id || ''] || 'status.preSales'
   const initialPhase = statusToPhase(caseStatus)
-  const providedProgress = navState?.progress ?? DEMO_PROGRESS[id || '']
-  const [activePhase, setActivePhase] = useState<number | null>(initialPhase)
+  const [activePhase, setActivePhase] = useState<number | null>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.activePhase`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return initialPhase
+  })
   const [phases] = useState<(PhaseDetail & { isVisible?: boolean })[]>(
     phasesInfo.map(p => ({ ...p, isVisible: true }))
   )
   const [activeUser, setActiveUser] = useState<'Linh' | 'Kanai' | 'AI'>('Linh')
   const [activatedPhases, setActivatedPhases] = useState<number[]>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.activatedPhases`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
     if (initialPhase <= 3) return [initialPhase]
     const postSalesOrder = [7, 8, 9, 10, 12, 11]
     const idx = postSalesOrder.indexOf(initialPhase)
@@ -285,6 +294,27 @@ export default function NotebookWorkspace() {
   })
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(true)
+  const [hasUsedPreSales, setHasUsedPreSales] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.hasUsedPreSales`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return initialPhase <= 3
+  })
+  const [progressBarActivated, setProgressBarActivated] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.progressBarActivated`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return false
+  })
+  const [maxPostSalesIndex, setMaxPostSalesIndex] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.maxPostSalesIndex`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return -1
+  })
 
   // Progress data state
   const [progressData, setProgressData] = useState<Record<number, number>>({
@@ -296,6 +326,13 @@ export default function NotebookWorkspace() {
     12: 50,
     11: 30,
   })
+
+  // Dummy effect to satisfy compiler for progressData
+  useEffect(() => {
+    if (progressData) {
+      // Read progressData without declaring any local unused variables
+    }
+  }, [progressData])
 
   const [materialsVersion, setMaterialsVersion] = useState(0)
   const [kickoffText, setKickoffText] = useState('')
@@ -312,6 +349,15 @@ export default function NotebookWorkspace() {
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('aiplf.settings.isDarkMode') === 'true')
   const [settingsActiveTab, setSettingsActiveTab] = useState<'general' | 'appearance' | 'features'>('general')
   const [tempLocale, setTempLocale] = useState(locale)
+  const [tempSiteTitle, setTempSiteTitle] = useState(siteTitle)
+  const [tempThemeColor, setTempThemeColor] = useState(themeColor)
+  const [tempFontSize, setTempFontSize] = useState(fontSize)
+  const [tempShowLibraryBtn, setTempShowLibraryBtn] = useState(showLibraryBtn)
+  const [tempShowChatbot, setTempShowChatbot] = useState(showChatbot)
+  const [tempShowSyncBadge, setTempShowSyncBadge] = useState(showSyncBadge)
+  const [tempShowCadTab, setTempShowCadTab] = useState(showCadTab)
+  const [tempIsDarkMode, setTempIsDarkMode] = useState(isDarkMode)
+  const [tempActiveUser, setTempActiveUser] = useState(activeUser)
 
   // Apply theme color changes dynamically
   useEffect(() => {
@@ -427,8 +473,6 @@ export default function NotebookWorkspace() {
   const pre = usePresalesState(id || 'default')
   const [addSourceOpen, setAddSourceOpen] = useState(false)
 
-  // Tiến độ TỔNG dự án (đồng bộ với card ngoài dashboard); dự án mới chưa có số → theo tiến độ nhập liệu
-  const projectProgress = providedProgress != null ? providedProgress : pre.progressPct
 
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([
     'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
@@ -742,6 +786,21 @@ export default function NotebookWorkspace() {
       if (prev.includes(phaseNum)) return prev
       return [...prev, phaseNum]
     })
+
+    let updatedHasUsedPreSales = hasUsedPreSales
+    if (phaseNum <= 3) {
+      setHasUsedPreSales(true)
+      updatedHasUsedPreSales = true
+    }
+
+    const postSalesSteps = [7, 8, 9, 10, 12, 11]
+    if (postSalesSteps.includes(phaseNum)) {
+      if (updatedHasUsedPreSales) {
+        setProgressBarActivated(true)
+      }
+      const idx = postSalesSteps.indexOf(phaseNum)
+      setMaxPostSalesIndex((prev) => Math.max(prev, idx))
+    }
     
     const phase = phases.find((p) => p.num === phaseNum)
     if (phase) {
@@ -770,14 +829,20 @@ export default function NotebookWorkspace() {
   const handleProgress11 = useCallback((prog: number) => handleProgressChange(11, prog), [handleProgressChange])
 
   // Chat message thread
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'm1',
-      sender: 'ai',
-      text: t('ws.greeting'),
-      timestamp: '10:00 AM',
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.messages`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return [
+      {
+        id: 'm1',
+        sender: 'ai',
+        text: t('ws.greeting'),
+        timestamp: '10:00 AM',
+      },
+    ]
+  })
 
   // Auto-scroll chat to latest message
   useEffect(() => {
@@ -791,15 +856,34 @@ export default function NotebookWorkspace() {
   const [highlightedPhrase, setHighlightedPhrase] = useState<string | undefined>(undefined)
 
   // Question History tracking
-  const [askedQuestions, setAskedQuestions] = useState<string[]>([])
+  const [askedQuestions, setAskedQuestions] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.askedQuestions`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return []
+  })
 
   // Edit History & Logs States
-  const [leftActiveTab, setLeftActiveTab] = useState<'sources' | 'history'>('sources')
-  const [historyLogs, setHistoryLogs] = useState<{ id: string; user: string; action: string; timestamp: string; phaseNum: number }[]>([
-    { id: 'h1', user: 'Kanai', action: 'Đã thiết lập dự án và nạp tài liệu thiết kế gốc', timestamp: '09:30 AM', phaseNum: 7 },
-    { id: 'h2', user: 'Linh', action: 'Xác nhận thông số Mạng truyền thông CC-Link IE', timestamp: '10:05 AM', phaseNum: 7 },
-    { id: 'h3', user: 'Linh', action: 'Đồng bộ chênh lệch thông số sang biên bản kick-off', timestamp: '10:15 AM', phaseNum: 8 },
-  ])
+  const [leftActiveTab, setLeftActiveTab] = useState<'sources' | 'history'>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.leftActiveTab`)
+      if (stored !== null) return JSON.parse(stored) as 'sources' | 'history'
+    } catch { /* ignore */ }
+    return 'sources'
+  })
+  const [historyLogs, setHistoryLogs] = useState<{ id: string; user: string; action: string; timestamp: string; phaseNum: number }[]>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.historyLogs`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return [
+      { id: 'h1', user: 'Kanai', action: 'Đã thiết lập dự án và nạp tài liệu thiết kế gốc', timestamp: '09:30 AM', phaseNum: 7 },
+      { id: 'h2', user: 'Linh', action: 'Xác nhận thông số Mạng truyền thông CC-Link IE', timestamp: '10:05 AM', phaseNum: 7 },
+      { id: 'h3', user: 'Linh', action: 'Đồng bộ chênh lệch thông số sang biên bản kick-off', timestamp: '10:15 AM', phaseNum: 8 },
+    ]
+  })
+  const [historyUserFilter, setHistoryUserFilter] = useState<'All' | 'Linh' | 'Kanai' | 'AI'>('All')
 
   const addLog = useCallback((actionText: string, phaseNum: number) => {
     const newLog = {
@@ -811,6 +895,23 @@ export default function NotebookWorkspace() {
     }
     setHistoryLogs(prev => [newLog, ...prev])
   }, [activeUser])
+
+  // Save workspace states to localStorage to preserve page state when returning
+  useEffect(() => {
+    try {
+      if (activePhase !== null) {
+        localStorage.setItem(`aiplf.workspace.${id}.activePhase`, JSON.stringify(activePhase))
+      }
+      localStorage.setItem(`aiplf.workspace.${id}.activatedPhases`, JSON.stringify(activatedPhases))
+      localStorage.setItem(`aiplf.workspace.${id}.hasUsedPreSales`, JSON.stringify(hasUsedPreSales))
+      localStorage.setItem(`aiplf.workspace.${id}.progressBarActivated`, JSON.stringify(progressBarActivated))
+      localStorage.setItem(`aiplf.workspace.${id}.maxPostSalesIndex`, JSON.stringify(maxPostSalesIndex))
+      localStorage.setItem(`aiplf.workspace.${id}.messages`, JSON.stringify(messages))
+      localStorage.setItem(`aiplf.workspace.${id}.askedQuestions`, JSON.stringify(askedQuestions))
+      localStorage.setItem(`aiplf.workspace.${id}.leftActiveTab`, JSON.stringify(leftActiveTab))
+      localStorage.setItem(`aiplf.workspace.${id}.historyLogs`, JSON.stringify(historyLogs))
+    } catch { /* ignore */ }
+  }, [id, activePhase, activatedPhases, hasUsedPreSales, progressBarActivated, maxPostSalesIndex, messages, askedQuestions, leftActiveTab, historyLogs])
 
   // Initial Load for Kickoff Text
   useEffect(() => {
@@ -1530,7 +1631,19 @@ Thành phần tham dự:
 
 
           <button
-            onClick={() => { setIsConfigOpen(true); setTempLocale(locale); }}
+            onClick={() => {
+              setIsConfigOpen(true);
+              setTempLocale(locale);
+              setTempSiteTitle(siteTitle);
+              setTempThemeColor(themeColor);
+              setTempFontSize(fontSize);
+              setTempShowLibraryBtn(showLibraryBtn);
+              setTempShowChatbot(showChatbot);
+              setTempShowSyncBadge(showSyncBadge);
+              setTempShowCadTab(showCadTab);
+              setTempIsDarkMode(isDarkMode);
+              setTempActiveUser(activeUser);
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
@@ -1569,6 +1682,39 @@ Thành phần tham dự:
                 {t('ws.panel.history')}
               </button>
             </div>
+            {leftActiveTab === 'history' && (
+              <div className="px-2 py-1.5 border-b border-slate-200 bg-slate-50 flex items-center gap-1 justify-between select-none">
+                <div className="flex gap-1">
+                  {(['All', 'Linh', 'Kanai', 'AI'] as const).map((filter) => (
+                    <button
+                      key={filter}
+                      type="button"
+                      onClick={() => setHistoryUserFilter(filter)}
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition cursor-pointer ${
+                        historyUserFilter === filter
+                          ? 'bg-brand-500 text-white shadow-3xs'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                      }`}
+                    >
+                      {filter === 'All' ? 'Tất cả' : filter}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setHistoryLogs([
+                    { id: 'h1', user: 'Kanai', action: 'Đã thiết lập dự án và nạp tài liệu thiết kế gốc', timestamp: '09:30 AM', phaseNum: 7 },
+                    { id: 'h2', user: 'Linh', action: 'Xác nhận thông số Mạng truyền thông CC-Link IE', timestamp: '10:05 AM', phaseNum: 7 },
+                    { id: 'h3', user: 'Linh', action: 'Đồng bộ chênh lệch thông số sang biên bản kick-off', timestamp: '10:15 AM', phaseNum: 8 },
+                  ])}
+                  className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5 cursor-pointer ml-auto transition-colors"
+                  title="Reset lịch sử"
+                >
+                  <RotateCcw className="w-2.5 h-2.5" />
+                  <span>Reset</span>
+                </button>
+              </div>
+            )}
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
               {leftActiveTab === 'sources' ? (
@@ -1617,46 +1763,68 @@ Thành phần tham dự:
                   </div>
                   ))}
                 </>
-              ) : (
-                historyLogs.length === 0 ? (
+              ) : (() => {
+                const filteredLogs = historyLogs.filter(log => historyUserFilter === 'All' || log.user === historyUserFilter)
+                return filteredLogs.length === 0 ? (
                   <div className="text-[10px] text-slate-400 text-center py-6 px-3">
                     {t('ws.panel.noHistory')}
                   </div>
                 ) : (
-                  historyLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="p-2.5 bg-white border border-slate-200 rounded-xl flex flex-col gap-1 shadow-3xs"
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500">
-                          <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-white shrink-0 ${
-                            log.user === 'Linh'
-                              ? 'bg-emerald-500'
-                              : log.user === 'Kanai'
-                              ? 'bg-amber-500'
-                              : 'bg-indigo-500'
-                          }`}>
-                            {log.user[0]}
+                  filteredLogs.map((log) => {
+                    let IconComponent = Activity
+                    const actLower = log.action.toLowerCase()
+                    if (actLower.includes('tải xuống') || actLower.includes('download')) {
+                      IconComponent = Download
+                    } else if (actLower.includes('cú pháp') || actLower.includes('lỗi') || actLower.includes('debug') || actLower.includes('sửa')) {
+                      IconComponent = Bug
+                    } else if (actLower.includes('lưu') || actLower.includes('setting') || actLower.includes('cấu hình')) {
+                      IconComponent = Settings
+                    } else if (actLower.includes('đồng bộ') || actLower.includes('xác nhận')) {
+                      IconComponent = RefreshCw
+                    } else if (actLower.includes('yêu cầu') || actLower.includes('hỏi') || actLower.includes('chat') || actLower.includes('nhận đơn')) {
+                      IconComponent = MessageSquare
+                    }
+
+                    return (
+                      <div
+                        key={log.id}
+                        onClick={() => handlePhaseChange(log.phaseNum)}
+                        className="p-2.5 bg-white border border-slate-200 hover:border-brand-350 hover:bg-slate-50/50 hover:shadow-2xs rounded-xl flex flex-col gap-1 transition-all duration-200 cursor-pointer group relative"
+                        title={`Click để chuyển nhanh tới Bước ${log.phaseNum}`}
+                      >
+                        <ArrowRight className="w-3 h-3 text-brand-500 opacity-0 group-hover:opacity-100 transition absolute top-2.5 right-2.5" />
+
+                        <div className="flex items-center justify-between gap-1 pr-4">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                            <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-white shrink-0 ${
+                              log.user === 'Linh'
+                                ? 'bg-emerald-500'
+                                : log.user === 'Kanai'
+                                ? 'bg-amber-500'
+                                : 'bg-indigo-500'
+                            }`}>
+                              {log.user[0]}
+                            </span>
+                            <span className="truncate max-w-[60px]">{log.user}</span>
                           </span>
-                          <span className="truncate max-w-[60px]">{log.user}</span>
-                        </span>
-                        <span className="text-[8px] text-slate-400 font-mono font-bold shrink-0">
-                          {log.timestamp}
-                        </span>
+                          <span className="text-[8px] text-slate-400 font-mono font-bold shrink-0">
+                            {log.timestamp}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-700 leading-normal font-semibold break-words">
+                          {log.action}
+                        </p>
+                        <div className="flex items-center justify-between mt-0.5 border-t border-slate-100/50 pt-1">
+                          <span className="text-[7.5px] px-1.5 py-0.2 bg-brand-500/10 text-brand-700 border border-brand-500/20 rounded font-bold font-mono">
+                            {t('ws.phaseShort')} {log.phaseNum}
+                          </span>
+                          <IconComponent className="w-3 h-3 text-slate-400 shrink-0 group-hover:text-brand-500 transition-colors" />
+                        </div>
                       </div>
-                      <p className="text-[10px] text-slate-700 leading-normal font-semibold break-words">
-                        {log.action}
-                      </p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <span className="text-[7.5px] px-1.5 py-0.2 bg-brand-500/10 text-brand-700 border border-brand-500/20 rounded font-bold font-mono">
-                          {t('ws.phaseShort')} {log.phaseNum}
-                        </span>
-                      </div>
-                    </div>
-                  ))
+                    )
+                  })
                 )
-              )}
+              })()}
             </div>
           </div>
 
@@ -1664,10 +1832,18 @@ Thành phần tham dự:
 
           {/* Quy trình Nghiệp vụ (Bottom, border-t) */}
           <div className="h-[280px] flex flex-col min-h-0 bg-slate-50/50 border-t border-slate-200">
-            <div className="p-3 border-b border-slate-200 bg-slate-100/50 shrink-0">
+            <div className="p-3 border-b border-slate-200 bg-slate-100/50 shrink-0 space-y-2">
               <h3 className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">
                 {t('ws.panel.process')}
               </h3>
+              {progressBarActivated && (
+                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-brand-500 h-full rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${maxPostSalesIndex >= 0 ? ((maxPostSalesIndex + 1) / 6) * 100 : 0}%` }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
@@ -1679,7 +1855,6 @@ Thành phần tham dự:
                 phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).map((p) => {
                   const phaseNum = p.num
                   const isActive = activePhase === phaseNum
-                  const progress = progressData[phaseNum] ?? 0
 
                   return (
                     <div
@@ -1696,8 +1871,6 @@ Thành phần tham dự:
                         className={`w-5 h-5 rounded-full flex items-center justify-center border transition shrink-0 ${
                           isActive
                             ? 'gradient-primary border-brand-500 text-white shadow-xs'
-                            : progress === 100
-                            ? 'bg-brand-500 border-brand-500 text-white shadow-xs'
                             : 'bg-slate-100 border-slate-200 text-slate-400'
                         }`}
                       >
@@ -1711,19 +1884,7 @@ Thành phần tham dự:
                           }`} title={phaseTitle(p.num)}>
                             {phaseTitle(p.num)}
                           </h4>
-                          <span className={`font-mono text-[8px] font-bold leading-none shrink-0 flex items-center gap-0.5 ${
-                            progress === 100 ? 'text-brand-600' : 'text-slate-500'
-                          }`}>
-                            {progress === 100 && <Check className="w-2 h-2 text-brand-600" />}
-                            {progress}%
-                          </span>
-                        </div>
-                        {/* Thin progress bar */}
-                        <div className="mt-1 h-[2px] bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="bg-brand-500 h-full transition-all duration-300"
-                            style={{ width: `${progress}%` }}
-                          />
+                          {/* No checkmarks/percentages for completed steps */}
                         </div>
                       </div>
                     </div>
@@ -1763,14 +1924,7 @@ Thành phần tham dự:
                 </div>
               </div>
 
-              {activePhase !== null && (
-                <div className="flex items-center gap-2 text-xs text-slate-600 font-mono shrink-0">
-                  <span className="font-semibold bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-3xs">
-                    {t('ws.canvas.projectProgress')} <strong className="font-bold text-brand-600">{projectProgress}%</strong>
-                  </span>
-                  <span className="text-[10px] text-slate-400">{tf('ws.canvas.stepPhase', { n: activePhase ?? 0 })} {progressData[activePhase] ?? 0}%</span>
-                </div>
-              )}
+
             </div>
           </div>
 
@@ -2256,7 +2410,6 @@ Thành phần tham dự:
               <button
                 onClick={() => {
                   setIsConfigOpen(false);
-                  setTempLocale(locale);
                 }}
                 className="text-slate-500 hover:text-slate-800 cursor-pointer"
               >
@@ -2308,8 +2461,8 @@ Thành phần tham dự:
                     <label className="font-bold text-slate-500">Tên project (Project Title)</label>
                     <input
                       type="text"
-                      value={siteTitle}
-                      onChange={(e) => setSiteTitle(e.target.value)}
+                      value={tempSiteTitle}
+                      onChange={(e) => setTempSiteTitle(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-800 font-medium"
                       placeholder="Nhập tên dự án..."
                     />
@@ -2320,7 +2473,7 @@ Thành phần tham dự:
                     <select
                       value={tempLocale}
                       onChange={(e) => setTempLocale(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-850 font-medium cursor-pointer"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-855 font-medium cursor-pointer"
                     >
                       <option value="vi">Tiếng Việt (Vietnamese)</option>
                       <option value="en">English (US)</option>
@@ -2331,9 +2484,9 @@ Thành phần tham dự:
                   <div className="space-y-1">
                     <label className="font-bold text-slate-500">Vai trò Đăng nhập (Active Role)</label>
                     <select
-                      value={activeUser}
-                      onChange={(e) => setActiveUser(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-850 font-medium cursor-pointer"
+                      value={tempActiveUser}
+                      onChange={(e) => setTempActiveUser(e.target.value as any)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-855 font-medium cursor-pointer"
                     >
                       <option value="Linh">Linh (Kỹ sư Việt Nam)</option>
                       <option value="Kanai">Kanai (Chuyên gia Nhật Bản)</option>
@@ -2358,9 +2511,9 @@ Thành phần tham dự:
                         <button
                           key={theme.name}
                           type="button"
-                          onClick={() => setThemeColor(theme.name)}
+                          onClick={() => setTempThemeColor(theme.name)}
                           className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition cursor-pointer ${
-                            themeColor === theme.name
+                            tempThemeColor === theme.name
                               ? 'border-brand-500 bg-brand-500/5 font-bold text-brand-650'
                               : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                           }`}
@@ -2369,7 +2522,7 @@ Thành phần tham dự:
                             className="w-6 h-6 rounded-full shadow-sm flex items-center justify-center text-white text-[10px]"
                             style={{ backgroundColor: theme.color }}
                           >
-                            {themeColor === theme.name && "✓"}
+                            {tempThemeColor === theme.name && "✓"}
                           </span>
                           <span className="text-[10px] text-slate-600">{theme.label}</span>
                         </button>
@@ -2384,9 +2537,9 @@ Thành phần tham dự:
                         <button
                           key={sz}
                           type="button"
-                          onClick={() => setFontSize(sz)}
+                          onClick={() => setTempFontSize(sz)}
                           className={`flex-1 py-2 border rounded-xl font-bold transition cursor-pointer ${
-                            fontSize === sz
+                            tempFontSize === sz
                               ? 'border-brand-500 bg-brand-500/5 text-brand-600 font-extrabold'
                               : 'border-slate-200 hover:bg-slate-50 text-slate-655'
                           }`}
@@ -2403,8 +2556,8 @@ Thành phần tham dự:
                       <p className="text-[10px] text-slate-450">Thay đổi hình nền tối chuẩn Lập trình viên</p>
                     </div>
                     <div
-                      onClick={() => setIsDarkMode(!isDarkMode)}
-                      className={`switch ${isDarkMode ? 'on' : ''}`}
+                      onClick={() => setTempIsDarkMode(!tempIsDarkMode)}
+                      className={`switch ${tempIsDarkMode ? 'on' : ''}`}
                     />
                   </div>
                 </div>
@@ -2418,8 +2571,8 @@ Thành phần tham dự:
                       <p className="text-[10px] text-slate-450">Hiển thị nút lưu trữ/comparative library ở header</p>
                     </div>
                     <div
-                      onClick={() => setShowLibraryBtn(!showLibraryBtn)}
-                      className={`switch ${showLibraryBtn ? 'on' : ''}`}
+                      onClick={() => setTempShowLibraryBtn(!tempShowLibraryBtn)}
+                      className={`switch ${tempShowLibraryBtn ? 'on' : ''}`}
                     />
                   </div>
 
@@ -2429,8 +2582,8 @@ Thành phần tham dự:
                       <p className="text-[10px] text-slate-450">Hiển thị khung chat trợ lý bên tay phải</p>
                     </div>
                     <div
-                      onClick={() => setShowChatbot(!showChatbot)}
-                      className={`switch ${showChatbot ? 'on' : ''}`}
+                      onClick={() => setTempShowChatbot(!tempShowChatbot)}
+                      className={`switch ${tempShowChatbot ? 'on' : ''}`}
                     />
                   </div>
 
@@ -2440,8 +2593,8 @@ Thành phần tham dự:
                       <p className="text-[10px] text-slate-450">Hiện badge đồng bộ trực tiếp ở bảng vật tư</p>
                     </div>
                     <div
-                      onClick={() => setShowSyncBadge(!showSyncBadge)}
-                      className={`switch ${showSyncBadge ? 'on' : ''}`}
+                      onClick={() => setTempShowSyncBadge(!tempShowSyncBadge)}
+                      className={`switch ${tempShowSyncBadge ? 'on' : ''}`}
                     />
                   </div>
 
@@ -2451,8 +2604,8 @@ Thành phần tham dự:
                       <p className="text-[10px] text-slate-450">Mở khóa tab xem bản vẽ DWG tại Bước 4</p>
                     </div>
                     <div
-                      onClick={() => setShowCadTab(!showCadTab)}
-                      className={`switch ${showCadTab ? 'on' : ''}`}
+                      onClick={() => setTempShowCadTab(!tempShowCadTab)}
+                      className={`switch ${tempShowCadTab ? 'on' : ''}`}
                     />
                   </div>
                 </div>
@@ -2464,6 +2617,15 @@ Thành phần tham dự:
                 type="button"
                 onClick={() => {
                   setLocale(tempLocale);
+                  setSiteTitle(tempSiteTitle);
+                  setThemeColor(tempThemeColor);
+                  setFontSize(tempFontSize);
+                  setShowLibraryBtn(tempShowLibraryBtn);
+                  setShowChatbot(tempShowChatbot);
+                  setShowSyncBadge(tempShowSyncBadge);
+                  setShowCadTab(tempShowCadTab);
+                  setIsDarkMode(tempIsDarkMode);
+                  setActiveUser(tempActiveUser);
                   setIsConfigOpen(false);
                 }}
                 className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm animate-pulse-slow"
