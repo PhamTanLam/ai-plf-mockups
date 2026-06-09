@@ -44,6 +44,7 @@ export const postsales: Dictionary = {
     'post.mat.autoRecalc': 'チャットの変更要求で仕様案を自動更新',
     'post.mat.savedAlert': '設計バージョン {v} をライブラリに保存しました！',
     'post.mat.saveError': '設計バージョンの保存中にエラーが発生しました。',
+    'post.mat.readOnlyNotice': '⚠️ ここで直接編集することはできません。チャットで変更を依頼し、「案件情報の再入力」（ステップ7）に戻って確認（ライブラリに新バージョンを保存）してから設計を続けてください。',
     // ProjectReentry (phase 7)
     'post.reentry.title': 'フィールド調査・仕様変更ログ',
     'post.reentry.subtitle': '受注後の実際の技術変更をすべて記録',
@@ -133,6 +134,7 @@ export const postsales: Dictionary = {
     'post.mat.autoRecalc': 'Auto-updates specs on change requests from chat',
     'post.mat.savedAlert': 'Saved design version {v} to the Library successfully!',
     'post.mat.saveError': 'An error occurred while saving the design version.',
+    'post.mat.readOnlyNotice': '⚠️ Cannot edit directly here. Please request changes via chat and return to "Re-enter project info" (Step 7) to confirm (saving a new version to the library) before continuing design.',
     'post.reentry.title': 'Field survey & spec change log',
     'post.reentry.subtitle': 'A record of all actual technical changes after the order',
     'post.reentry.downloadTitle': 'Download the log file',
@@ -219,6 +221,7 @@ export const postsales: Dictionary = {
     'post.mat.autoRecalc': 'Tự động cập nhật specs khi nhận yêu cầu thay đổi từ chat',
     'post.mat.savedAlert': 'Đã lưu thành công phiên bản thiết kế {v} vào Thư viện!',
     'post.mat.saveError': 'Đã xảy ra lỗi khi lưu phiên bản thiết kế.',
+    'post.mat.readOnlyNotice': '⚠️ Không thể hiệu chỉnh trực tiếp tại đây. Hãy chat yêu cầu và quay lại bước "Nhập lại thông tin dự án" (Bước 7) để xác nhận thay đổi (lưu phiên bản mới vào thư viện) trước khi thiết kế tiếp.',
     'post.reentry.title': 'Nhật ký Khảo sát & Thay đổi Specs',
     'post.reentry.subtitle': 'Bản ghi nhận toàn bộ thay đổi kỹ thuật thực tế sau đơn hàng',
     'post.reentry.downloadTitle': 'Tải tệp nhật ký text về máy',
