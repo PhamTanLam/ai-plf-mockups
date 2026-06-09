@@ -1906,10 +1906,10 @@ Thành phần tham dự:
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-extrabold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full tracking-wider font-mono">
-                      {activePhase !== null ? (activePhase <= 3 ? t('ws.badge.preOrder') : t('ws.badge.postOrder')) : t('ws.badge.pipeline')}
+                      {activePhase !== null ? phaseTitle(activePhase) : t('ws.badge.pipeline')}
                     </span>
                     <h1 className="text-sm font-extrabold text-slate-900">
-                      {activePhase !== null ? phaseTitle(activePhase) : t('ws.canvas.detailArea')}
+                      {activePhase !== null ? t('ws.panel.process') : t('ws.canvas.detailArea')}
                     </h1>
                   </div>
                   {activePhase !== null ? (
