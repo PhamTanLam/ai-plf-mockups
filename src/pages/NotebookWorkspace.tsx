@@ -170,7 +170,7 @@ const phasesInfo: PhaseDetail[] = [
   },
   {
     num: 12,
-    title: 'Debug & Hiệu chỉnh Code',
+    title: 'Debug',
     desc: 'Chỉnh sửa trực tiếp mã PLC ST, kiểm tra lỗi cú pháp và tối ưu hóa code bằng AI.',
     prompts: [
       'Kiểm tra lỗi cú pháp mã PLC.',
@@ -479,7 +479,7 @@ export default function NotebookWorkspace() {
     'Chuyển sang Bước 2: Họp Kick-off',
     'Chuyển sang Bước 3: Điều chỉnh vật tư',
     'Chuyển sang Bước 4: Thiết kế & Code tự động',
-    'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+    'Chuyển sang Bước 5: Debug',
     'Chuyển sang Bước 6: Nghiệm thu & HDSD'
   ])
 
@@ -498,7 +498,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'reentry' }],
@@ -512,7 +512,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'notes' }],
@@ -527,7 +527,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
@@ -541,14 +541,14 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'cad', tab: 'design_code' }],
     },
-    'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code': {
+    'Chuyển sang Bước 5: Debug': {
       phaseNum: 12,
-      explanationText: 'Đã chuyển sang Bước 5: Debug & Hiệu chỉnh Code. Tại đây bạn có thể chỉnh sửa trực tiếp mã Structured Text (ST) của PLC, chạy kiểm tra lỗi biên dịch, và yêu cầu AI paraphrase/tối ưu hóa chương trình.',
+      explanationText: 'Đã chuyển sang Bước 5: Debug. Tại đây bạn có thể chỉnh sửa trực tiếp mã Structured Text (ST) của PLC, chạy kiểm tra lỗi biên dịch, và yêu cầu AI paraphrase/tối ưu hóa chương trình.',
       suggestions: [
         'Kiểm tra lỗi cú pháp mã PLC.',
         'Tối ưu hóa mã PLC ST (Paraphrase).',
@@ -572,7 +572,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+        'Chuyển sang Bước 5: Debug'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
     },
@@ -585,7 +585,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'reentry' }],
@@ -597,7 +597,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'reentry' }],
@@ -610,7 +610,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'notes' }],
@@ -623,7 +623,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'notes' }],
@@ -637,7 +637,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
@@ -651,7 +651,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
@@ -665,7 +665,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
@@ -678,7 +678,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'cad', tab: 'design_code' }],
@@ -691,7 +691,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'cad', tab: 'design_code' }],
@@ -736,7 +736,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+        'Chuyển sang Bước 5: Debug'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
     },
@@ -749,7 +749,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+        'Chuyển sang Bước 5: Debug'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
     },
@@ -762,7 +762,7 @@ export default function NotebookWorkspace() {
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+        'Chuyển sang Bước 5: Debug'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
     }
@@ -993,7 +993,7 @@ Thành phần tham dự:
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ])
     } else if (activePhase === 8) {
@@ -1003,7 +1003,7 @@ Thành phần tham dự:
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ])
     } else if (activePhase === 9) {
@@ -1014,7 +1014,7 @@ Thành phần tham dự:
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ])
     } else if (activePhase === 10) {
@@ -1024,7 +1024,7 @@ Thành phần tham dự:
         'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code',
+        'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ])
     } else if (activePhase === 12) {
@@ -1047,7 +1047,7 @@ Thành phần tham dự:
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug & Hiệu chỉnh Code'
+        'Chuyển sang Bước 5: Debug'
       ])
     }
   }, [activePhase])
@@ -1420,8 +1420,8 @@ Thành phần tham dự:
       12: {
         keywords: ['debug', 'sửa lỗi', 'hiệu chỉnh', 'chỉnh code', 'paraphrase', 'tối ưu hóa st', 'tối ưu st', 'tối ưu code', 'cú pháp', 'compiler'],
         tab: 'debug_code',
-        title: 'Debug & Hiệu chỉnh Code',
-        desc: 'Tôi đã di chuyển màn hình đến Bước 5: Debug & Hiệu chỉnh Code. Tại đây bạn có thể soạn thảo, biên dịch thử và tối ưu code bằng AI.'
+        title: 'Debug',
+        desc: 'Tôi đã di chuyển màn hình đến Bước 5: Debug. Tại đây bạn có thể soạn thảo, biên dịch thử và tối ưu code bằng AI.'
       },
       11: { 
         keywords: ['nghiệm thu', 'hdsd', 'tài liệu', 'hướng dẫn', 'test', 'doc', 'biên bản', 'báo cáo', 'tải biên bản'], 
@@ -1816,7 +1816,7 @@ Thành phần tham dự:
                         </p>
                         <div className="flex items-center justify-between mt-0.5 border-t border-slate-100/50 pt-1">
                           <span className="text-[7.5px] px-1.5 py-0.2 bg-brand-500/10 text-brand-700 border border-brand-500/20 rounded font-bold font-mono">
-                            {t('ws.phaseShort')} {log.phaseNum}
+                            {phaseTitle(log.phaseNum)}
                           </span>
                           <IconComponent className="w-3 h-3 text-slate-400 shrink-0 group-hover:text-brand-500 transition-colors" />
                         </div>
@@ -1906,7 +1906,7 @@ Thành phần tham dự:
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-extrabold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full tracking-wider font-mono">
-                      {activePhase !== null ? (activePhase <= 3 ? t('ws.badge.preOrder') : tf('ws.badge.postOrder', { n: activePhase })) : t('ws.badge.pipeline')}
+                      {activePhase !== null ? (activePhase <= 3 ? t('ws.badge.preOrder') : t('ws.badge.postOrder')) : t('ws.badge.pipeline')}
                     </span>
                     <h1 className="text-sm font-extrabold text-slate-900">
                       {activePhase !== null ? phaseTitle(activePhase) : t('ws.canvas.detailArea')}
@@ -2249,7 +2249,7 @@ Thành phần tham dự:
                 {/* Dynamic Context Banner */}
                 <div className="px-3.5 py-2.5 bg-brand-500/10 border-b border-brand-500/20 text-[10px] text-brand-700 leading-relaxed select-none">
                   {activePhase !== null ? (
-                    <>{tf('ws.copilot.ctxPhase', { n: activePhase, title: phaseTitle(activePhase) })}</>
+                    <>{tf('ws.copilot.ctxPhase', { title: phaseTitle(activePhase) })}</>
                   ) : (
                     <>{t('ws.copilot.ctxNone')}</>
                   )}
