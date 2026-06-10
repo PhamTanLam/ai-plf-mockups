@@ -12,8 +12,8 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
   onConvertToSource?: (title: string) => void
   onToast?: (msg: string) => void
   onAdvance?: () => void
-  /** Tín hiệu mở thẳng chi tiết (từ nút trong chat). oid = output có sẵn; doc = tài liệu tổng hợp. n đổi → mở lại. */
-  openSignal?: { oid?: string; doc?: { title: string; content: string }; n: number }
+  /** Tín hiệu mở thẳng chi tiết (từ nút trong chat). oid = output có sẵn (version = snapshot cụ thể); doc = tài liệu tổng hợp. n đổi → mở lại. */
+  openSignal?: { oid?: string; version?: number; doc?: { title: string; content: string }; n: number }
 }) {
   const { t, tf } = useI18n()
   const [menuOid, setMenuOid] = useState<string | null>(null)
@@ -40,10 +40,17 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
       setDetail({ oid: '_doc', kind: 'note', title: openSignal.doc.title, ts: Date.now(), content: openSignal.doc.content })
     } else if (openSignal.oid) {
       const o = pre.savedOutputs.find(s => s.oid === openSignal.oid)
-      if (o) setDetail(o)
+      if (o) {
+        // Nếu nút chỉ định version cụ thể → mở đúng snapshot version đó (vd nút chat cũ = V1)
+        const snap = openSignal.version && o.versions ? o.versions.find(v => v.v === openSignal.version) : undefined
+        setDetail(snap ? { ...o, content: snap.content, version: snap.v } : o)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openSignal?.n])
+
+  // "Hồ sơ trình khách" (final) không hiển thị ở "Đã tạo" — nó là sản phẩm bàn giao (ở Thư viện)
+  const visibleOutputs = pre.savedOutputs.filter(e => !(e.kind === 'gen' && e.toolId === 'final'))
 
   const toast = (m: string) => onToast?.(m)
   const fmtAgo = (ts: number) => {
@@ -59,7 +66,12 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
           <button onClick={() => { setZoomed(false); setDetail(null) }} className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition flex items-center gap-1 cursor-pointer">
             {t('ps.common.backToList')}
           </button>
-          <strong className="text-sm text-slate-800 truncate max-w-[250px]">{detail.title}</strong>
+          <div className="flex items-center gap-2 min-w-0">
+            <strong className="text-sm text-slate-800 truncate max-w-[220px]">{detail.title}</strong>
+            {detail.version && (
+              <span className="shrink-0 text-[9px] font-bold bg-brand-500/10 text-brand-700 border border-brand-500/20 px-1.5 py-0.5 rounded-full font-mono">Bản V{detail.version}</span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5">
             <button onClick={() => setZoomed(true)} title="Phóng to" className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
               <Maximize2 className="w-3 h-3" /> Phóng to
@@ -78,7 +90,12 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
           <div className="fixed inset-0 z-[100] bg-slate-900/55 backdrop-blur-xs flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200" onClick={() => setZoomed(false)}>
             <div className="bg-white rounded-3xl border border-slate-200 shadow-pop w-full h-full max-w-[1400px] max-h-[95vh] flex flex-col animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-8 py-4 border-b border-slate-200 shrink-0">
-                <strong className="text-base text-slate-900 truncate pr-4">{detail.title}</strong>
+                <div className="flex items-center gap-2 min-w-0 pr-4">
+                  <strong className="text-base text-slate-900 truncate">{detail.title}</strong>
+                  {detail.version && (
+                    <span className="shrink-0 text-[9px] font-bold bg-brand-500/10 text-brand-700 border border-brand-500/20 px-1.5 py-0.5 rounded-full font-mono">Bản V{detail.version}</span>
+                  )}
+                </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button onClick={() => pre.downloadOutput(detail.oid)} className="text-xs inline-flex items-center gap-1 border border-slate-200 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-slate-50 cursor-pointer">
                     <Download className="w-3.5 h-3.5" /> {t('ps.common.downloadMd')}
@@ -107,12 +124,12 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
         <span>{tf('ps.input.status', { n: pre.total })}</span>
       </div>
 
-      {/* ---- Đầu ra đã tạo ---- */}
-      {pre.savedOutputs.length > 0 && (
+      {/* ---- Đầu ra đã tạo ---- (ẩn "Hồ sơ trình khách" final — nó nằm ở Thư viện, không phải scratch) */}
+      {visibleOutputs.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-panel">
-          <div className="text-xs font-bold text-slate-500 font-mono uppercase tracking-wider mb-3">{tf('ps.input.createdN', { n: pre.savedOutputs.length })}</div>
+          <div className="text-xs font-bold text-slate-500 font-mono uppercase tracking-wider mb-3">{tf('ps.input.createdN', { n: visibleOutputs.length })}</div>
           <div className="space-y-2">
-            {pre.savedOutputs.map(e => {
+            {visibleOutputs.map(e => {
               const isNote = e.kind === 'note'
               const icon = isNote ? '📝' : (pre.outputs.find(o => o.id === e.toolId)?.icon || '📄')
               return (

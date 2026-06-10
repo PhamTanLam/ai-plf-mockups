@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
  */
 
 export interface ProjectField { id: string; name: string; value: string }
-export interface SavedOutput { oid: string; toolId?: string; kind: 'gen' | 'note'; title: string; ts: number; content: string }
+export interface SavedOutput { oid: string; toolId?: string; kind: 'gen' | 'note'; title: string; ts: number; content: string; version?: number; versions?: { v: number; content: string; ts: number }[] }
 export interface OutputDef { id: string; icon: string; name: string }
 export interface RoundLog { n: number; ts: number; fields: number; outputs: number }  // 1 vòng pre-sales đã hoàn thành
 
@@ -38,6 +38,7 @@ export const OUTPUTS: OutputDef[] = [
   { id: 'estimate', icon: '💴', name: 'Dự toán khái quát' },
   { id: 'schedule', icon: '🗓️', name: 'Lịch trình khái quát' },
   { id: 'proposal', icon: '📝', name: 'Tài liệu nền đề xuất' },
+  { id: 'final', icon: '📑', name: 'Hồ sơ trình khách (chi tiết)' },
 ]
 
 // Case demo: seed sẵn "bộ nhớ" giả (dự án đang làm dở) để sinh đầu ra có dữ liệu; dự án mới bắt đầu trống.
@@ -63,6 +64,7 @@ function buildOutputMarkdown(id: string, fields: ProjectField[]): string {
     case 'estimate': return head + `\n## Dự toán khái quát (ước tính)\n\n| Hạng mục | Ước tính |\n| :--- | ---: |\n| Thiết kế điện & phần mềm | ¥3.2M |\n| Vật tư điều khiển | ¥4.1M |\n| Lắp đặt & debug | ¥2.0M |\n| Tổng | ¥9.3M |\n\n- Thời gian ~16 tuần · Độ tin cậy 75%.\n`
     case 'schedule': return head + `\n## Lịch trình khái quát\n\n| Pha | Nội dung | Thời lượng |\n| :--- | :--- | :---: |\n| 1. Thiết kế | Bản vẽ điện, kiến trúc PM | 8 tuần |\n| 2. Chế tạo | Tủ điện, lập trình PLC/HMI | 6 tuần |\n| 3. Lắp đặt & Debug | takt ${get(/takt/i)} | 4 tuần |\n| 4. Bàn giao | Nghiệm thu | 2 tuần |\n`
     case 'proposal': return head + `\n## Tài liệu nền đề xuất\nBối cảnh: ${get(/bối cảnh/i)}.\n\nMục tiêu: tự động hoá ${get(/hoạt động/i)}, takt ${get(/takt/i)}.\n\nPhạm vi: ${get(/phạm vi/i)}.\n\nAn toàn: ${get(/an toàn/i)}.\n`
+    case 'final': return head + `\n> **Hồ sơ trình khách — bản tổng hợp chi tiết** (gom toàn bộ thông tin đã làm rõ để trình khách chốt đơn).\n\n## 1. Thông tin dự án\n${list}\n\n## 2. Cấu thành hệ thống\n- Điều khiển: ${get(/điều khiển/i)}\n- Mạng: ${get(/mạng/i)}\n- Liên động: ${get(/liên động/i)}\n- An toàn: ${get(/an toàn/i)}\n\n## 3. Dự toán chi tiết\n\n| Hạng mục | Ước tính |\n| :--- | ---: |\n| Thiết kế điện & phần mềm | ¥3.2M |\n| Vật tư điều khiển | ¥4.1M |\n| Lắp đặt & debug | ¥2.0M |\n| **Tổng** | **¥9.3M** |\n\n## 4. Lịch trình khái quát\n- Thiết kế 8 tuần · Chế tạo 6 tuần · Lắp đặt & debug 4 tuần · Nghiệm thu 2 tuần.\n\n## 5. Phạm vi & Cam kết\nPhạm vi: ${get(/phạm vi/i)}. Bảo hành: ${get(/bảo hành/i)}.\n\n*Bản nháp do AI tổng hợp — cần kỹ sư rà soát trước khi gửi khách.*\n`
     default: return head + '\n' + list
   }
 }
@@ -172,9 +174,25 @@ export function usePresalesState(caseId: string): PresalesApi {
 
   const generate = useCallback((id: string): SavedOutput | null => {
     const o = OUTPUTS.find(x => x.id === id); if (!o) return null
-    const out: SavedOutput = { oid: oid(), toolId: id, kind: 'gen', title: o.name, ts: Date.now(), content: buildOutputMarkdown(id, fields) }
+    const content = buildOutputMarkdown(id, fields)
+    // Sinh lại cùng loại → CẬP NHẬT bản hiện có (tăng version) + lưu SNAPSHOT từng version, không tạo bản trùng
+    const now = Date.now()
+    const existing = savedOutputs.find(e => e.kind === 'gen' && e.toolId === id)
+    if (existing) {
+      const newV = (existing.version || 1) + 1
+      const prevVersions = existing.versions && existing.versions.length
+        ? existing.versions
+        : [{ v: existing.version || 1, content: existing.content, ts: existing.ts }]
+      const out: SavedOutput = { ...existing, content, ts: now, version: newV, versions: [...prevVersions, { v: newV, content, ts: now }] }
+      // Cập nhật bản đang giữ + dọn các bản trùng cùng loại (rác từ test cũ)
+      setSavedOutputs(prev => prev
+        .map(e => e.oid === existing.oid ? out : e)
+        .filter(e => e.oid === existing.oid || !(e.kind === 'gen' && e.toolId === id)))
+      return out
+    }
+    const out: SavedOutput = { oid: oid(), toolId: id, kind: 'gen', title: o.name, ts: now, content, version: 1, versions: [{ v: 1, content, ts: now }] }
     setSavedOutputs(prev => [out, ...prev]); return out
-  }, [fields])
+  }, [fields, savedOutputs])
   const saveAnswerNote = useCallback((title: string, content: string) => {
     setSavedOutputs(prev => [{ oid: oid(), kind: 'note', title: title.slice(0, 46) || 'Ghi chú từ chat', ts: Date.now(), content }, ...prev])
   }, [])

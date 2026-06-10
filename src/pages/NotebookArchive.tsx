@@ -6,6 +6,7 @@ import {
   Brain, Boxes, MoreVertical, History, Share2,
   RotateCcw, Trash2, ExternalLink, Sparkles, GitCompare
 } from 'lucide-react'
+import MarkdownLite from '@/components/MarkdownLite'
 import { useI18n } from '@/i18n/I18nProvider'
 
 interface ProjectFile {
@@ -29,6 +30,7 @@ export default function NotebookArchive() {
   const { t } = useI18n()
   
   // State for search and filters
+  const [libTab, setLibTab] = useState<'memory' | 'deliverables'>('deliverables')
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'code' | 'cad' | 'doc'>('all')
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
@@ -44,7 +46,7 @@ export default function NotebookArchive() {
   const [compare, setCompare] = useState<{ file: ProjectFile; oldV: number; newV: number } | null>(null)
 
   // Simulated files list — gồm cả file ĐẦU VÀO (bộ nhớ AI) và file ĐẦU RA (sản phẩm AI sinh)
-  const [files] = useState<ProjectFile[]>([
+  const [files, setFiles] = useState<ProjectFile[]>([
     // ── ĐẦU VÀO (INPUT): bộ nhớ dự án — AI sinh từ chat, dùng làm context xuyên suốt ──
     {
       id: 'in-1',
@@ -224,6 +226,38 @@ END_IF;`
     }
   ])
 
+  // Đầu ra do AI sinh ở pre-sales (hồ sơ trình khách, dự toán...) — đọc từ bộ nhớ pre-sales,
+  // hiển thị trong "Sản phẩm bàn giao". refreshGen để buộc tính lại sau khi xóa.
+  const [refreshGen, setRefreshGen] = useState(0)
+  const genOutputs: ProjectFile[] = (() => {
+    void refreshGen
+    try {
+      const raw = localStorage.getItem(`aiplf.presales.${id || 'default'}`)
+      if (!raw) return []
+      const st = JSON.parse(raw)
+      const pad = (n: number) => String(n).padStart(2, '0')
+      return ((st.savedOutputs || []) as { oid: string; kind: string; toolId?: string; title: string; ts: number; content: string; version?: number }[])
+        .filter(o => o.kind === 'gen' && o.toolId === 'final')
+        .map(o => {
+          const d = new Date(o.ts)
+          return {
+            id: 'gen-' + o.oid,
+            name: (o.title || 'Tài liệu').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 48) + '.md',
+            category: 'output' as const,
+            type: 'Hồ sơ đề xuất (AI · Pre-Sales)',
+            size: Math.max(1, Math.round((o.content || '').length / 102.4) / 10) + ' KB',
+            version: 'V' + (o.version || 1),
+            createdAt: `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
+            author: 'AI (Pre-Sales)',
+            approvalStatus: 'reviewing' as const,
+            tags: ['#ĐềXuất', '#TrìnhKhách'],
+            summary: 'Hồ sơ AI tổng hợp ở giai đoạn pre-sales để trình khách.',
+            previewContent: o.content || '',
+          }
+        })
+    } catch { return [] }
+  })()
+
   // Categorize helper function
   const getFileCategory = (filename: string): 'code' | 'cad' | 'doc' => {
     const fn = filename.toLowerCase()
@@ -305,7 +339,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
 
   // Đếm cho chip lọc — chỉ tính SẢN PHẨM (bộ lọc loại không áp cho Bộ nhớ)
   const getCount = (catId: 'all' | 'code' | 'cad' | 'doc') => {
-    const outs = files.filter(f => f.category === 'output')
+    const outs = [...files, ...genOutputs].filter(f => f.category === 'output')
     if (catId === 'all') return outs.length
     return outs.filter(f => getFileCategory(f.name) === catId).length
   }
@@ -318,6 +352,29 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
       // Trigger a raw browser download simulation
       alert(`[MOCK DOWNLOAD] Đã tải thành công file: ${file.name}\nPhiên bản: ${file.version}\nDung lượng: ${file.size}`)
     }, 1200)
+  }
+
+  // Xóa file khỏi thư viện (có xác nhận)
+  const deleteFile = (file: ProjectFile) => {
+    if (!window.confirm(`Xóa "${file.name}" khỏi thư viện?`)) return
+    if (file.id.startsWith('gen-')) {
+      // Output pre-sales — xóa khỏi bộ nhớ pre-sales
+      const oid = file.id.slice(4)
+      try {
+        const key = `aiplf.presales.${id || 'default'}`
+        const raw = localStorage.getItem(key)
+        if (raw) {
+          const st = JSON.parse(raw)
+          st.savedOutputs = (st.savedOutputs || []).filter((o: { oid: string }) => o.oid !== oid)
+          localStorage.setItem(key, JSON.stringify(st))
+        }
+      } catch { /* ignore */ }
+      setRefreshGen(r => r + 1)
+    } else {
+      setFiles(prev => prev.filter(f => f.id !== file.id))
+    }
+    if (selectedPreviewFile?.id === file.id) setSelectedPreviewFile(null)
+    if (historyFile?.id === file.id) setHistoryFile(null)
   }
 
   // Sắp xếp dùng chung
@@ -333,12 +390,10 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
   // BỘ NHỚ (input): chỉ lọc theo tìm kiếm — bộ lọc loại file là khái niệm của Sản phẩm, không áp cho Bộ nhớ
   const inputFiles = sortFiles(files.filter(f => f.category === 'input' && matchesSearch(f)))
   // SẢN PHẨM (output): lọc theo tìm kiếm + loại file
-  const outputFiles = sortFiles(files.filter(f =>
+  const outputFiles = sortFiles([...genOutputs, ...files].filter(f =>
     f.category === 'output' && matchesSearch(f) &&
     (categoryFilter === 'all' || getFileCategory(f.name) === categoryFilter)
   ))
-  // Tổng hợp cho nút "Tải toàn bộ" và trạng thái rỗng toàn cục
-  const filteredFiles = [...inputFiles, ...outputFiles]
 
   // Bước 7 (ProjectReentry) ghi nhật ký khảo sát vào localStorage theo dự án.
   // Hai file "Bộ nhớ" phản ánh bộ nhớ AI thật (usePresalesState): in-1 = pre-sales (baseline),
@@ -446,6 +501,13 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-50 cursor-pointer text-brand-700 font-semibold"
                 >
                   <History className="w-3.5 h-3.5" /> Lịch sử phiên bản
+                </button>
+                <div className="border-t border-slate-100 my-1 mx-1" />
+                <button
+                  onClick={(e) => { e.stopPropagation(); setMenuFileId(null); deleteFile(file) }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 cursor-pointer text-rose-600"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Xóa
                 </button>
               </div>
             </>
@@ -713,135 +775,124 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
             </div>
           </div>
 
-          {filteredFiles.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <FileText className="w-10 h-10 text-slate-300 mb-2 animate-bounce-slow" />
-              <p className="text-xs font-bold text-slate-400">Không tìm thấy tài liệu phù hợp</p>
-              <p className="text-[10px] text-slate-400 mt-1">Hãy thử tìm với từ khóa hoặc bộ lọc khác</p>
-            </div>
-          ) : (
-            /* Thân 2 cột: TRÁI = Bộ nhớ (nền tảng) · PHẢI = Sản phẩm bàn giao */
-            <div className="flex-1 flex min-h-0 mt-4 gap-5">
+          {/* Tab chọn nhóm: Bộ nhớ AI | Sản phẩm bàn giao */}
+          <div className="flex gap-2 mt-4 shrink-0">
+            {([
+              { key: 'deliverables', label: 'Sản phẩm bàn giao', icon: Boxes, n: outputFiles.length },
+              { key: 'memory', label: 'Bộ nhớ AI', icon: Brain, n: inputFiles.length },
+            ] as const).map(({ key, label, icon: Icon, n }) => {
+              const active = libTab === key
+              return (
+                <button
+                  key={key}
+                  onClick={() => setLibTab(key)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                    active ? 'bg-brand-500 text-white border-brand-500 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                  <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>{n}</span>
+                </button>
+              )
+            })}
+          </div>
 
-              {/* ── TRÁI: Bộ nhớ dự án (vùng nền tảng, nền tô nhẹ) ── */}
-              <aside className="w-[320px] shrink-0 flex flex-col min-h-0">
-                <div className="flex flex-col min-h-0 max-h-full rounded-2xl border border-brand-200/60 bg-brand-50/40 p-4">
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="w-7 h-7 rounded-lg bg-brand-100 border border-brand-200/70 flex items-center justify-center text-brand-600 shrink-0">
-                      <Brain className="w-4 h-4" />
-                    </div>
-                    <h4 className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                      Bộ nhớ dự án
-                      <span className="text-[8px] px-1.5 py-0.2 rounded-full font-bold bg-brand-100 text-brand-700">{inputFiles.length}</span>
-                    </h4>
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-1.5 shrink-0 leading-relaxed">
-                    Đặc tả & nhật ký AI tự ghi nhận qua trao đổi — nền tảng để tạo sản phẩm.
-                  </p>
-                  <div className="overflow-y-auto mt-3 space-y-2 pr-0.5 min-h-0">
-                    {inputFiles.length === 0 ? (
-                      <p className="text-[10px] text-slate-400 italic px-1 py-4 text-center">Chưa có file bộ nhớ phù hợp.</p>
-                    ) : inputFiles.map(renderFileRow)}
-                  </div>
-                  <div className="shrink-0 mt-3 pt-3 border-t border-brand-200/50 text-[9px] font-semibold text-brand-700/90 flex items-center gap-1.5">
-                    <ArrowRight className="w-3 h-3 shrink-0" />
-                    AI dùng bộ nhớ này để sinh sản phẩm
-                  </div>
-                </div>
-              </aside>
+          {/* Mô tả ngắn theo tab */}
+          <p className="text-[10px] text-slate-450 mt-2 shrink-0">
+            {libTab === 'memory'
+              ? 'Đặc tả & nhật ký AI tự ghi nhận qua trao đổi — nền tảng để AI sinh ra sản phẩm.'
+              : 'Bản vẽ, mã nguồn, tài liệu AI tạo ra từ bộ nhớ dự án.'}
+          </p>
 
-              {/* ── PHẢI: Sản phẩm bàn giao ── */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="shrink-0 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-brand-50 border border-brand-200/70 flex items-center justify-center text-brand-600 shrink-0">
-                      <Boxes className="w-4 h-4" />
-                    </div>
-                    <h4 className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                      Sản phẩm bàn giao
-                      <span className="text-[8px] px-1.5 py-0.2 rounded-full font-bold bg-brand-100 text-brand-700">{outputFiles.length}</span>
-                    </h4>
-                  </div>
-
-                  {/* Tìm kiếm + sắp xếp */}
-                  <div className="flex flex-col sm:flex-row gap-2.5">
-                    <div className="relative flex-1">
-                      <Search className="w-4 h-4 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Tìm kiếm tài liệu, định dạng..."
-                        className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-semibold text-slate-800 transition duration-200"
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery('')}
-                          className="p-1 hover:bg-slate-200 rounded-full absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition cursor-pointer"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="relative min-w-[150px]">
-                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as any)}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-bold text-slate-700 cursor-pointer appearance-none"
-                      >
-                        <option value="date">Mới cập nhật</option>
-                        <option value="name">Tên tệp (A-Z)</option>
-                        <option value="size">Dung lượng lớn</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Chip lọc theo loại (chỉ áp cho Sản phẩm) */}
-                  <div className="flex flex-wrap items-center gap-1.5 select-none">
-                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
-                      <Filter className="w-3 h-3 text-slate-400" />
-                      Lọc:
-                    </span>
-                    {[
-                      { id: 'all', label: 'Tất cả' },
-                      { id: 'code', label: 'Mã nguồn PLC' },
-                      { id: 'cad', label: 'Sơ đồ mạch CAD' },
-                      { id: 'doc', label: 'Tài liệu & Báo cáo' }
-                    ].map((cat) => {
-                      const active = categoryFilter === cat.id
-                      return (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => setCategoryFilter(cat.id as any)}
-                          className={`px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wide transition cursor-pointer flex items-center gap-1.5 ${
-                            active
-                              ? 'bg-brand-500 text-white shadow-3xs font-black'
-                              : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-800'
-                          }`}
-                        >
-                          <span>{cat.label}</span>
-                          <span className={`px-1.5 py-0.2 rounded-full text-[8px] font-bold ${
-                            active ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
-                          }`}>
-                            {getCount(cat.id as any)}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto mt-3 space-y-2 pr-1 min-h-0">
-                  {outputFiles.length === 0 ? (
-                    <p className="text-[10px] text-slate-400 italic px-1 py-4 text-center">Không có sản phẩm khớp bộ lọc.</p>
-                  ) : outputFiles.map(renderFileRow)}
-                </div>
+          {/* Toolbar: tìm kiếm + sắp xếp + (lọc loại chỉ ở tab Sản phẩm) */}
+          <div className="shrink-0 space-y-3 mt-3">
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm tài liệu, định dạng..."
+                  className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-semibold text-slate-800 transition duration-200"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 hover:bg-slate-200 rounded-full absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-
+              <div className="relative min-w-[150px]">
+                <ArrowUpDown className="w-3.5 h-3.5 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-bold text-slate-700 cursor-pointer appearance-none"
+                >
+                  <option value="date">Mới cập nhật</option>
+                  <option value="name">Tên tệp (A-Z)</option>
+                  <option value="size">Dung lượng lớn</option>
+                </select>
+              </div>
             </div>
-          )}
+
+            {libTab === 'deliverables' && (
+              <div className="flex flex-wrap items-center gap-1.5 select-none">
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
+                  <Filter className="w-3 h-3 text-slate-400" />
+                  Lọc:
+                </span>
+                {[
+                  { id: 'all', label: 'Tất cả' },
+                  { id: 'code', label: 'Mã nguồn PLC' },
+                  { id: 'cad', label: 'Sơ đồ mạch CAD' },
+                  { id: 'doc', label: 'Tài liệu & Báo cáo' }
+                ].map((cat) => {
+                  const active = categoryFilter === cat.id
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setCategoryFilter(cat.id as any)}
+                      className={`px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wide transition cursor-pointer flex items-center gap-1.5 ${
+                        active
+                          ? 'bg-brand-500 text-white shadow-3xs font-black'
+                          : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <span>{cat.label}</span>
+                      <span className={`px-1.5 py-0.2 rounded-full text-[8px] font-bold ${
+                        active ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {getCount(cat.id as any)}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Danh sách file theo tab */}
+          <div className="flex-1 overflow-y-auto mt-4 space-y-2 pr-1 min-h-0">
+            {(() => {
+              const list = libTab === 'memory' ? inputFiles : outputFiles
+              if (list.length === 0) {
+                return (
+                  <div className="h-full flex flex-col items-center justify-center text-center py-10">
+                    <FileText className="w-10 h-10 text-slate-300 mb-2" />
+                    <p className="text-xs font-bold text-slate-400">{libTab === 'memory' ? 'Chưa có file bộ nhớ' : 'Không có sản phẩm phù hợp'}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">{searchQuery ? 'Thử từ khóa khác' : 'Trao đổi với AI để tạo nội dung'}</p>
+                  </div>
+                )
+              }
+              return list.map(renderFileRow)
+            })()}
+          </div>
         </section>
 
       </div>
@@ -912,7 +963,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   // File text (gồm bộ nhớ AI) — ưu tiên nội dung động từ Bước 7 nếu có
                   const { text, isLive } = getLivePreview(selectedPreviewFile)
                   if (text) {
-                    // Code (.l5k/.st) → giao diện terminal tối; văn bản (.md/.txt, bộ nhớ) → tài liệu nền sáng dễ đọc
+                    // Code (.l5k/.st/.json) → terminal editor; còn lại (md/txt — nội dung markdown) → render prose
                     const isCodeFile = /\.(l5k|st|json)$/i.test(selectedPreviewFile.name)
                     return (
                       <div className="space-y-1.5">
@@ -925,10 +976,8 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                         {isCodeFile ? (
                           renderCodeBlock(text, selectedPreviewFile.name)
                         ) : (
-                          <div className="bg-white border border-slate-200 rounded-xl p-4 overflow-auto max-h-[340px] shadow-3xs">
-                            <pre className="text-[12px] text-slate-700 leading-relaxed whitespace-pre-wrap break-words font-sans select-text">
-                              {text}
-                            </pre>
+                          <div className="bg-white border border-slate-200 rounded-xl p-5 overflow-auto max-h-[360px] shadow-3xs prose prose-sm prose-slate max-w-none text-slate-800 select-text">
+                            <MarkdownLite text={text} />
                           </div>
                         )}
                       </div>

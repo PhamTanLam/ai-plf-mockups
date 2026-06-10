@@ -53,7 +53,7 @@ interface Message {
   tvars?: Record<string, string | number>
   citations?: { id: number; sourceId: string; phrase?: string; tab?: string }[]
   /** Nút hành động nhanh dưới câu trả lời AI. `to` = điều hướng route; `openOid` = mở output có sẵn; `openDoc` = mở tài liệu tổng hợp ngay trong canvas. */
-  action?: { label: string; to?: string; openOid?: string; openDoc?: { title: string; content: string } }
+  action?: { label: string; to?: string; openOid?: string; openDoc?: { title: string; content: string }; phase?: number; version?: number }
   timestamp: string
 }
 
@@ -535,7 +535,7 @@ export default function NotebookWorkspace() {
   // Bộ nhớ RIÊNG cho Bước 7 (post-sales delta) — tách khỏi pre-sales (baseline), tham chiếu pre làm gốc
   const reentry = usePresalesState((id || 'default') + '__reentry')
   // Tín hiệu mở chi tiết ngay trong canvas Bước 7 (từ nút trong chat): output có sẵn (oid) hoặc doc tổng hợp
-  const [reentryOpen, setReentryOpen] = useState<{ oid?: string; doc?: { title: string; content: string }; n: number } | null>(null)
+  const [caseOpen, setCaseOpen] = useState<{ oid?: string; version?: number; doc?: { title: string; content: string }; n: number } | null>(null)
   const [addSourceOpen, setAddSourceOpen] = useState(false)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
 
@@ -1199,7 +1199,7 @@ Thành phần tham dự:
 
   // đẩy 1 cặp tin nhắn (người dùng + AI) vào chat.
   // tkey/tvars (tuỳ chọn): message AI động — render bằng tf() để dịch lại theo ngôn ngữ.
-  const pushChat = (userText: string, aiText: string, sugg?: string[], tkey?: string, tvars?: Record<string, string | number>, action?: { label: string; to?: string; openOid?: string; openDoc?: { title: string; content: string } }) => {
+  const pushChat = (userText: string, aiText: string, sugg?: string[], tkey?: string, tvars?: Record<string, string | number>, action?: { label: string; to?: string; openOid?: string; openDoc?: { title: string; content: string }; phase?: number; version?: number }) => {
     const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     setMessages(prev => [
       ...prev,
@@ -1236,7 +1236,9 @@ Thành phần tham dự:
     }
     // ý định sinh đầu ra → Step 3
     let gen = ''
-    if (text === 'Soạn nội dung tài liệu dự toán') gen = 'doc'
+    // Hồ sơ trình khách (bước 6 — chi tiết/final): ưu tiên nhận diện trước
+    if (/hồ sơ trình khách|trình khách|tài liệu final|bản final|file final|tổng hợp.*trình|hồ sơ.*khách|đề xuất cuối|chốt đơn|dự toán chi tiết|tài liệu chi tiết|hồ sơ chi tiết/i.test(text)) gen = 'final'
+    else if (text === 'Soạn nội dung tài liệu dự toán') gen = 'doc'
     else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') gen = 'config'
     else if (text === 'Lập dự toán khái quát') gen = 'estimate'
     else if (text === 'Lập lịch trình khái quát') gen = 'schedule'
@@ -1246,9 +1248,20 @@ Thành phần tham dự:
     else if (/cấu thành/i.test(text)) gen = 'config'
     else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) gen = 'proposal'
     if (gen) {
-      pre.generate(gen)
+      const out = pre.generate(gen)
       handlePhaseChange(3)
-      pushChat(text, 'Đã sinh tài liệu ✓ (xem ở mục "Đã tạo").', PRE_SUGG, 'chat.ps.generated')
+      if (gen === 'final') {
+        pushChat(
+          text,
+          'Đã tạo "Hồ sơ trình khách (chi tiết)" — bản tổng hợp thông tin + dự toán + lịch trình để trình khách ✓.\n\nFile đã lưu vào "Sản phẩm bàn giao" trong Thư viện. Bấm để xem ngay:',
+          PRE_SUGG,
+          undefined,
+          undefined,
+          out ? { label: 'Xem hồ sơ trình khách', openOid: out.oid, version: out.version, phase: 3 } : undefined,
+        )
+      } else {
+        pushChat(text, 'Đã sinh tài liệu ✓ (xem ở mục "Đã tạo").', PRE_SUGG, 'chat.ps.generated')
+      }
       return
     }
     // tóm tắt / xem lại → Step 2
@@ -2195,7 +2208,7 @@ Thành phần tham dự:
                   pre={reentry}
                   onConvertToSource={addSourceFromNote}
                   onToast={(m) => addLog(m, 7)}
-                  openSignal={reentryOpen ?? undefined}
+                  openSignal={caseOpen ?? undefined}
                 />
               )}
 
@@ -2205,6 +2218,7 @@ Thành phần tham dự:
                   pre={pre}
                   onConvertToSource={addSourceFromNote}
                   onToast={(m) => addLog(m, activePhase ?? 1)}
+                  openSignal={caseOpen ?? undefined}
                 />
               )}
 
@@ -2653,27 +2667,29 @@ Thành phần tham dự:
                                   </span>
                                 )
                               })}
-                              {(msg.action?.openOid || msg.action?.openDoc) && (
-                                <button
-                                  onClick={() => { handlePhaseChange(7); setReentryOpen({ oid: msg.action!.openOid, doc: msg.action!.openDoc, n: Date.now() }) }}
-                                  className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1 rounded-lg transition cursor-pointer"
-                                >
-                                  <FileText className="w-3.5 h-3.5" /> {msg.action.label}
-                                </button>
-                              )}
-                              {msg.action?.to && !msg.action.openOid && !msg.action.openDoc && (
-                                <Link
-                                  to={msg.action.to}
-                                  className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1 rounded-lg transition cursor-pointer no-underline"
-                                >
-                                  <FolderOpen className="w-3.5 h-3.5" /> {msg.action.label}
-                                </Link>
-                              )}
                             </div>
                           ) : (
                             <span>{tc(msg.text)}</span>
                           )}
                         </div>
+
+                        {/* Nút hành động — đặt DƯỚI bong bóng chat */}
+                        {(msg.action?.openOid || msg.action?.openDoc) && (
+                          <button
+                            onClick={() => { handlePhaseChange(msg.action!.phase ?? 7); setCaseOpen({ oid: msg.action!.openOid, version: msg.action!.version, doc: msg.action!.openDoc, n: Date.now() }) }}
+                            className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                          >
+                            <FileText className="w-3.5 h-3.5" /> {msg.action.label}
+                          </button>
+                        )}
+                        {msg.action?.to && !msg.action.openOid && !msg.action.openDoc && (
+                          <Link
+                            to={msg.action.to}
+                            className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1.5 rounded-lg transition cursor-pointer no-underline"
+                          >
+                            <FolderOpen className="w-3.5 h-3.5" /> {msg.action.label}
+                          </Link>
+                        )}
                     </div>
                   </div>
                 ))}
