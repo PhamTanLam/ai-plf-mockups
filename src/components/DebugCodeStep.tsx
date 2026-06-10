@@ -10,7 +10,9 @@ import {
   CheckCircle2, 
   History, 
   Terminal, 
-  AlertCircle
+  AlertCircle,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 
@@ -316,6 +318,15 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
   const [activeParaphrase, setActiveParaphrase] = useState<string>('default')
   const [revisions, setRevisions] = useState<{ id: string; time: string; desc: string; code: string }[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [activeTab, setActiveTab] = useState<'diagnostics' | 'refactor' | 'revisions'>('diagnostics')
+  const [isRightSidebarExpanded, setIsRightSidebarExpanded] = useState<boolean>(true)
+  const lineGutterRef = useRef<HTMLDivElement>(null)
+
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (lineGutterRef.current) {
+      lineGutterRef.current.scrollTop = e.currentTarget.scrollTop
+    }
+  }
 
   // 1. Load initial code from localStorage or set defaults
   useEffect(() => {
@@ -359,6 +370,7 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
 
   // 2. Syntax validation
   const runSyntaxCheck = () => {
+    setActiveTab('diagnostics')
     setSyntaxStatus('checking')
     setErrorMessage(null)
     
@@ -503,7 +515,6 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
-
   // 5. Watch storage events to sync when user updates code via AI Chatbot
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
@@ -540,6 +551,23 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
 
         <div className="flex gap-2">
           <button
+            type="button"
+            onClick={() => setIsRightSidebarExpanded(!isRightSidebarExpanded)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-violet-55 hover:bg-violet-100/80 text-violet-700 border border-violet-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
+          >
+            {isRightSidebarExpanded ? (
+              <>
+                <ArrowRight className="w-3.5 h-3.5 text-violet-600" />
+                <span>Ẩn công cụ AI</span>
+              </>
+            ) : (
+              <>
+                <Wand2 className="w-3.5 h-3.5 text-violet-600 animate-pulse" />
+                <span>Hiện công cụ AI</span>
+              </>
+            )}
+          </button>
+          <button
             onClick={handleCopy}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
           >
@@ -549,45 +577,52 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
-        {/* LEFT COLUMN: The Interactive ST Editor (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden min-h-[500px]">
+        {/* LEFT COLUMN: The Interactive ST Editor (8 cols or 12 cols when right sidebar is collapsed) */}
+        <div className={`flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[500px] transition-all duration-300 ${
+          isRightSidebarExpanded ? 'lg:col-span-8' : 'lg:col-span-12'
+        }`}>
           
-          {/* Editor Header Bar */}
-          <div className="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono select-none">
+          {/* Editor Header Bar (Light Theme) */}
+          <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600 font-mono select-none">
             <div className="flex items-center gap-2">
-              <span className="w-3.5 h-3.5 rounded-full bg-red-500/80" />
-              <span className="w-3.5 h-3.5 rounded-full bg-yellow-500/80" />
-              <span className="w-3.5 h-3.5 rounded-full bg-green-500/80" />
-              <span className="ml-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              <span className="w-3 h-3 rounded-full bg-red-400" />
+              <span className="w-3 h-3 rounded-full bg-yellow-450" />
+              <span className="w-3 h-3 rounded-full bg-green-450" />
+              <span className="ml-2 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                 WW2_Welding_Cell.st
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-750 text-[9px] font-bold uppercase text-brand-400">
+              <span className="px-2 py-0.5 rounded bg-brand-500/10 border border-brand-500/20 text-[9px] font-bold uppercase text-brand-700">
                 IEC 61131-3 Active
               </span>
             </div>
           </div>
 
           {/* Editor TextArea Body */}
-          <div className="flex-1 flex overflow-hidden font-mono text-xs p-2.5">
+          <div className="flex-1 flex overflow-hidden font-mono text-xs p-2.5 bg-white">
             
             {/* Line numbers gutter */}
-            <div className="w-10 select-none text-right pr-3.5 text-slate-600 font-semibold border-r border-slate-800 py-1.5 leading-6">
+            <div 
+              ref={lineGutterRef} 
+              className="w-10 select-none text-right pr-3.5 text-slate-400 bg-slate-50/50 border-r border-slate-200 py-1.5 leading-6 overflow-hidden h-[460px] font-semibold"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               {lineNumbers.map(n => (
                 <div key={n} className="h-6 overflow-hidden">{n}</div>
               ))}
             </div>
 
             {/* Textarea Area */}
-            <div className="flex-1 relative py-1.5 pl-3.5 bg-slate-900 leading-6 h-[460px]">
+            <div className="flex-1 relative py-1.5 pl-3.5 bg-white leading-6 h-[460px]">
               <textarea
                 ref={textareaRef}
                 value={code}
                 onChange={(e) => handleCodeChange(e.target.value)}
-                className="absolute inset-0 w-full h-full bg-transparent text-slate-200 border-none outline-none resize-none font-mono text-xs pl-3.5 py-1.5 focus:ring-0 leading-6 whitespace-pre overflow-y-auto select-text selection:bg-brand-500/30"
+                onScroll={handleScroll}
+                className="absolute inset-0 w-full h-full bg-transparent text-slate-800 border-none outline-none resize-none font-mono text-xs pl-3.5 py-1.5 focus:ring-0 leading-6 whitespace-pre overflow-y-auto select-text selection:bg-brand-500/15"
                 spellCheck={false}
                 placeholder={t('post.debug.placeholder')}
               />
@@ -595,12 +630,12 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
           </div>
 
           {/* Editor Status Bar */}
-          <div className="p-2.5 bg-slate-950 border-t border-slate-800 text-[10px] text-slate-500 font-mono flex items-center justify-between select-none">
+          <div className="p-2.5 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-505 font-mono flex items-center justify-between select-none">
             <div className="flex gap-4">
               <span>Lines: <strong>{lineCount}</strong></span>
               <span>Chars: <strong>{code.length}</strong></span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-400 font-bold">
+            <div className="flex items-center gap-1.5 text-slate-600 font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
               <span>{t('post.debug.editEnabled')}</span>
             </div>
@@ -608,185 +643,247 @@ export default function DebugCodeStep({ projectId, onProgressChange, onAddLog }:
         </div>
 
         {/* RIGHT COLUMN: AI Control Center & Validation (4 cols) */}
-        <div className="lg:col-span-4 space-y-5 flex flex-col justify-between">
-          
-          {/* Syntax Diagnostics Panel */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-4">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <Terminal className="w-4 h-4 text-violet-650" />
-              <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                {t('post.debug.analysisCenter')}
-              </h5>
-            </div>
-
-            <button
-              onClick={runSyntaxCheck}
-              disabled={syntaxStatus === 'checking'}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-xl text-xs font-bold transition shadow-md shadow-violet-500/10 cursor-pointer"
-            >
-              {syntaxStatus === 'checking' ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>{t('post.debug.checking')}</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5" />
-                  <span>{t('post.debug.runCheck')}</span>
-                </>
-              )}
-            </button>
-
-            {/* Validation Feedback Widgets */}
-            {syntaxStatus === 'idle' && (
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-center text-slate-500 text-xs flex flex-col items-center gap-1.5 py-5 select-none">
-                <AlertCircle className="w-6 h-6 text-slate-400" />
-                <div className="font-bold">{t('post.debug.notChecked')}</div>
-                <p className="text-[10px] text-slate-400">{t('post.debug.notCheckedDesc')}</p>
-              </div>
-            )}
-
-            {syntaxStatus === 'checking' && (
-              <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-4 text-center text-amber-700 text-xs flex flex-col items-center gap-2 py-5 animate-pulse">
-                <RefreshCw className="w-6 h-6 text-amber-500 animate-spin" />
-                <div className="font-bold">{t('post.debug.compiling')}</div>
-                <p className="text-[10px] text-amber-500/80">{t('post.debug.compilingDesc')}</p>
-              </div>
-            )}
-
-            {syntaxStatus === 'valid' && (
-              <div className="bg-emerald-50 border border-emerald-250 rounded-xl p-3.5 text-emerald-800 text-xs space-y-2.5 animate-in zoom-in duration-200">
-                <div className="flex items-center gap-2 font-bold">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <span>{t('post.debug.valid')}</span>
-                </div>
-                <p className="text-[10px] text-emerald-700 leading-relaxed">
-                  {t('post.debug.validDesc')}
-                </p>
-                <div className="text-[9px] font-mono bg-emerald-100 border border-emerald-200/50 rounded px-2 py-1 flex items-center justify-between text-emerald-600 select-none">
-                  <span>Errors: 0</span>
-                  <span>Warnings: 0</span>
-                  <span>Code Size: {code.split('\n').length} lines</span>
-                </div>
-              </div>
-            )}
-
-            {syntaxStatus === 'invalid' && (
-              <div className="bg-rose-50 border border-rose-250 rounded-xl p-3.5 text-rose-800 text-xs space-y-2.5 animate-in shake duration-300">
-                <div className="flex items-center gap-2 font-bold">
-                  <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
-                  <span>{t('post.debug.errorFound')}</span>
-                </div>
-                <div className="text-[10.5px] font-mono bg-white border border-rose-150 rounded p-2 text-rose-700 whitespace-pre-wrap leading-relaxed">
-                  {errorMessage}
-                </div>
-                
-                <button
-                  onClick={handleQuickFix}
-                  className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold transition cursor-pointer"
-                >
-                  <Wand2 className="w-3.5 h-3.5" />
-                  <span>{t('post.debug.quickFix')}</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* AI Paraphrase / Rewrite Panel */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3.5">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <Wand2 className="w-4 h-4 text-amber-500" />
-              <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                {t('post.debug.paraphraseTitle')}
-              </h5>
-            </div>
-
-            <p className="text-[10px] text-slate-450 leading-relaxed">
-              {t('post.debug.paraphraseDesc')}
-            </p>
-
-            <div className="space-y-2">
-              <button
-                onClick={() => applyParaphrase('compact')}
-                className={`w-full text-left p-2.5 rounded-xl border text-xs transition cursor-pointer flex items-center justify-between ${
-                  activeParaphrase === 'compact'
-                    ? 'border-brand-500 bg-brand-50/40 text-brand-800 font-bold'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                }`}
-              >
-                <div>
-                  <div className="font-bold">{t('post.debug.optimize')}</div>
-                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.optimizeDesc')}</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => applyParaphrase('clean_case')}
-                className={`w-full text-left p-2.5 rounded-xl border text-xs transition cursor-pointer flex items-center justify-between ${
-                  activeParaphrase === 'clean_case'
-                    ? 'border-brand-500 bg-brand-50/40 text-brand-800 font-bold'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                }`}
-              >
-                <div>
-                  <div className="font-bold">{t('post.debug.iecNotes')}</div>
-                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.iecNotesDesc')}</div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => applyParaphrase('default')}
-                className={`w-full text-left p-2.5 rounded-xl border text-xs transition cursor-pointer flex items-center justify-between ${
-                  activeParaphrase === 'default'
-                    ? 'border-brand-500 bg-brand-50/40 text-brand-800 font-bold'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                }`}
-              >
-                <div>
-                  <div className="font-bold">{t('post.debug.restore')}</div>
-                  <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.restoreDesc')}</div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Revision Logs */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <History className="w-4 h-4 text-teal-600" />
-              <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                {t('post.debug.revisionTitle')}
-              </h5>
-            </div>
-
-            <div className="space-y-2.5 max-h-[140px] overflow-y-auto pr-1">
-              {revisions.map((rev) => (
-                <div key={rev.id} className="flex gap-2.5 items-start text-[10px] leading-normal border-b border-slate-50 pb-2 last:border-0 last:pb-0">
-                  <span className="font-mono text-slate-400 font-semibold">{rev.time}</span>
-                  <div className="flex-1">
-                    <span className="font-bold text-slate-750 block">{rev.desc}</span>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setCode(rev.code)
-                      localStorage.setItem(STORAGE_KEY, rev.code)
-                      window.dispatchEvent(new Event('storage'))
-                      setSyntaxStatus('idle')
-                      alert(`Đã hoàn tác về phiên bản: ${rev.desc}`)
-                    }}
-                    className="text-brand-600 font-bold hover:underline cursor-pointer"
+        {isRightSidebarExpanded && (
+          <div className="lg:col-span-4 flex flex-col h-full animate-in slide-in-from-right duration-300">
+            
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full flex-1 min-h-[500px]">
+              {/* Tab Switched Header */}
+              <div className="p-2 bg-slate-50 border-b border-slate-200 flex shrink-0 rounded-t-2xl">
+                <div className="flex bg-slate-250 p-0.5 rounded-xl w-full">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('diagnostics')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer select-none ${
+                      activeTab === 'diagnostics'
+                        ? 'bg-white text-slate-800 shadow-3xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
                   >
-                    Hoàn tác
+                    <Terminal className="w-3.5 h-3.5" />
+                    <span>Phân tích</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('refactor')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer select-none ${
+                      activeTab === 'refactor'
+                        ? 'bg-white text-slate-800 shadow-3xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>Tối ưu</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('revisions')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer select-none ${
+                      activeTab === 'revisions'
+                        ? 'bg-white text-slate-800 shadow-3xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <History className="w-3.5 h-3.5" />
+                    <span>Lịch sử</span>
                   </button>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-        </div>
+              {/* Tab Contents */}
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-between min-h-0">
+                {/* Tab 1: Diagnostics */}
+                {activeTab === 'diagnostics' && (
+                  <div className="space-y-4 flex flex-col h-full justify-between min-h-0 animate-in fade-in duration-200">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
+                        <Terminal className="w-4 h-4 text-violet-650" />
+                        <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                          {t('post.debug.analysisCenter')}
+                        </h5>
+                      </div>
+                      
+                      {/* Validation Feedback Widgets */}
+                      {syntaxStatus === 'idle' && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-center text-slate-500 text-xs flex flex-col items-center gap-1.5 py-6 select-none animate-fade-in-up">
+                          <AlertCircle className="w-6 h-6 text-slate-400" />
+                          <div className="font-bold text-slate-700">{t('post.debug.notChecked')}</div>
+                          <p className="text-[10px] text-slate-400">{t('post.debug.notCheckedDesc')}</p>
+                        </div>
+                      )}
+
+                      {syntaxStatus === 'checking' && (
+                        <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-4 text-center text-amber-700 text-xs flex flex-col items-center gap-2 py-6 animate-pulse">
+                          <RefreshCw className="w-6 h-6 text-amber-500 animate-spin" />
+                          <div className="font-bold">{t('post.debug.compiling')}</div>
+                          <p className="text-[10px] text-amber-500/80">{t('post.debug.compilingDesc')}</p>
+                        </div>
+                      )}
+
+                      {syntaxStatus === 'valid' && (
+                        <div className="bg-emerald-50 border border-emerald-250 rounded-xl p-3.5 text-emerald-800 text-xs space-y-2.5 animate-in zoom-in duration-200">
+                          <div className="flex items-center gap-2 font-bold">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                            <span>{t('post.debug.valid')}</span>
+                          </div>
+                          <p className="text-[10px] text-emerald-700 leading-relaxed">
+                            {t('post.debug.validDesc')}
+                          </p>
+                          <div className="text-[9px] font-mono bg-emerald-100 border border-emerald-200/50 rounded px-2 py-1 flex items-center justify-between text-emerald-600 select-none">
+                            <span>Errors: 0</span>
+                            <span>Warnings: 0</span>
+                            <span>Size: {code.split('\n').length} lines</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {syntaxStatus === 'invalid' && (
+                        <div className="bg-rose-50 border border-rose-250 rounded-xl p-3.5 text-rose-800 text-xs space-y-2.5 animate-in shake duration-300">
+                          <div className="flex items-center gap-2 font-bold">
+                            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+                            <span>{t('post.debug.errorFound')}</span>
+                          </div>
+                          <div className="text-[10.5px] font-mono bg-white border border-rose-150 rounded p-2 text-rose-700 whitespace-pre-wrap leading-relaxed">
+                            {errorMessage}
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={handleQuickFix}
+                            className="w-full flex items-center justify-center gap-1.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[10px] font-bold transition cursor-pointer shadow-sm shadow-rose-600/10"
+                          >
+                            <Wand2 className="w-3.5 h-3.5" />
+                            <span>{t('post.debug.quickFix')}</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={runSyntaxCheck}
+                      disabled={syntaxStatus === 'checking'}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-xl text-xs font-bold transition shadow-md shadow-violet-500/10 cursor-pointer shrink-0 mt-4"
+                    >
+                      {syntaxStatus === 'checking' ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>{t('post.debug.checking')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-3.5 h-3.5" />
+                          <span>{t('post.debug.runCheck')}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Tab 2: Refactor */}
+                {activeTab === 'refactor' && (
+                  <div className="space-y-3.5 animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
+                      <Wand2 className="w-4 h-4 text-amber-500" />
+                      <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                        {t('post.debug.paraphraseTitle')}
+                      </h5>
+                    </div>
+
+                    <p className="text-[10px] text-slate-500 leading-relaxed">
+                      {t('post.debug.paraphraseDesc')}
+                    </p>
+
+                    <div className="space-y-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => applyParaphrase('compact')}
+                        className={`w-full text-left p-2.5 rounded-xl border text-xs transition cursor-pointer flex items-center justify-between hover:bg-slate-50/50 ${
+                          activeParaphrase === 'compact'
+                            ? 'border-brand-500 bg-brand-50/40 text-brand-800 font-extrabold shadow-3xs'
+                            : 'border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-bold text-slate-800">{t('post.debug.optimize')}</div>
+                          <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.optimizeDesc')}</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => applyParaphrase('clean_case')}
+                        className={`w-full text-left p-2.5 rounded-xl border text-xs transition cursor-pointer flex items-center justify-between hover:bg-slate-50/50 ${
+                          activeParaphrase === 'clean_case'
+                            ? 'border-brand-500 bg-brand-50/40 text-brand-800 font-extrabold shadow-3xs'
+                            : 'border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-bold text-slate-800">{t('post.debug.iecNotes')}</div>
+                          <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.iecNotesDesc')}</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => applyParaphrase('default')}
+                        className={`w-full text-left p-2.5 rounded-xl border text-xs transition cursor-pointer flex items-center justify-between hover:bg-slate-50/50 ${
+                          activeParaphrase === 'default'
+                            ? 'border-brand-500 bg-brand-50/40 text-brand-800 font-extrabold shadow-3xs'
+                            : 'border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-bold text-slate-800">{t('post.debug.restore')}</div>
+                          <div className="text-[9.5px] text-slate-400 font-normal mt-0.5">{t('post.debug.restoreDesc')}</div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 3: Revisions */}
+                {activeTab === 'revisions' && (
+                  <div className="space-y-3 animate-in fade-in duration-200 flex-1 flex flex-col min-h-0">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5 shrink-0">
+                      <History className="w-4 h-4 text-teal-600" />
+                      <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                        {t('post.debug.revisionTitle')}
+                      </h5>
+                    </div>
+
+                    <div className="space-y-2.5 divide-y divide-slate-100 overflow-y-auto pr-1 flex-1 min-h-0">
+                      {revisions.map((rev) => (
+                        <div key={rev.id} className="flex gap-2.5 items-start text-[10px] leading-normal pt-2.5 first:pt-0 pb-1">
+                          <span className="font-mono text-slate-400 font-semibold mt-0.5">{rev.time}</span>
+                          <div className="flex-1">
+                            <span className="font-bold text-slate-700 block leading-snug">{rev.desc}</span>
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setCode(rev.code)
+                              localStorage.setItem(STORAGE_KEY, rev.code)
+                              window.dispatchEvent(new Event('storage'))
+                              setSyntaxStatus('idle')
+                              alert(`Đã hoàn tác về phiên bản: ${rev.desc}`)
+                            }}
+                            className="text-brand-600 hover:text-brand-700 font-extrabold hover:underline cursor-pointer transition shrink-0 ml-2"
+                          >
+                            Hoàn tác
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        )}
 
       </div>
-
     </div>
   )
 }

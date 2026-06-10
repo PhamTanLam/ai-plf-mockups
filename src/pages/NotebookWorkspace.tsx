@@ -292,6 +292,13 @@ export default function NotebookWorkspace() {
   })
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(true)
+  const [isLeftSidebarExpanded, setIsLeftSidebarExpanded] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem(`aiplf.workspace.${id}.leftSidebarExpanded`)
+      if (stored !== null) return JSON.parse(stored)
+    } catch { /* ignore */ }
+    return true
+  })
   const [hasUsedPreSales, setHasUsedPreSales] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem(`aiplf.workspace.${id}.hasUsedPreSales`)
@@ -909,8 +916,9 @@ export default function NotebookWorkspace() {
       localStorage.setItem(`aiplf.workspace.${id}.askedQuestions`, JSON.stringify(askedQuestions))
       localStorage.setItem(`aiplf.workspace.${id}.leftActiveTab`, JSON.stringify(leftActiveTab))
       localStorage.setItem(`aiplf.workspace.${id}.historyLogs`, JSON.stringify(historyLogs))
+      localStorage.setItem(`aiplf.workspace.${id}.leftSidebarExpanded`, JSON.stringify(isLeftSidebarExpanded))
     } catch { /* ignore */ }
-  }, [id, activePhase, activatedPhases, hasUsedPreSales, progressBarActivated, maxPostSalesIndex, messages, askedQuestions, leftActiveTab, historyLogs])
+  }, [id, activePhase, activatedPhases, hasUsedPreSales, progressBarActivated, maxPostSalesIndex, messages, askedQuestions, leftActiveTab, historyLogs, isLeftSidebarExpanded])
 
   // Initial Load for Kickoff Text
   useEffect(() => {
@@ -1698,146 +1706,91 @@ Thành phần tham dự:
       {/* Main Container */}
       <div className="flex-1 flex min-h-0 relative">
         
-        {/* COLUMN 1: LEFT SIDEBAR - Source Documents & Output History (Width: 220px) */}
-        <aside className="w-[220px] shrink-0 bg-slate-50/80 border-r border-slate-200 flex flex-col h-full z-10">
-          
-          {/* Sources List & History Panel (Top, flex-1) */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="border-b border-slate-200 bg-slate-100/50 shrink-0 p-1 flex gap-1">
-              <button
-                onClick={() => setLeftActiveTab('sources')}
-                className={`flex-1 py-1 text-[10px] font-extrabold uppercase tracking-wider transition cursor-pointer text-center rounded-lg ${
-                  leftActiveTab === 'sources'
-                    ? 'bg-white text-brand-700 shadow-3xs font-black'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {t('ws.panel.sources')}
-              </button>
-              <button
-                onClick={() => setLeftActiveTab('history')}
-                className={`flex-1 py-1 text-[10px] font-extrabold uppercase tracking-wider transition cursor-pointer text-center rounded-lg ${
-                  leftActiveTab === 'history'
-                    ? 'bg-white text-brand-700 shadow-3xs font-black'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {t('ws.panel.history')}
-              </button>
-            </div>
-            {leftActiveTab === 'history' && (
-              <div className="px-2 py-1.5 border-b border-slate-200 bg-slate-50 flex items-center gap-1 justify-between select-none">
-                <div className="flex gap-1">
-                  {(['All', 'Linh', 'Kanai', 'AI'] as const).map((filter) => (
-                    <button
-                      key={filter}
-                      type="button"
-                      onClick={() => setHistoryUserFilter(filter)}
-                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition cursor-pointer ${
-                        historyUserFilter === filter
-                          ? 'bg-brand-500 text-white shadow-3xs'
-                          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                      }`}
-                    >
-                      {filter === 'All' ? 'Tất cả' : filter}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setHistoryLogs([
-                    { id: 'h1', user: 'Kanai', action: 'Đã thiết lập dự án và nạp tài liệu thiết kế gốc', timestamp: '09:30 AM', phaseNum: 7 },
-                    { id: 'h2', user: 'Linh', action: 'Xác nhận thông số Mạng truyền thông CC-Link IE', timestamp: '10:05 AM', phaseNum: 7 },
-                    { id: 'h3', user: 'Linh', action: 'Đồng bộ chênh lệch thông số sang biên bản kick-off', timestamp: '10:15 AM', phaseNum: 8 },
-                  ])}
-                  className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5 cursor-pointer ml-auto transition-colors"
-                  title="Reset lịch sử"
-                >
-                  <RotateCcw className="w-2.5 h-2.5" />
-                  <span>Reset</span>
-                </button>
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-              {leftActiveTab === 'sources' ? (
-                <>
-                  <button onClick={() => setAddSourceOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 mb-1 text-[11px] font-bold border border-slate-200 bg-white rounded-xl text-slate-700 hover:bg-slate-50 cursor-pointer">
-                    <Plus className="w-3 h-3" />{t('ws.panel.addSource')}
-                  </button>
-                  {sources.map((src) => (
-                  <div
-                    key={src.id}
-                    onClick={() => {
-                      setActiveViewerSource(src.id)
-                      setHighlightedPhrase(undefined)
-                    }}
-                    className={`p-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col gap-1 hover-lift ${
-                      activeViewerSource === src.id
-                        ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
-                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+        {/* COLUMN 1: LEFT SIDEBAR - Source Documents & Output History (Collapsible: 220px / 48px) */}
+        <aside className={`shrink-0 bg-slate-50/80 border-r border-slate-200 flex flex-col h-full z-10 transition-all duration-300 relative ${
+          isLeftSidebarExpanded ? 'w-[220px]' : 'w-12'
+        }`}>
+          {isLeftSidebarExpanded ? (
+            <>
+              {/* Sources List & History Panel (Top, flex-1) */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="border-b border-slate-200 bg-slate-100/50 shrink-0 p-1 flex gap-1 items-center">
+                  <button
+                    onClick={() => setLeftActiveTab('sources')}
+                    className={`flex-1 py-1 text-[10px] font-extrabold uppercase tracking-wider transition cursor-pointer text-center rounded-lg ${
+                      leftActiveTab === 'sources'
+                        ? 'bg-white text-brand-700 shadow-3xs font-black'
+                        : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-1.5">
-                      <div className="flex items-center gap-1 min-w-0">
-                        <FileText className={`w-3 h-3 shrink-0 ${src.selected ? 'text-brand-500' : 'text-slate-400'}`} />
-                        <span className={`text-[10px] font-bold truncate ${
-                          activeViewerSource === src.id ? 'text-brand-700 font-extrabold' : 'text-slate-800'
-                        }`} title={src.title}>
-                          {src.title}
-                        </span>
-                      </div>
-
-                      <input
-                        type="checkbox"
-                        checked={src.selected}
-                        onChange={(e) => {
-                          e.stopPropagation()
-                          handleSourceSelect(src.id)
-                        }}
-                        className="w-2.5 h-2.5 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-white cursor-pointer shrink-0"
-                      />
+                    {t('ws.panel.sources')}
+                  </button>
+                  <button
+                    onClick={() => setLeftActiveTab('history')}
+                    className={`flex-1 py-1 text-[10px] font-extrabold uppercase tracking-wider transition cursor-pointer text-center rounded-lg ${
+                      leftActiveTab === 'history'
+                        ? 'bg-white text-brand-700 shadow-3xs font-black'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    {t('ws.panel.history')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsLeftSidebarExpanded(false)}
+                    className="p-1 hover:bg-slate-200/80 text-slate-450 hover:text-slate-700 rounded transition cursor-pointer shrink-0 ml-0.5"
+                    title="Thu gọn sidebar"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {leftActiveTab === 'history' && (
+                  <div className="px-2 py-1.5 border-b border-slate-200 bg-slate-50 flex items-center gap-1 justify-between select-none">
+                    <div className="flex gap-1">
+                      {(['All', 'Linh', 'Kanai', 'AI'] as const).map((filter) => (
+                        <button
+                          key={filter}
+                          type="button"
+                          onClick={() => setHistoryUserFilter(filter)}
+                          className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition cursor-pointer ${
+                            historyUserFilter === filter
+                              ? 'bg-brand-500 text-white shadow-3xs'
+                              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                          }`}
+                        >
+                          {filter === 'All' ? 'Tất cả' : filter}
+                        </button>
+                      ))}
                     </div>
-
-                    <div className="flex items-center justify-between text-[8px] text-slate-500 font-semibold font-mono">
-                      <span>{src.type}</span>
-                      <span>{src.size}</span>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setHistoryLogs([
+                        { id: 'h1', user: 'Kanai', action: 'Đã thiết lập dự án và nạp tài liệu thiết kế gốc', timestamp: '09:30 AM', phaseNum: 7 },
+                        { id: 'h2', user: 'Linh', action: 'Xác nhận thông số Mạng truyền thông CC-Link IE', timestamp: '10:05 AM', phaseNum: 7 },
+                        { id: 'h3', user: 'Linh', action: 'Đồng bộ chênh lệch thông số sang biên bản kick-off', timestamp: '10:15 AM', phaseNum: 8 },
+                      ])}
+                      className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5 cursor-pointer ml-auto transition-colors"
+                      title="Reset lịch sử"
+                    >
+                      <RotateCcw className="w-2.5 h-2.5" />
+                      <span>Reset</span>
+                    </button>
                   </div>
-                  ))}
-                </>
-              ) : (() => {
-                const filteredLogs = historyLogs.filter(log => historyUserFilter === 'All' || log.user === historyUserFilter)
-                return filteredLogs.length === 0 ? (
-                  <div className="text-[10px] text-slate-400 text-center py-6 px-3">
-                    {t('ws.panel.noHistory')}
-                  </div>
-                ) : (
-                  filteredLogs.map((log) => {
-                    let IconComponent = Activity
-                    const actLower = log.action.toLowerCase()
-                    if (actLower.includes('tải xuống') || actLower.includes('download')) {
-                      IconComponent = Download
-                    } else if (actLower.includes('cú pháp') || actLower.includes('lỗi') || actLower.includes('debug') || actLower.includes('sửa')) {
-                      IconComponent = Bug
-                    } else if (actLower.includes('lưu') || actLower.includes('setting') || actLower.includes('cấu hình')) {
-                      IconComponent = Settings
-                    } else if (actLower.includes('đồng bộ') || actLower.includes('xác nhận')) {
-                      IconComponent = RefreshCw
-                    } else if (actLower.includes('yêu cầu') || actLower.includes('hỏi') || actLower.includes('chat') || actLower.includes('nhận đơn')) {
-                      IconComponent = MessageSquare
-                    }
+                )}
 
-                    return (
+                <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                  {leftActiveTab === 'sources' ? (
+                    <>
+                      <button onClick={() => setAddSourceOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 mb-1 text-[11px] font-bold border border-slate-200 bg-white rounded-xl text-slate-700 hover:bg-slate-50 cursor-pointer">
+                        <Plus className="w-3 h-3" />{t('ws.panel.addSource')}
+                      </button>
+                      {sources.map((src) => (
                       <div
-                        key={log.id}
-                        onClick={() => handlePhaseChange(log.phaseNum)}
-                        className="p-2.5 bg-white border border-slate-200 hover:border-brand-350 hover:bg-slate-50/50 hover:shadow-2xs rounded-xl flex flex-col gap-1 transition-all duration-200 cursor-pointer group relative"
-                        title={`Click để chuyển nhanh tới Bước ${log.phaseNum}`}
-                      >
-                        <ArrowRight className="w-3 h-3 text-brand-500 opacity-0 group-hover:opacity-100 transition absolute top-2.5 right-2.5" />
-
-                        <div className="flex items-center justify-between gap-1 pr-4">
+                        key={src.id}
+                        onClick={() => {
+                          setActiveViewerSource(src.id)
+                          setHighlightedPhrase(undefined)
+                        }}
                           <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500">
                             <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-white shrink-0 ${
                               log.user === 'Linh'
@@ -1958,11 +1911,7 @@ Thành phần tham dự:
                       {activePhase !== null ? phaseTitle(activePhase) : t('ws.canvas.detailArea')}
                     </h1>
                   </div>
-                  {activePhase !== null ? (
-                    <p className="mt-0.5 text-xs text-slate-500 leading-normal">
-                      {t(`ws.phase.${activePhase}.desc`)}
-                    </p>
-                  ) : (
+                  {activePhase === null && (
                     <p className="mt-0.5 text-xs text-slate-500 leading-normal">
                       {t('ws.canvas.intro')}
                     </p>
