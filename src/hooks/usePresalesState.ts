@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { tcText, tField, tFieldValue } from '@/i18n/chat'
+import type { Locale } from '@/i18n/types'
 
 /**
  * usePresalesState — "bộ nhớ AI" cho nghiệp vụ NV1 (Input + Q&A). MÔ PHỎNG, dữ liệu GIẢ ĐỊNH.
@@ -54,17 +56,18 @@ const DEMO_FIELDS: { name: string; value: string }[] = [
   { name: 'Nhịp sản xuất (takt)', value: '35 giây/cái' },
 ]
 
-function buildOutputMarkdown(id: string, fields: ProjectField[]): string {
-  const get = (kw: RegExp) => fields.find(f => kw.test(f.name))?.value || '(chưa có)'
-  const list = fields.length ? fields.map(f => `- ${f.name}: ${f.value}`).join('\n') : '- (chưa có dữ liệu)'
-  const head = `# ${OUTPUTS.find(o => o.id === id)?.name}\n\n> Bản nháp sinh tự động từ thông tin đã ghi nhận — cần kỹ sư rà soát.\n`
+function buildOutputMarkdown(id: string, fields: ProjectField[], locale: Locale = 'vi'): string {
+  const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
+  const get = (kw: RegExp) => { const f = fields.find(x => kw.test(x.name)); return f ? tFieldValue(f.value, locale) : L('(chưa có)', '(なし)', '(none)') }
+  const list = fields.length ? fields.map(f => `- ${tField(f.name, locale)}: ${tFieldValue(f.value, locale)}`).join('\n') : `- ${L('(chưa có dữ liệu)', '(データなし)', '(no data)')}`
+  const head = `# ${tcText(OUTPUTS.find(o => o.id === id)?.name || '', locale)}\n\n> ${L('Bản nháp sinh tự động từ thông tin đã ghi nhận — cần kỹ sư rà soát.', '記録された情報から自動生成された下書き — 技術者の確認が必要です。', 'Auto-generated draft from recorded info — needs engineer review.')}\n`
   switch (id) {
-    case 'doc': return head + `\n## Tóm tắt kỹ thuật\n${list}\n`
-    case 'config': return head + `\n## Cấu thành hệ thống (đơn giản)\n- Điều khiển: ${get(/điều khiển/i)}\n- Mạng: ${get(/mạng/i)}\n- Liên động: ${get(/liên động/i)}\n- Chủng loại: ${get(/chủng loại/i)}\n`
-    case 'estimate': return head + `\n## Dự toán khái quát (ước tính)\n\n| Hạng mục | Ước tính |\n| :--- | ---: |\n| Thiết kế điện & phần mềm | ¥3.2M |\n| Vật tư điều khiển | ¥4.1M |\n| Lắp đặt & debug | ¥2.0M |\n| Tổng | ¥9.3M |\n\n- Thời gian ~16 tuần · Độ tin cậy 75%.\n`
-    case 'schedule': return head + `\n## Lịch trình khái quát\n\n| Pha | Nội dung | Thời lượng |\n| :--- | :--- | :---: |\n| 1. Thiết kế | Bản vẽ điện, kiến trúc PM | 8 tuần |\n| 2. Chế tạo | Tủ điện, lập trình PLC/HMI | 6 tuần |\n| 3. Lắp đặt & Debug | takt ${get(/takt/i)} | 4 tuần |\n| 4. Bàn giao | Nghiệm thu | 2 tuần |\n`
-    case 'proposal': return head + `\n## Tài liệu nền đề xuất\nBối cảnh: ${get(/bối cảnh/i)}.\n\nMục tiêu: tự động hoá ${get(/hoạt động/i)}, takt ${get(/takt/i)}.\n\nPhạm vi: ${get(/phạm vi/i)}.\n\nAn toàn: ${get(/an toàn/i)}.\n`
-    case 'final': return head + `\n> **Hồ sơ trình khách — bản tổng hợp chi tiết** (gom toàn bộ thông tin đã làm rõ để trình khách chốt đơn).\n\n## 1. Thông tin dự án\n${list}\n\n## 2. Cấu thành hệ thống\n- Điều khiển: ${get(/điều khiển/i)}\n- Mạng: ${get(/mạng/i)}\n- Liên động: ${get(/liên động/i)}\n- An toàn: ${get(/an toàn/i)}\n\n## 3. Dự toán chi tiết\n\n| Hạng mục | Ước tính |\n| :--- | ---: |\n| Thiết kế điện & phần mềm | ¥3.2M |\n| Vật tư điều khiển | ¥4.1M |\n| Lắp đặt & debug | ¥2.0M |\n| **Tổng** | **¥9.3M** |\n\n## 4. Lịch trình khái quát\n- Thiết kế 8 tuần · Chế tạo 6 tuần · Lắp đặt & debug 4 tuần · Nghiệm thu 2 tuần.\n\n## 5. Phạm vi & Cam kết\nPhạm vi: ${get(/phạm vi/i)}. Bảo hành: ${get(/bảo hành/i)}.\n\n*Bản nháp do AI tổng hợp — cần kỹ sư rà soát trước khi gửi khách.*\n`
+    case 'doc': return head + `\n## ${L('Tóm tắt kỹ thuật', '技術概要', 'Technical summary')}\n${list}\n`
+    case 'config': return head + `\n## ${L('Cấu thành hệ thống (đơn giản)', 'システム構成（簡易）', 'System configuration (simple)')}\n- ${L('Điều khiển', '制御', 'Control')}: ${get(/điều khiển/i)}\n- ${L('Mạng', 'ネットワーク', 'Network')}: ${get(/mạng/i)}\n- ${L('Liên động', '連動', 'Interlock')}: ${get(/liên động/i)}\n- ${L('Chủng loại', '機種', 'Variants')}: ${get(/chủng loại/i)}\n`
+    case 'estimate': return head + `\n## ${L('Dự toán khái quát (ước tính)', '概算見積（試算）', 'Rough estimate')}\n\n| ${L('Hạng mục', '項目', 'Item')} | ${L('Ước tính', '概算', 'Estimate')} |\n| :--- | ---: |\n| ${L('Thiết kế điện & phần mềm', '電気・ソフト設計', 'Electrical & software design')} | ¥3.2M |\n| ${L('Vật tư điều khiển', '制御資材', 'Control materials')} | ¥4.1M |\n| ${L('Lắp đặt & debug', '据付・デバッグ', 'Install & debug')} | ¥2.0M |\n| ${L('Tổng', '合計', 'Total')} | ¥9.3M |\n\n- ${L('Thời gian ~16 tuần · Độ tin cậy 75%.', '期間 約16週 · 信頼度 75%。', 'Duration ~16 weeks · Confidence 75%.')}\n`
+    case 'schedule': return head + `\n## ${L('Lịch trình khái quát', '概略スケジュール', 'Rough schedule')}\n\n| ${L('Pha', 'フェーズ', 'Phase')} | ${L('Nội dung', '内容', 'Content')} | ${L('Thời lượng', '期間', 'Duration')} |\n| :--- | :--- | :---: |\n| 1. ${L('Thiết kế', '設計', 'Design')} | ${L('Bản vẽ điện, kiến trúc PM', '電気図面・PM設計', 'Electrical drawings, PM architecture')} | ${L('8 tuần', '8週', '8 weeks')} |\n| 2. ${L('Chế tạo', '製作', 'Build')} | ${L('Tủ điện, lập trình PLC/HMI', '制御盤・PLC/HMIプログラム', 'Panel, PLC/HMI programming')} | ${L('6 tuần', '6週', '6 weeks')} |\n| 3. ${L('Lắp đặt & Debug', '据付・デバッグ', 'Install & debug')} | takt ${get(/takt/i)} | ${L('4 tuần', '4週', '4 weeks')} |\n| 4. ${L('Bàn giao', '引き渡し', 'Handover')} | ${L('Nghiệm thu', '検収', 'Acceptance')} | ${L('2 tuần', '2週', '2 weeks')} |\n`
+    case 'proposal': return head + `\n## ${L('Tài liệu nền đề xuất', '提案ベース資料', 'Proposal base document')}\n${L('Bối cảnh', '背景', 'Context')}: ${get(/bối cảnh/i)}.\n\n${L('Mục tiêu: tự động hoá', '目的: 自動化', 'Goal: automate')} ${get(/hoạt động/i)}, takt ${get(/takt/i)}.\n\n${L('Phạm vi', '範囲', 'Scope')}: ${get(/phạm vi/i)}.\n\n${L('An toàn', '安全', 'Safety')}: ${get(/an toàn/i)}.\n`
+    case 'final': return head + `\n> **${L('Hồ sơ trình khách — bản tổng hợp chi tiết', '顧客提案書 — 詳細総合版', 'Customer proposal — detailed consolidated')}** (${L('gom toàn bộ thông tin đã làm rõ để trình khách chốt đơn', '確定した全情報をまとめ受注へ', 'all clarified info to close the order')}).\n\n## 1. ${L('Thông tin dự án', '案件情報', 'Project info')}\n${list}\n\n## 2. ${L('Cấu thành hệ thống', 'システム構成', 'System configuration')}\n- ${L('Điều khiển', '制御', 'Control')}: ${get(/điều khiển/i)}\n- ${L('Mạng', 'ネットワーク', 'Network')}: ${get(/mạng/i)}\n- ${L('Liên động', '連動', 'Interlock')}: ${get(/liên động/i)}\n- ${L('An toàn', '安全', 'Safety')}: ${get(/an toàn/i)}\n\n## 3. ${L('Dự toán chi tiết', '詳細見積', 'Detailed estimate')}\n\n| ${L('Hạng mục', '項目', 'Item')} | ${L('Ước tính', '概算', 'Estimate')} |\n| :--- | ---: |\n| ${L('Thiết kế điện & phần mềm', '電気・ソフト設計', 'Electrical & software design')} | ¥3.2M |\n| ${L('Vật tư điều khiển', '制御資材', 'Control materials')} | ¥4.1M |\n| ${L('Lắp đặt & debug', '据付・デバッグ', 'Install & debug')} | ¥2.0M |\n| **${L('Tổng', '合計', 'Total')}** | **¥9.3M** |\n\n## 4. ${L('Lịch trình khái quát', '概略スケジュール', 'Rough schedule')}\n- ${L('Thiết kế 8 tuần · Chế tạo 6 tuần · Lắp đặt & debug 4 tuần · Nghiệm thu 2 tuần.', '設計8週 · 製作6週 · 据付デバッグ4週 · 検収2週。', 'Design 8w · Build 6w · Install & debug 4w · Acceptance 2w.')}\n\n## 5. ${L('Phạm vi & Cam kết', '範囲・保証', 'Scope & commitment')}\n${L('Phạm vi', '範囲', 'Scope')}: ${get(/phạm vi/i)}. ${L('Bảo hành', '保証', 'Warranty')}: ${get(/bảo hành/i)}.\n\n*${L('Bản nháp do AI tổng hợp — cần kỹ sư rà soát trước khi gửi khách.', 'AIが作成した下書き — 送付前に技術者の確認が必要。', 'AI-drafted — needs engineer review before sending.')}*\n`
     default: return head + '\n' + list
   }
 }
@@ -96,7 +99,7 @@ export interface PresalesApi {
   summaryText: () => string                          // tóm tắt bộ nhớ (cho chat hiển thị)
   clearAll: () => void
   reExtract: (label: string) => { name: string; from: string; to: string }[]
-  generate: (id: string) => SavedOutput | null
+  generate: (id: string, locale?: Locale) => SavedOutput | null
   saveAnswerNote: (title: string, content: string) => void
   renameOutput: (oid: string, title: string) => void
   deleteOutput: (oid: string) => void
@@ -172,9 +175,9 @@ export function usePresalesState(caseId: string): PresalesApi {
     return diffs
   }, [fields])
 
-  const generate = useCallback((id: string): SavedOutput | null => {
+  const generate = useCallback((id: string, locale: Locale = 'vi'): SavedOutput | null => {
     const o = OUTPUTS.find(x => x.id === id); if (!o) return null
-    const content = buildOutputMarkdown(id, fields)
+    const content = buildOutputMarkdown(id, fields, locale)
     // Sinh lại cùng loại → CẬP NHẬT bản hiện có (tăng version) + lưu SNAPSHOT từng version, không tạo bản trùng
     const now = Date.now()
     const existing = savedOutputs.find(e => e.kind === 'gen' && e.toolId === id)

@@ -47,6 +47,17 @@ const CHAT: Record<string, { ja: string; en: string }> = {
   'Lập dự toán khái quát': { ja: '概算見積を作成', en: 'Create a rough estimate' },
   'Lập lịch trình khái quát': { ja: '概略スケジュールを作成', en: 'Create a rough schedule' },
   'Soạn tài liệu nền đề xuất': { ja: '提案ベース資料を作成', en: 'Draft the proposal base document' },
+  'Tạo hồ sơ trình khách chi tiết': { ja: '顧客提案書（詳細）を作成', en: 'Create the detailed customer proposal' },
+  // ── Tiêu đề đầu ra (OUTPUTS) — dịch khi render card ──
+  'Nội dung tài liệu dự toán': { ja: '見積資料の内容', en: 'Estimate document content' },
+  'Cấu thành đơn giản': { ja: 'システム構成（簡易）', en: 'System configuration (simple)' },
+  'Dự toán khái quát': { ja: '概算見積', en: 'Rough estimate' },
+  'Lịch trình khái quát': { ja: '概略スケジュール', en: 'Rough schedule' },
+  'Tài liệu nền đề xuất': { ja: '提案ベース資料', en: 'Proposal base document' },
+  'Hồ sơ trình khách (chi tiết)': { ja: '顧客提案書（詳細）', en: 'Customer proposal (detailed)' },
+  // ── Nhãn nút hành động dưới chat (pre-sales) ──
+  'Xem hồ sơ trình khách': { ja: '顧客提案書を見る', en: 'View customer proposal' },
+  'Xem trong Thư viện': { ja: 'ライブラリで見る', en: 'View in Library' },
   // ── Câu trả lời AI (explanationText) ──
   'Đã chuyển sang Bước 1: Khảo sát & Phát sinh. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.': { ja: 'ステップ1「調査・追加費用」に移動しました。ログ画面 khao_sat_thay_doi_specs.txt を左側に表示しています。', en: 'Moved to Step 1: Survey & Change Orders. The log view khao_sat_thay_doi_specs.txt is shown on the left.' },
   'Đã chuyển sang Bước 2: Họp Kick-off. Giao diện biên bản bien_ban_kickoff_ban_giao.txt đã được hiển thị ở bên trái.': { ja: 'ステップ2「キックオフ会議」に移動しました。議事録 bien_ban_kickoff_ban_giao.txt を左側に表示しています。', en: 'Moved to Step 2: Kick-off meeting. The minutes bien_ban_kickoff_ban_giao.txt are shown on the left.' },
@@ -166,6 +177,86 @@ const CHAT: Record<string, { ja: string; en: string }> = {
 export function tcText(text: string, locale: Locale): string {
   if (locale === 'vi') return text
   return CHAT[text]?.[locale] ?? text
+}
+
+// Dịch tên trường bộ nhớ AI (FIELD_CATALOG ở usePresalesState) sang JA/EN
+const FIELD_I18N: Record<string, { ja: string; en: string }> = {
+  'Bối cảnh dự án': { ja: '案件背景', en: 'Project context' },
+  'Tóm tắt hoạt động thiết bị': { ja: '設備動作概要', en: 'Equipment operation summary' },
+  'Thiết bị điều khiển': { ja: '制御機器', en: 'Control devices' },
+  'Cấu hình mạng': { ja: 'ネットワーク構成', en: 'Network configuration' },
+  'Số chủng loại sản phẩm': { ja: '製品種類数', en: 'Number of product variants' },
+  'Phạm vi phụ trách': { ja: '担当範囲', en: 'Scope of work' },
+  'Thiết bị liên động ngoài': { ja: '外部連動機器', en: 'External interlock devices' },
+  'Thông số an toàn': { ja: '安全仕様', en: 'Safety specs' },
+  'Yêu cầu đặc biệt của khách': { ja: '客先特別要求', en: 'Customer special requirements' },
+  'Địa điểm debug / chạy thử': { ja: 'デバッグ・試運転場所', en: 'Debug / trial-run location' },
+  'Người phụ trách (cơ/điện/PM)': { ja: '担当者（機械/電気/PM）', en: 'Owner (mech/elec/PM)' },
+  'Nhịp sản xuất (takt)': { ja: '生産タクト', en: 'Production takt' },
+  'Màu sơn tủ điện': { ja: '制御盤塗装色', en: 'Panel paint color' },
+  'Điện áp nguồn cấp': { ja: '供給電源電圧', en: 'Supply voltage' },
+  'Yêu cầu bảo hành': { ja: '保証要求', en: 'Warranty requirement' },
+  'Chứng nhận / tiêu chuẩn': { ja: '認証・規格', en: 'Certification / standard' },
+  'Cấp độ phòng sạch': { ja: 'クリーンルーム等級', en: 'Cleanroom class' },
+  // Tên trường ở Bước 7 (chênh lệch khảo sát)
+  'PLC điều khiển': { ja: '制御PLC', en: 'Control PLC' },
+  'Màn hình HMI': { ja: 'HMI画面', en: 'HMI screen' },
+  'Trục Servo': { ja: 'サーボ軸', en: 'Servo axis' },
+  'Tiêu chuẩn an toàn': { ja: '安全規格', en: 'Safety standard' },
+  'Cảm biến quang': { ja: '光電センサー', en: 'Photoelectric sensor' },
+}
+
+// Dịch GIÁ TRỊ dữ liệu mẫu (demo) — chỉ những giá trị có chữ tiếng Việt; thuật ngữ/proper-noun giữ nguyên
+const VALUE_I18N: Record<string, { ja: string; en: string }> = {
+  'Khách hàng A · 2026/09': { ja: '顧客A · 2026/09', en: 'Customer A · 2026/09' },
+  'Khách hàng A · end-user X · 2026/09': { ja: '顧客A · エンドユーザーX · 2026/09', en: 'Customer A · end-user X · 2026/09' },
+  'Dây chuyền lắp ráp & kiểm tra': { ja: '組立・検査ライン', en: 'Assembly & inspection line' },
+  'Servo ×6 · CC-LINK': { ja: 'サーボ×6 · CC-LINK', en: 'Servo ×6 · CC-LINK' },
+  '3 chủng loại': { ja: '3機種', en: '3 variants' },
+  'Điện + phần mềm': { ja: '電気＋ソフト', en: 'Electrical + software' },
+  '2 băng tải': { ja: 'コンベヤ2台', en: '2 conveyors' },
+  'Nhà máy A': { ja: 'A工場', en: 'Factory A' },
+  'Anh B (điện)': { ja: 'Bさん（電気）', en: 'Mr. B (electrical)' },
+  '35 giây/cái': { ja: '35秒/個', en: '35 sec/pc' },
+  '3 pha 380V/50Hz': { ja: '三相380V/50Hz', en: '3-phase 380V/50Hz' },
+  '18 tháng': { ja: '18ヶ月', en: '18 months' },
+  'Có': { ja: 'あり', en: 'Yes' },
+  // Giá trị chênh lệch Bước 7
+  'FX5U (Compact) → Q03UDE (Module)': { ja: 'FX5U（コンパクト）→ Q03UDE（モジュール）', en: 'FX5U (Compact) → Q03UDE (Module)' },
+  'GOT2000 7" → 10"': { ja: 'GOT2000 7" → 10"', en: 'GOT2000 7" → 10"' },
+  '3 trục → 4 trục (bổ sung MR-J5-40A)': { ja: '3軸 → 4軸（MR-J5-40A 追加）', en: '3 axes → 4 axes (add MR-J5-40A)' },
+  'ISO 13849 PLc → PLd (thêm Omron G9SE + 2 light curtain)': { ja: 'ISO 13849 PLc → PLd（Omron G9SE + ライトカーテン2台 追加）', en: 'ISO 13849 PLc → PLd (add Omron G9SE + 2 light curtains)' },
+  '6 → 8 cái': { ja: '6 → 8個', en: '6 → 8 pcs' },
+}
+export function tFieldValue(v: string, locale: Locale): string {
+  if (locale === 'vi') return v
+  return VALUE_I18N[v]?.[locale] ?? v
+}
+/** Tóm tắt bộ nhớ dạng "• Tên: Giá trị", dịch cả tên trường lẫn giá trị mẫu. */
+export function tSummary(fields: { name: string; value: string }[], locale: Locale): string {
+  if (!fields.length) return locale === 'ja' ? '（記録データなし）' : locale === 'en' ? '(no data recorded)' : '(chưa ghi nhận dữ liệu nào)'
+  return fields.map(f => `• ${tField(f.name, locale)}: ${tFieldValue(f.value, locale)}`).join('\n')
+}
+export function tField(viName: string, locale: Locale): string {
+  if (locale === 'vi') return viName
+  return FIELD_I18N[viName]?.[locale] ?? viName
+}
+
+// Dịch nhãn loại nguồn / kích thước do người dùng thêm (type mặc định là tiếng Anh kỹ thuật → giữ nguyên)
+const SOURCE_LABEL_I18N: Record<string, { ja: string; en: string }> = {
+  'Tải lên': { ja: 'アップロード', en: 'Upload' },
+  'Văn bản': { ja: 'テキスト', en: 'Text' },
+  'Ghi chú': { ja: 'メモ', en: 'Note' },
+}
+export function tSourceMeta(s: string, locale: Locale): string {
+  if (locale === 'vi') return s
+  if (SOURCE_LABEL_I18N[s]) return SOURCE_LABEL_I18N[s][locale]
+  // kích thước dạng "N ký tự"
+  if (s.includes('ký tự')) return s.replace('ký tự', locale === 'ja' ? '文字' : 'chars')
+  return s
+}
+export function tFieldList(viNames: string[], locale: Locale): string {
+  return viNames.map(n => tField(n, locale)).join(', ')
 }
 
 const COMMENT_REPLACEMENTS: Record<string, { ja: string; en: string }> = {

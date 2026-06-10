@@ -31,7 +31,7 @@ import {
   Search
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
-import { tcText } from '@/i18n/chat'
+import { tcText, tField, tFieldList, tSourceMeta, tSummary } from '@/i18n/chat'
 
 // Import components
 import CadViewer from '@/components/CadViewer'
@@ -1318,7 +1318,7 @@ Thành phần tham dự:
     // ý định sinh đầu ra → Step 3
     let gen = ''
     // Hồ sơ trình khách (bước 6 — chi tiết/final): ưu tiên nhận diện trước
-    if (/hồ sơ trình khách|trình khách|tài liệu final|bản final|file final|tổng hợp.*trình|hồ sơ.*khách|đề xuất cuối|chốt đơn|dự toán chi tiết|tài liệu chi tiết|hồ sơ chi tiết/i.test(text)) gen = 'final'
+    if (/hồ sơ trình khách|trình khách|tài liệu final|bản final|file final|tổng hợp.*trình|hồ sơ.*khách|đề xuất cuối|chốt đơn|dự toán chi tiết|tài liệu chi tiết|hồ sơ chi tiết|提案書|顧客提案|最終資料|詳細見積|customer proposal|final proposal|detailed proposal|detailed estimate/i.test(text)) gen = 'final'
     else if (text === 'Soạn nội dung tài liệu dự toán') gen = 'doc'
     else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') gen = 'config'
     else if (text === 'Lập dự toán khái quát') gen = 'estimate'
@@ -1329,15 +1329,15 @@ Thành phần tham dự:
     else if (/cấu thành/i.test(text)) gen = 'config'
     else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) gen = 'proposal'
     if (gen) {
-      const out = pre.generate(gen)
+      const out = pre.generate(gen, locale)
       handlePhaseChange(3)
       if (gen === 'final') {
         pushChat(
           text,
           'Đã tạo "Hồ sơ trình khách (chi tiết)" — bản tổng hợp thông tin + dự toán + lịch trình để trình khách ✓.\n\nFile đã lưu vào "Sản phẩm bàn giao" trong Thư viện. Bấm để xem ngay:',
           PRE_SUGG,
-          undefined,
-          undefined,
+          'chat.ps.finalCreated',
+          {},
           out ? { label: 'Xem hồ sơ trình khách', openOid: out.oid, version: out.version, phase: 3 } : undefined,
         )
       } else {
@@ -1347,7 +1347,7 @@ Thành phần tham dự:
     }
     // tóm tắt / xem lại → Step 2
     if (/tóm tắt|xem dữ liệu|dữ liệu đã|đã ghi|nhớ gì|thông tin dự án/i.test(text)) {
-      const data = pre.summaryText()
+      const data = tSummary(pre.fields, locale)
       handlePhaseChange(2)
       pushChat(text, 'Dữ liệu dự án mình đang ghi nhớ:\n' + data, PRE_SUGG, 'chat.ps.summary', { data })
       return
@@ -1355,7 +1355,7 @@ Thành phần tham dự:
     // chat chung → ghi nhớ thêm từ nội dung → Step 1
     const added = pre.rememberFromContent(text)
     handlePhaseChange(1)
-    if (added.length) pushChat(text, `Mình đã ghi nhớ thêm: ${added.join(', ')}.`, PRE_SUGG, 'chat.ps.remembered', { names: added.join(', ') })
+    if (added.length) pushChat(text, `Mình đã ghi nhớ thêm: ${added.join(', ')}.`, PRE_SUGG, 'chat.ps.remembered', { names: tFieldList(added, locale) })
     else pushChat(text, 'Đã hiểu.', PRE_SUGG, 'chat.ps.understood')
   }
 
@@ -1413,7 +1413,7 @@ Thành phần tham dự:
 
     // 2) TRA CỨU — tóm tắt / xem / đối chiếu → chỉ trả lời, KHÔNG ghi
     if (/tóm tắt|tóm lược|tổng hợp|tổng quan|xem lại|xem dữ liệu|xem chi tiết|liệt kê|thống kê|hiện trạng|so sánh|đối chiếu|chênh lệch|có gì|những gì/.test(low)) {
-      const data = reentry.summaryText()
+      const data = tSummary(reentry.fields, locale)
       pushChat(text, reentry.total
         ? `Chênh lệch đã ghi nhận sau khảo sát (so với specs gốc pre-sales):\n${data}`
         : 'Chưa ghi nhận chênh lệch nào. Hãy cho tôi biết thay đổi sau khảo sát (PLC, HMI, servo, an toàn…).', REENTRY_SUGG_BASE)
@@ -1423,7 +1423,7 @@ Thành phần tham dự:
     // 3) LẬP đầu ra (lệnh rõ ràng: "lập/tạo/xuất dự toán…") → sinh card từ bộ nhớ hiện có
     if (/(lập|tạo|xuất|soạn).*(dự toán|báo giá|phát sinh|change order)|(dự toán|báo giá|phát sinh).*(lập|tạo|xuất|soạn)/.test(low)) {
       if (!reentry.total) { pushChat(text, 'Chưa có chênh lệch nào để lập dự toán. Hãy ghi nhận thay đổi sau khảo sát trước.', REENTRY_SUGG_BASE); return }
-      const out = reentry.generate('estimate')
+      const out = reentry.generate('estimate', locale)
       pushChat(text, 'Đã lập "Dự toán phát sinh" từ các chênh lệch đã ghi nhận ✓. Bấm để xem ngay:', REENTRY_SUGG_AFTER, undefined, undefined, out ? { label: 'Xem dự toán phát sinh', openOid: out.oid } : undefined)
       return
     }
@@ -1845,9 +1845,18 @@ Thành phần tham dự:
     setAddSourceOpen(false)
     const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     let aiText: string
-    if (first) { const names = pre.rememberFromContent(); aiText = names.length ? `Đã đọc ${files.length} tài liệu và ghi nhớ: ${names.join(', ')}.` : `Đã thêm ${files.length} tài liệu.` }
-    else { const d = pre.reExtract(files[0].name); aiText = d.length ? `Đã đọc lại & đối chiếu — cập nhật ${d[0].name}.` : `Đã thêm ${files.length} tài liệu.` }
-    setMessages(prev => [...prev, { id: `a-${Date.now()}`, sender: 'ai', text: aiText, timestamp: ts }])
+    let tkey: string | undefined
+    let tvars: Record<string, string | number> | undefined
+    if (first) {
+      const names = pre.rememberFromContent()
+      if (names.length) { aiText = `Đã đọc ${files.length} tài liệu và ghi nhớ: ${names.join(', ')}.`; tkey = 'chat.add.filesRemembered'; tvars = { n: files.length, names: tFieldList(names, locale) } }
+      else { aiText = `Đã thêm ${files.length} tài liệu.`; tkey = 'chat.add.filesAdded'; tvars = { n: files.length } }
+    } else {
+      const d = pre.reExtract(files[0].name)
+      if (d.length) { aiText = `Đã đọc lại & đối chiếu — cập nhật ${d[0].name}.`; tkey = 'chat.add.reExtract'; tvars = { name: tField(d[0].name, locale) } }
+      else { aiText = `Đã thêm ${files.length} tài liệu.`; tkey = 'chat.add.filesAdded'; tvars = { n: files.length } }
+    }
+    setMessages(prev => [...prev, { id: `a-${Date.now()}`, sender: 'ai', text: aiText, tkey, tvars, timestamp: ts }])
     if (activePhase === null) handlePhaseChange(1)
   }
   const handleAddText = (text: string) => {
@@ -1855,7 +1864,13 @@ Thành phần tham dự:
     setAddSourceOpen(false)
     const names = pre.rememberFromContent(text)   // AI tự ghi nhớ từ nội dung dán
     const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    setMessages(prev => [...prev, { id: `a-${Date.now()}`, sender: 'ai', text: names.length ? `Đã đọc văn bản và ghi nhớ: ${names.join(', ')}. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã thêm văn bản làm nguồn.', timestamp: ts }])
+    setMessages(prev => [...prev, {
+      id: `a-${Date.now()}`, sender: 'ai',
+      text: names.length ? `Đã đọc văn bản và ghi nhớ: ${names.join(', ')}. Gõ "tóm tắt dự án" để xem toàn bộ.` : 'Đã thêm văn bản làm nguồn.',
+      tkey: names.length ? 'chat.add.textRemembered' : 'chat.add.textAdded',
+      tvars: names.length ? { names: tFieldList(names, locale) } : undefined,
+      timestamp: ts,
+    }])
     if (activePhase === null) handlePhaseChange(1)
   }
   const addSourceFromNote = (title: string) => {
@@ -1892,7 +1907,7 @@ Thành phần tham dự:
                     className="flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 transition cursor-pointer"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    Đang dự toán
+                    {t('ws.status.estimating')}
                     <ChevronDown className="w-2.5 h-2.5" />
                   </button>
                   {showStatusMenu && (
@@ -1901,7 +1916,7 @@ Thành phần tham dự:
                       <div className="absolute top-full left-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50 p-1.5 space-y-0.5 animate-in fade-in duration-150">
                         <div className="px-2.5 py-1.5 text-[10px] text-amber-700 font-semibold flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-100">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                          Đang dự toán (hiện tại)
+                          {t('ws.status.estimatingCurrent')}
                         </div>
                         <div className="border-t border-slate-100 mx-1 my-1" />
                         <button
@@ -1913,7 +1928,7 @@ Thành phần tham dự:
                           className="w-full text-left px-2.5 py-1.5 text-[10px] font-bold text-brand-700 hover:bg-brand-50 rounded-lg flex items-center gap-2 transition cursor-pointer"
                         >
                           <ArrowRight className="w-3 h-3 shrink-0" />
-                          Đã nhận đơn → chuyển post-sales
+                          {t('ws.status.acceptOrder')}
                         </button>
                       </div>
                     </>
@@ -2099,8 +2114,8 @@ Thành phần tham dự:
                           </div>
 
                           <div className="flex items-center justify-between text-[8px] text-slate-500 font-semibold font-mono">
-                            <span>{src.type}</span>
-                            <span>{src.size}</span>
+                            <span>{tSourceMeta(src.type, locale)}</span>
+                            <span>{tSourceMeta(src.size, locale)}</span>
                           </div>
                         </div>
                       ))}
@@ -2775,7 +2790,7 @@ Thành phần tham dự:
                             onClick={() => { handlePhaseChange(msg.action!.phase ?? 7); setCaseOpen({ oid: msg.action!.openOid, version: msg.action!.version, doc: msg.action!.openDoc, n: Date.now() }) }}
                             className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1.5 rounded-lg transition cursor-pointer"
                           >
-                            <FileText className="w-3.5 h-3.5" /> {msg.action.label}
+                            <FileText className="w-3.5 h-3.5" /> {tc(msg.action.label)}
                           </button>
                         )}
                         {msg.action?.to && !msg.action.openOid && !msg.action.openDoc && (
@@ -2783,7 +2798,7 @@ Thành phần tham dự:
                             to={msg.action.to}
                             className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1.5 rounded-lg transition cursor-pointer no-underline"
                           >
-                            <FolderOpen className="w-3.5 h-3.5" /> {msg.action.label}
+                            <FolderOpen className="w-3.5 h-3.5" /> {tc(msg.action.label)}
                           </Link>
                         )}
                     </div>

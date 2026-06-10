@@ -9,6 +9,7 @@ import {
 import MarkdownLite from '@/components/MarkdownLite'
 import { DEMO_CASE_IDS } from '@/hooks/usePresalesState'
 import { useI18n } from '@/i18n/I18nProvider'
+import { tField, tFieldValue } from '@/i18n/chat'
 
 interface ProjectFile {
   id: string
@@ -29,7 +30,249 @@ export default function NotebookArchive() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t, locale } = useI18n()
-  
+  const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
+
+  // Localize dữ liệu file tĩnh (type/summary/preview) theo ngôn ngữ — áp ở render để reactive khi đổi locale.
+  type Tri = [string, string, string]
+  const FILE_LOC: Record<string, { type?: Tri; summary?: Tri; preview?: Tri }> = {
+    'in-1': {
+      type: ['Markdown Specs (Bộ nhớ AI)', 'Markdown仕様書 (AI記憶)', 'Markdown specs (AI memory)'],
+      summary: [
+        'Hồ sơ đặc tả gốc do AI tổng hợp từ thông tin khách cung cấp ở giai đoạn pre-sales. Là nguồn sự thật để AI đối chiếu khi sinh dự toán, bản vẽ và code ở các bước sau.',
+        'プリセールス段階で顧客から提供された情報をAIがまとめた原仕様書。後工程で見積・図面・コードを生成する際にAIが参照する信頼できる情報源です。',
+        'The original spec AI compiled from customer-provided info during pre-sales. The single source of truth AI references when generating estimates, drawings and code in later steps.',
+      ],
+      preview: [
+        `# ĐẶC TẢ DỰ ÁN (PROJECT SPECS) — V1
+Mã dự án: WW2 Welding Cell
+Nguồn: Tổng hợp từ chat pre-sales (Bước 1-3)
+
+## 1. Yêu cầu khách hàng
+- Dây chuyền hàn & đo kiểm phôi tự động cho line WW2.
+- Điều khiển vị trí phôi chính xác bằng Servo Mitsubishi MR-J5.
+
+## 2. Cấu hình dự kiến (lúc báo giá)
+- PLC: Mitsubishi Melsec FX5U (dòng Compact).
+- HMI: GOT2000 7-inch.
+- Servo: 3 trục (A1, A2, A3).
+- An toàn: ISO 13849 PLc.
+
+## 3. Ràng buộc
+- Ngân sách dự kiến + thời gian giao theo dự toán đính kèm.
+
+→ AI dùng file này làm mốc để phát hiện CHÊNH LỆCH ở Bước 7 (Khảo sát & Phát sinh).`,
+        `# プロジェクト仕様 (PROJECT SPECS) — V1
+プロジェクトコード: WW2 Welding Cell
+出典: プリセールスチャット（ステップ1-3）から集約
+
+## 1. 顧客要件
+- WW2ライン向けの自動溶接・検査ライン。
+- 三菱サーボ MR-J5 によるワーク位置の高精度制御。
+
+## 2. 想定構成（見積時点）
+- PLC: 三菱 Melsec FX5U（コンパクト型）。
+- HMI: GOT2000 7インチ。
+- サーボ: 3軸（A1, A2, A3）。
+- 安全: ISO 13849 PLc。
+
+## 3. 制約
+- 想定予算 + 添付見積に基づく納期。
+
+→ AIはこのファイルを基準に、ステップ7（調査・追加費用）で差分を検出します。`,
+        `# PROJECT SPECS — V1
+Project code: WW2 Welding Cell
+Source: Aggregated from pre-sales chat (Steps 1-3)
+
+## 1. Customer requirements
+- Automated welding & inspection line for the WW2 line.
+- Precise workpiece positioning via Mitsubishi MR-J5 servo.
+
+## 2. Planned configuration (at quotation)
+- PLC: Mitsubishi Melsec FX5U (Compact).
+- HMI: GOT2000 7-inch.
+- Servo: 3 axes (A1, A2, A3).
+- Safety: ISO 13849 PLc.
+
+## 3. Constraints
+- Estimated budget + delivery time per the attached estimate.
+
+→ AI uses this file as a baseline to detect DIFFERENCES in Step 7 (Survey & Change Orders).`,
+      ],
+    },
+    'in-2': {
+      type: ['Nhật ký Khảo sát (Bộ nhớ AI)', '調査ログ (AI記憶)', 'Survey log (AI memory)'],
+      summary: [
+        'Bản ghi chênh lệch kỹ thuật thực tế sau khi nhận đơn, do AI cập nhật từ chat ở Bước 7. AI so file này với Specs_V1 để tính phát sinh và cập nhật bản vẽ/code.',
+        '受注後の実地調査による技術差分の記録。ステップ7のチャットからAIが更新します。AIはこのファイルをSpecs_V1と比較して追加費用を算出し、図面・コードを更新します。',
+        'A record of actual technical differences after order intake, updated by AI from the Step 7 chat. AI compares this with Specs_V1 to compute change orders and update drawings/code.',
+      ],
+      preview: [
+        `# NHẬT KÝ KHẢO SÁT & THAY ĐỔI THÔNG SỐ — V2
+Mã dự án: WW2 Welding Cell
+Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
+
+## Chênh lệch so với Specs_V1
+- PLC: FX5U (Compact) → Q03UDE (Modulized) + module I/O mở rộng.
+  Lý do: I/O thực tế tăng 28% + cần Ethernet tốc độ cao cho Robot hàn.
+- HMI: GOT2000 7-inch → 10-inch.
+- Servo: 3 trục → 4 trục (bổ sung MR-J5-40A cho băng tải phụ).
+- An toàn: ISO 13849 PLc → PLd (thêm rơ-le Omron G9SE + 2 light curtain).
+
+→ AI đã cập nhật bảng vật tư (Bước 3) và bản vẽ/code (Bước 4) theo delta này.`,
+        `# 調査・仕様変更ログ — V2
+プロジェクトコード: WW2 Welding Cell
+出典: ステップ7チャット（調査・追加費用）から集約
+
+## Specs_V1 との差分
+- PLC: FX5U（コンパクト）→ Q03UDE（モジュール型）+ 拡張I/Oモジュール。
+  理由: 実I/Oが28%増加 + 溶接ロボット用の高速Ethernetが必要。
+- HMI: GOT2000 7インチ → 10インチ。
+- サーボ: 3軸 → 4軸（補助コンベヤ用に MR-J5-40A を追加）。
+- 安全: ISO 13849 PLc → PLd（Omron G9SE リレー + ライトカーテン2台を追加）。
+
+→ AIはこの差分に基づき資材表（ステップ3）と図面・コード（ステップ4）を更新済み。`,
+        `# SURVEY & SPEC CHANGE LOG — V2
+Project code: WW2 Welding Cell
+Source: Aggregated from Step 7 chat (Survey & Change Orders)
+
+## Differences vs Specs_V1
+- PLC: FX5U (Compact) → Q03UDE (Modular) + expansion I/O module.
+  Reason: actual I/O up 28% + high-speed Ethernet needed for the welding robot.
+- HMI: GOT2000 7-inch → 10-inch.
+- Servo: 3 axes → 4 axes (added MR-J5-40A for the auxiliary conveyor).
+- Safety: ISO 13849 PLc → PLd (added Omron G9SE relay + 2 light curtains).
+
+→ AI has updated the materials list (Step 3) and drawings/code (Step 4) per this delta.`,
+      ],
+    },
+    'f-4': {
+      summary: [
+        'Mã logic điều khiển tuần tự chu trình hàn tự động cho toàn bộ hệ thống đồ gá WW2.',
+        'WW2治具システム全体の自動溶接サイクルを制御するシーケンスロジックコード。',
+        'Sequential control logic code for the automated welding cycle of the entire WW2 fixture system.',
+      ],
+      preview: [
+        `// PLC Ladder Logic Structure (L5K)
+PROGRAM MainProgram
+  TAGS:
+    Start_Button : BOOL; // Nút nhấn khởi động
+    Auto_Welding_Sequence : BOOL; // Chu trình tự động
+    Welding_Robot_Active : BOOL; // Robot hàn kích hoạt
+  END_TAGS
+
+  // Rung 1: Khởi động chu trình tự động
+  LD Start_Button AND NOT Emergency_Stop OUT Auto_Welding_Sequence;
+
+  // Rung 2: Kích hoạt tín hiệu robot
+  LD Auto_Welding_Sequence AND Cylinder_Extended OUT Welding_Robot_Active;
+END_PROGRAM`,
+        `// PLCラダーロジック構成 (L5K)
+PROGRAM MainProgram
+  TAGS:
+    Start_Button : BOOL; // 起動ボタン
+    Auto_Welding_Sequence : BOOL; // 自動サイクル
+    Welding_Robot_Active : BOOL; // 溶接ロボット起動
+  END_TAGS
+
+  // Rung 1: 自動サイクルの起動
+  LD Start_Button AND NOT Emergency_Stop OUT Auto_Welding_Sequence;
+
+  // Rung 2: ロボット信号の起動
+  LD Auto_Welding_Sequence AND Cylinder_Extended OUT Welding_Robot_Active;
+END_PROGRAM`,
+        `// PLC Ladder Logic Structure (L5K)
+PROGRAM MainProgram
+  TAGS:
+    Start_Button : BOOL; // Start button
+    Auto_Welding_Sequence : BOOL; // Automatic cycle
+    Welding_Robot_Active : BOOL; // Welding robot active
+  END_TAGS
+
+  // Rung 1: Start the automatic cycle
+  LD Start_Button AND NOT Emergency_Stop OUT Auto_Welding_Sequence;
+
+  // Rung 2: Activate robot signal
+  LD Auto_Welding_Sequence AND Cylinder_Extended OUT Welding_Robot_Active;
+END_PROGRAM`,
+      ],
+    },
+    'f-5': {
+      summary: [
+        'Bản vẽ sơ đồ mạch đấu nối dây động lực, nguồn 24VDC, rơ le an toàn và cổng IO mô đun Mitsubishi.',
+        '動力配線、24VDC電源、安全リレー、三菱モジュールI/Oポートの回路接続図。',
+        'Wiring schematic for power cabling, 24VDC supply, safety relays and Mitsubishi module I/O ports.',
+      ],
+    },
+    'f-6': {
+      summary: [
+        'Biên bản nghiệm thu kỹ thuật bàn giao dự án đã được ký số bởi đại diện Cowatech và khách hàng.',
+        'Cowatech担当者と顧客が電子署名した、プロジェクト引き渡しの技術検収調書。',
+        'Technical acceptance & handover record, digitally signed by Cowatech and the customer.',
+      ],
+    },
+    'f-7': {
+      summary: [
+        'Tài liệu hướng dẫn vận hành chi tiết các màn hình điều khiển HMI GOT2000 cho công nhân nhà máy.',
+        '工場作業者向けの GOT2000 HMI 操作画面の詳細操作マニュアル。',
+        'Detailed operation manual for the GOT2000 HMI control screens, for factory operators.',
+      ],
+    },
+    'f-8': {
+      summary: [
+        'Mã Structured Text điều khiển liên khóa an toàn và bảo vệ cửa rào lưới mắt cáo robot.',
+        'ロボットの安全インターロックとメッシュ柵扉の保護を制御するStructured Textコード。',
+        'Structured Text code controlling the safety interlock and mesh-fence door protection for the robot.',
+      ],
+      preview: [
+        `// Safety Interlock Check
+IF NOT Safety_Gate_Closed OR Emergency_Stop_Active THEN
+    Robot_Enable := FALSE;
+    Alarm_Siren := TRUE;
+    Current_Step := 0; // Reset sequence
+ELSE
+    Robot_Enable := TRUE;
+    Alarm_Siren := FALSE;
+END_IF;`,
+        `// 安全インターロックチェック
+IF NOT Safety_Gate_Closed OR Emergency_Stop_Active THEN
+    Robot_Enable := FALSE;
+    Alarm_Siren := TRUE;
+    Current_Step := 0; // シーケンスをリセット
+ELSE
+    Robot_Enable := TRUE;
+    Alarm_Siren := FALSE;
+END_IF;`,
+        `// Safety Interlock Check
+IF NOT Safety_Gate_Closed OR Emergency_Stop_Active THEN
+    Robot_Enable := FALSE;
+    Alarm_Siren := TRUE;
+    Current_Step := 0; // Reset sequence
+ELSE
+    Robot_Enable := TRUE;
+    Alarm_Siren := FALSE;
+END_IF;`,
+      ],
+    },
+    'f-9': {
+      summary: [
+        'Bảng phân bổ địa chỉ đầu vào/đầu ra (Input/Output Mapping) cho tủ điện điều khiển trung tâm.',
+        '中央制御盤向けの入出力アドレス割付表（I/Oマッピング）。',
+        'Input/Output address mapping table for the central control cabinet.',
+      ],
+    },
+    'f-10': {
+      summary: [
+        'Tài liệu cấu hình địa chỉ thanh ghi nhớ Modbus TCP để truyền thông với hệ thống SCADA tầng trên.',
+        '上位SCADAシステムと通信するための Modbus TCP レジスタアドレス設定資料。',
+        'Modbus TCP register address configuration for communicating with the upper SCADA system.',
+      ],
+    },
+  }
+  const locField = (id: string, f: 'type' | 'summary' | 'preview', fallback: string) => {
+    const tri = FILE_LOC[id]?.[f]
+    return tri ? L(tri[0], tri[1], tri[2]) : fallback
+  }
+
   // State for search and filters
   const [libTab, setLibTab] = useState<'memory' | 'deliverables'>('deliverables')
   const [searchQuery, setSearchQuery] = useState('')
@@ -254,16 +497,16 @@ END_IF;`
           const d = new Date(o.ts)
           return {
             id: 'gen-' + o.oid,
-            name: (o.title || 'Tài liệu').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 48) + '.md',
+            name: (o.title || L('Tài liệu', '資料', 'Document')).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 48) + '.md',
             category: 'output' as const,
-            type: 'Hồ sơ đề xuất (AI · Pre-Sales)',
+            type: L('Hồ sơ đề xuất (AI · Pre-Sales)', '提案資料 (AI · プリセールス)', 'Proposal (AI · Pre-Sales)'),
             size: Math.max(1, Math.round((o.content || '').length / 102.4) / 10) + ' KB',
             version: 'V' + (o.version || 1),
             createdAt: `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
             author: 'AI (Pre-Sales)',
             approvalStatus: 'reviewing' as const,
-            tags: ['#ĐềXuất', '#TrìnhKhách'],
-            summary: 'Hồ sơ AI tổng hợp ở giai đoạn pre-sales để trình khách.',
+            tags: locale === 'ja' ? ['#提案', '#顧客向け'] : locale === 'en' ? ['#Proposal', '#Customer'] : ['#ĐềXuất', '#TrìnhKhách'],
+            summary: L('Hồ sơ AI tổng hợp ở giai đoạn pre-sales để trình khách.', 'プリセールス段階でAIがまとめた顧客提案資料。', 'A proposal AI compiled at the pre-sales stage for the customer.'),
             previewContent: o.content || '',
           }
         })
@@ -441,7 +684,13 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
         version = 'V2 (Live)'
       }
     }
-    return { ...file, size, version }
+    const type = locField(file.id, 'type', file.type)
+    const summary = locField(file.id, 'summary', file.summary)
+    const pc = file.previewContent ?? ''
+    const previewContent = SPECIAL_PREVIEW.has(pc)
+      ? file.previewContent
+      : locField(file.id, 'preview', pc)
+    return { ...file, size, version, type, summary, previewContent }
   })
 
   // BỘ NHỚ (input): chỉ lọc theo tìm kiếm — bộ lọc loại file là khái niệm của Sản phẩm, không áp cho Bộ nhớ
@@ -462,7 +711,9 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
         const st = JSON.parse(raw)
         const fields = (st.fields || []) as { name: string; value: string }[]
         if (fields.length) {
-          return `# ${title}\nMã dự án: ${id || 'CASE-2026-0245'}\nNguồn: Bộ nhớ AI ghi nhận qua chat\n\n${fields.map(f => `- ${f.name}: ${f.value}`).join('\n')}`
+          const cn = L('Mã dự án', 'プロジェクトコード', 'Project code')
+          const src = L('Nguồn: Bộ nhớ AI ghi nhận qua chat', '出典: チャットからAIが記録した記憶', 'Source: AI memory captured via chat')
+          return `# ${title}\n${cn}: ${id || 'CASE-2026-0245'}\n${src}\n\n${fields.map(f => `- ${tField(f.name, locale)}: ${tFieldValue(f.value, locale)}`).join('\n')}`
         }
       }
     } catch { /* ignore */ }
@@ -474,11 +725,11 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
     : null
   const getLivePreview = (file: ProjectFile): { text?: string; isLive: boolean } => {
     if (file.id === 'in-1') {
-      const live = buildMemText(`aiplf.presales.${id || 'default'}`, 'ĐẶC TẢ DỰ ÁN (PRE-SALES)')
+      const live = buildMemText(`aiplf.presales.${id || 'default'}`, L('ĐẶC TẢ DỰ ÁN (PRE-SALES)', 'プロジェクト仕様 (プリセールス)', 'PROJECT SPECS (PRE-SALES)'))
       if (live) return { text: live, isLive: true }
     }
     if (file.id === 'in-2') {
-      const live = buildMemText(`aiplf.presales.${id || 'default'}__reentry`, 'NHẬT KÝ KHẢO SÁT & PHÁT SINH')
+      const live = buildMemText(`aiplf.presales.${id || 'default'}__reentry`, L('NHẬT KÝ KHẢO SÁT & PHÁT SINH', '調査・追加費用ログ', 'SURVEY & CHANGE ORDER LOG'))
       if (live) return { text: live, isLive: true }
     }
     if (file.id === 'f-8') {
@@ -553,7 +804,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
           <button
             onClick={(e) => { e.stopPropagation(); setMenuFileId(menuFileId === file.id ? null : file.id) }}
             className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer z-10"
-            title="Tùy chọn khác"
+            title={L('Tùy chọn khác', 'その他の操作', 'More options')}
           >
             <MoreVertical className="w-3.5 h-3.5" />
           </button>
@@ -566,27 +817,27 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   onClick={(e) => { e.stopPropagation(); setMenuFileId(null); handleDownload(file) }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"
                 >
-                  <Download className="w-3.5 h-3.5 text-slate-500" /> Tải xuống
+                  <Download className="w-3.5 h-3.5 text-slate-500" /> {L('Tải xuống', 'ダウンロード', 'Download')}
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setMenuFileId(null); alert(`[MOCK] Đã tạo liên kết chia sẻ cho: ${file.name}`) }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"
                 >
-                  <Share2 className="w-3.5 h-3.5 text-slate-500" /> Chia sẻ
+                  <Share2 className="w-3.5 h-3.5 text-slate-500" /> {L('Chia sẻ', '共有', 'Share')}
                 </button>
                 <div className="border-t border-slate-100 my-1 mx-1" />
                 <button
                   onClick={(e) => { e.stopPropagation(); setMenuFileId(null); setHistoryFile(file) }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-50 cursor-pointer text-brand-700 font-semibold"
                 >
-                  <History className="w-3.5 h-3.5" /> Lịch sử phiên bản
+                  <History className="w-3.5 h-3.5" /> {L('Lịch sử phiên bản', 'バージョン履歴', 'Version history')}
                 </button>
                 <div className="border-t border-slate-100 my-1 mx-1" />
                 <button
                   onClick={(e) => { e.stopPropagation(); setMenuFileId(null); deleteFile(file) }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 cursor-pointer text-rose-600"
                 >
-                  <Trash2 className="w-3.5 h-3.5" /> Xóa
+                  <Trash2 className="w-3.5 h-3.5" /> {L('Xóa', '削除', 'Delete')}
                 </button>
               </div>
             </>
@@ -706,7 +957,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <div className="space-y-1.5 font-sans whitespace-pre-wrap select-text">
                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/70 rounded-lg px-2 py-1 w-fit mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  Đồng bộ trực tiếp từ Bước 6 (Tạo tài liệu AI)
+                  {L('Đồng bộ trực tiếp từ Bước 6 (Tạo tài liệu AI)', 'ステップ6（検収・取説）から直接同期', 'Synced directly from Step 6 (Acceptance & Manual)')}
                 </div>
                 {live}
               </div>
@@ -715,16 +966,16 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
           return (
             <>
               <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
-                BIÊN BẢN NGHIỆM THU KỸ THUẬT VÀ BÀN GIAO THIẾT BỊ
+                {L('BIÊN BẢN NGHIỆM THU KỸ THUẬT VÀ BÀN GIAO THIẾT BỊ', '技術検収・設備引き渡し調書', 'TECHNICAL ACCEPTANCE & EQUIPMENT HANDOVER RECORD')}
               </div>
-              <p className="font-semibold text-slate-800">1. Thành phần nghiệm thu:</p>
+              <p className="font-semibold text-slate-800">{L('1. Thành phần nghiệm thu:', '1. 検収参加者:', '1. Acceptance participants:')}</p>
               <ul className="list-disc pl-4 space-y-1 text-[11px] text-slate-600">
-                <li>Đại diện Khách hàng: Trưởng bộ phận Kỹ thuật sản xuất</li>
-                <li>Đại diện Đơn vị Thiết kế: Kỹ sư Linh (Cowatech)</li>
+                <li>{L('Đại diện Khách hàng: Trưởng bộ phận Kỹ thuật sản xuất', '顧客代表: 製造技術部 部門長', 'Customer rep: Head of Production Engineering')}</li>
+                <li>{L('Đại diện Đơn vị Thiết kế: Kỹ sư Linh (Cowatech)', '設計側代表: Linh エンジニア (Cowatech)', 'Design unit rep: Engineer Linh (Cowatech)')}</li>
               </ul>
-              <p className="font-semibold text-slate-800">2. Nội dung nghiệm thu:</p>
+              <p className="font-semibold text-slate-800">{L('2. Nội dung nghiệm thu:', '2. 検収内容:', '2. Acceptance scope:')}</p>
               <p className="text-[11px] text-slate-600">
-                Kiểm tra vận hành liên động an toàn, hệ thống Robot hàn hàn đúng chu trình, thời gian đáp ứng đạt chuẩn chất lượng IEC 61131.
+                {L('Kiểm tra vận hành liên động an toàn, hệ thống Robot hàn hàn đúng chu trình, thời gian đáp ứng đạt chuẩn chất lượng IEC 61131.', '安全インターロックの動作確認、溶接ロボットが正しいサイクルで稼働、応答時間が IEC 61131 品質基準を満たすことを確認。', 'Verified safety interlock operation, the welding robot runs the correct cycle, and response time meets the IEC 61131 quality standard.')}
               </p>
             </>
           )
@@ -736,7 +987,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <div className="space-y-1.5 font-sans whitespace-pre-wrap select-text">
                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/70 rounded-lg px-2 py-1 w-fit mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  Đồng bộ trực tiếp từ Bước 6 (Tạo tài liệu AI)
+                  {L('Đồng bộ trực tiếp từ Bước 6 (Tạo tài liệu AI)', 'ステップ6（検収・取説）から直接同期', 'Synced directly from Step 6 (Acceptance & Manual)')}
                 </div>
                 {live}
               </div>
@@ -745,17 +996,17 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
           return (
             <>
               <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
-                TÀI LIỆU HƯỚNG DẪN VẬN HÀNH MÀN HÌNH HMI GOT2000
+                {L('TÀI LIỆU HƯỚNG DẪN VẬN HÀNH MÀN HÌNH HMI GOT2000', 'GOT2000 HMI 画面 操作マニュアル', 'GOT2000 HMI SCREEN OPERATION MANUAL')}
               </div>
-              <p className="font-semibold text-slate-800">1. Tổng quan giao diện:</p>
+              <p className="font-semibold text-slate-800">{L('1. Tổng quan giao diện:', '1. 画面概要:', '1. Interface overview:')}</p>
               <p className="text-[11px] text-slate-600">
-                Màn hình HMI bao gồm 3 trang chính: Trang chủ (Home), Trang thông số điều khiển (Settings), và Trang chẩn đoán lỗi (Diagnostics).
+                {L('Màn hình HMI bao gồm 3 trang chính: Trang chủ (Home), Trang thông số điều khiển (Settings), và Trang chẩn đoán lỗi (Diagnostics).', 'HMIは3つの主要画面で構成: ホーム(Home)、制御パラメータ画面(Settings)、故障診断画面(Diagnostics)。', 'The HMI has 3 main pages: Home, control parameters (Settings), and fault diagnostics (Diagnostics).')}
               </p>
-              <p className="font-semibold text-slate-800">2. Quy trình khởi động:</p>
+              <p className="font-semibold text-slate-800">{L('2. Quy trình khởi động:', '2. 起動手順:', '2. Startup procedure:')}</p>
               <ol className="list-decimal pl-4 space-y-1 text-[11px] text-slate-600">
-                <li>Kiểm tra nguồn điện 220VAC cấp cho HMI.</li>
-                <li>Đợi màn hình hiển thị logo khởi động và tự động kết nối PLC.</li>
-                <li>Nhấn nút "Reset Lỗi" trên màn hình trước khi nhấn "Start".</li>
+                <li>{L('Kiểm tra nguồn điện 220VAC cấp cho HMI.', 'HMIへの220VAC電源供給を確認する。', 'Check the 220VAC power supply to the HMI.')}</li>
+                <li>{L('Đợi màn hình hiển thị logo khởi động và tự động kết nối PLC.', '起動ロゴが表示され、PLCに自動接続されるのを待つ。', 'Wait for the startup logo and automatic PLC connection.')}</li>
+                <li>{L('Nhấn nút "Reset Lỗi" trên màn hình trước khi nhấn "Start".', '「Start」を押す前に画面の「故障リセット」ボタンを押す。', 'Press the "Reset Fault" button on screen before pressing "Start".')}</li>
               </ol>
             </>
           )
@@ -763,15 +1014,15 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
         {type === 'pdf_memory' && (
           <>
             <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
-              CẤU HÌNH PHÂN BỔ BỘ NHỚ MODBUS TCP REGISTER MAPPING
+              {L('CẤU HÌNH PHÂN BỔ BỘ NHỚ MODBUS TCP REGISTER MAPPING', 'MODBUS TCP レジスタマッピング設定', 'MODBUS TCP REGISTER MAPPING CONFIGURATION')}
             </div>
             <table className="w-full border-collapse text-[10px] text-left text-slate-600">
               <thead>
                 <tr className="border-b border-slate-200 font-bold bg-slate-100">
-                  <th className="p-1">Địa chỉ (HEX)</th>
-                  <th className="p-1">Tên thanh ghi</th>
-                  <th className="p-1">Định dạng</th>
-                  <th className="p-1">Mô tả</th>
+                  <th className="p-1">{L('Địa chỉ (HEX)', 'アドレス (HEX)', 'Address (HEX)')}</th>
+                  <th className="p-1">{L('Tên thanh ghi', 'レジスタ名', 'Register name')}</th>
+                  <th className="p-1">{L('Định dạng', '形式', 'Format')}</th>
+                  <th className="p-1">{L('Mô tả', '説明', 'Description')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -779,13 +1030,13 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   <td className="p-1 font-mono">0x40001</td>
                   <td className="p-1">SYSTEM_STATUS</td>
                   <td className="p-1">INT16</td>
-                  <td className="p-1">Trạng thái hệ thống (1: Run, 2: Idle, 9: Error)</td>
+                  <td className="p-1">{L('Trạng thái hệ thống (1: Run, 2: Idle, 9: Error)', 'システム状態 (1: Run, 2: Idle, 9: Error)', 'System status (1: Run, 2: Idle, 9: Error)')}</td>
                 </tr>
                 <tr className="border-b border-slate-150">
                   <td className="p-1 font-mono">0x40002</td>
                   <td className="p-1">WELDING_COUNT</td>
                   <td className="p-1">INT32</td>
-                  <td className="p-1">Tổng sản phẩm đã thực hiện hàn thành công</td>
+                  <td className="p-1">{L('Tổng sản phẩm đã thực hiện hàn thành công', '溶接成功した製品の累計数', 'Total products welded successfully')}</td>
                 </tr>
               </tbody>
             </table>
@@ -794,15 +1045,15 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
         {type === 'excel' && (
           <>
             <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
-              BẢNG PHÂN BỔ TÍN HIỆU ĐẦU VÀO/ĐẦU RA (I/O MAPPING TABLE)
+              {L('BẢNG PHÂN BỔ TÍN HIỆU ĐẦU VÀO/ĐẦU RA (I/O MAPPING TABLE)', '入出力信号割付表 (I/O MAPPING TABLE)', 'INPUT/OUTPUT SIGNAL MAPPING TABLE')}
             </div>
             <table className="w-full border-collapse text-[10px] text-left text-slate-600">
               <thead>
                 <tr className="border-b border-slate-250 font-bold bg-slate-200/50">
-                  <th className="p-1">Địa chỉ PLC</th>
-                  <th className="p-1">Tên tín hiệu</th>
-                  <th className="p-1">Phân loại</th>
-                  <th className="p-1">Thiết bị ngoại vi</th>
+                  <th className="p-1">{L('Địa chỉ PLC', 'PLCアドレス', 'PLC address')}</th>
+                  <th className="p-1">{L('Tên tín hiệu', '信号名', 'Signal name')}</th>
+                  <th className="p-1">{L('Phân loại', '分類', 'Type')}</th>
+                  <th className="p-1">{L('Thiết bị ngoại vi', '周辺機器', 'Peripheral device')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -810,19 +1061,19 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   <td className="p-1 font-mono text-brand-600 font-bold">X00</td>
                   <td className="p-1">PB_START</td>
                   <td className="p-1 font-bold">INPUT</td>
-                  <td className="p-1">Nút nhấn Start tủ điện chính</td>
+                  <td className="p-1">{L('Nút nhấn Start tủ điện chính', 'メイン制御盤の起動押しボタン', 'Start push-button on main control cabinet')}</td>
                 </tr>
                 <tr className="border-b border-slate-150">
                   <td className="p-1 font-mono text-brand-600 font-bold">X01</td>
                   <td className="p-1">SEN_SAFETY_GATE</td>
                   <td className="p-1 font-bold">INPUT</td>
-                  <td className="p-1">Cảm biến an toàn cửa mở</td>
+                  <td className="p-1">{L('Cảm biến an toàn cửa mở', '扉開放の安全センサー', 'Door-open safety sensor')}</td>
                 </tr>
                 <tr className="border-b border-slate-150">
                   <td className="p-1 font-mono text-rose-600 font-bold">Y00</td>
                   <td className="p-1">SOL_CYLINDER_CLAMP</td>
                   <td className="p-1 font-bold">OUTPUT</td>
-                  <td className="p-1">Van điện từ kẹp phôi đồ gá</td>
+                  <td className="p-1">{L('Van điện từ kẹp phôi đồ gá', '治具のワーククランプ用電磁弁', 'Solenoid valve for fixture workpiece clamp')}</td>
                 </tr>
               </tbody>
             </table>
@@ -885,8 +1136,8 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
           {/* Tab chọn nhóm: Bộ nhớ AI | Sản phẩm bàn giao */}
           <div className="flex gap-2 mt-4 shrink-0">
             {([
-              { key: 'deliverables', label: 'Sản phẩm bàn giao', icon: Boxes, n: outputFiles.length },
-              { key: 'memory', label: 'Bộ nhớ AI', icon: Brain, n: inputFiles.length },
+              { key: 'deliverables', label: L('Sản phẩm bàn giao', '納品物', 'Deliverables'), icon: Boxes, n: outputFiles.length },
+              { key: 'memory', label: L('Bộ nhớ AI', 'AI記憶', 'AI memory'), icon: Brain, n: inputFiles.length },
             ] as const).map(({ key, label, icon: Icon, n }) => {
               const active = libTab === key
               return (
@@ -908,8 +1159,8 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
           {/* Mô tả ngắn theo tab */}
           <p className="text-[10px] text-slate-450 mt-2 shrink-0">
             {libTab === 'memory'
-              ? 'Đặc tả & nhật ký AI tự ghi nhận qua trao đổi — nền tảng để AI sinh ra sản phẩm.'
-              : 'Bản vẽ, mã nguồn, tài liệu AI tạo ra từ bộ nhớ dự án.'}
+              ? L('Đặc tả & nhật ký AI tự ghi nhận qua trao đổi — nền tảng để AI sinh ra sản phẩm.', '対話からAIが記録した仕様・ログ — 納品物生成の基盤。', 'Specs & logs AI noted from chat — the basis for generating deliverables.')
+              : L('Bản vẽ, mã nguồn, tài liệu AI tạo ra từ bộ nhớ dự án.', 'AIがプロジェクト記憶から生成した図面・コード・資料。', 'Drawings, code, docs AI generated from project memory.')}
           </p>
 
           {/* Toolbar: tìm kiếm + sắp xếp + (lọc loại chỉ ở tab Sản phẩm) */}
@@ -921,7 +1172,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm tài liệu, định dạng..."
+                  placeholder={L('Tìm kiếm tài liệu, định dạng...', '資料・形式を検索…', 'Search documents, formats…')}
                   className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-semibold text-slate-800 transition duration-200"
                 />
                 {searchQuery && (
@@ -940,9 +1191,9 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-bold text-slate-700 cursor-pointer appearance-none"
                 >
-                  <option value="date">Mới cập nhật</option>
-                  <option value="name">Tên tệp (A-Z)</option>
-                  <option value="size">Dung lượng lớn</option>
+                  <option value="date">{L('Mới cập nhật', '最近更新', 'Recently updated')}</option>
+                  <option value="name">{L('Tên tệp (A-Z)', 'ファイル名 (A-Z)', 'File name (A-Z)')}</option>
+                  <option value="size">{L('Dung lượng lớn', 'サイズ大', 'Largest size')}</option>
                 </select>
               </div>
             </div>
@@ -951,13 +1202,13 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <div className="flex flex-wrap items-center gap-1.5 select-none">
                 <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
                   <Filter className="w-3 h-3 text-slate-400" />
-                  Lọc:
+                  {L('Lọc:', 'フィルター:', 'Filter:')}
                 </span>
                 {[
-                  { id: 'all', label: 'Tất cả' },
-                  { id: 'code', label: 'Mã nguồn PLC' },
-                  { id: 'cad', label: 'Sơ đồ mạch CAD' },
-                  { id: 'doc', label: 'Tài liệu & Báo cáo' }
+                  { id: 'all', label: L('Tất cả', 'すべて', 'All') },
+                  { id: 'code', label: L('Mã nguồn PLC', 'PLCソース', 'PLC source') },
+                  { id: 'cad', label: L('Sơ đồ mạch CAD', 'CAD回路図', 'CAD diagram') },
+                  { id: 'doc', label: L('Tài liệu & Báo cáo', '資料・報告', 'Docs & reports') }
                 ].map((cat) => {
                   const active = categoryFilter === cat.id
                   return (
@@ -992,8 +1243,8 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                 return (
                   <div className="h-full flex flex-col items-center justify-center text-center py-10">
                     <FileText className="w-10 h-10 text-slate-300 mb-2" />
-                    <p className="text-xs font-bold text-slate-400">{libTab === 'memory' ? 'Chưa có file bộ nhớ' : 'Không có sản phẩm phù hợp'}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">{searchQuery ? 'Thử từ khóa khác' : 'Trao đổi với AI để tạo nội dung'}</p>
+                    <p className="text-xs font-bold text-slate-400">{libTab === 'memory' ? L('Chưa có file bộ nhớ', 'AI記憶ファイルなし', 'No memory files yet') : L('Không có sản phẩm phù hợp', '該当する納品物なし', 'No matching deliverables')}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">{searchQuery ? L('Thử từ khóa khác', '別のキーワードで検索', 'Try another keyword') : L('Trao đổi với AI để tạo nội dung', 'AIと対話して作成', 'Chat with AI to create content')}</p>
                   </div>
                 )
               }
@@ -1018,7 +1269,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   </h4>
                 </div>
                 <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                  Định dạng: {activeSelectedFile.type} • Dung lượng: {activeSelectedFile.size} • Phiên bản: {activeSelectedFile.version}
+                  {L('Định dạng', '形式', 'Format')}: {activeSelectedFile.type} • {L('Dung lượng', 'サイズ', 'Size')}: {activeSelectedFile.size} • {L('Phiên bản', 'バージョン', 'Version')}: {activeSelectedFile.version}
                 </p>
               </div>
               
@@ -1034,7 +1285,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
               {/* Summary Section */}
               <div className="space-y-1">
-                <h5 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Tóm tắt nội dung (AI Extract):</h5>
+                <h5 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">{L('Tóm tắt nội dung (AI Extract):', 'コンテンツ要約 (AI抽出):', 'Content summary (AI extract):')}</h5>
                 <p className="text-[11px] text-slate-600 font-medium leading-relaxed bg-brand-500/2 border border-brand-200/20 rounded-xl p-3">
                   {activeSelectedFile.summary}
                 </p>
@@ -1051,7 +1302,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
 
               {/* Dynamic Preview Canvas Container */}
               <div className="space-y-1">
-                <h5 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono mb-1.5">Bản xem trước tệp (File Preview):</h5>
+                <h5 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono mb-1.5">{L('Bản xem trước tệp (File Preview):', 'ファイルプレビュー:', 'File preview:')}</h5>
                 
                 {/* Check file type for preview rendering */}
                 {(() => {
@@ -1116,7 +1367,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   }
                   return (
                     <div className="border border-slate-200 rounded-xl bg-slate-50 p-6 text-center text-[11px] text-slate-400">
-                      Không hỗ trợ xem trước cho tệp định dạng này
+                      {L('Không hỗ trợ xem trước cho tệp định dạng này', 'この形式のファイルはプレビューに対応していません', 'Preview is not supported for this file format')}
                     </div>
                   )
                 })()}
@@ -1135,7 +1386,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                 className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-sm transition cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Tải tệp xuống</span>
+                <span>{L('Tải tệp xuống', 'ファイルをダウンロード', 'Download file')}</span>
               </button>
             </div>
 
@@ -1150,7 +1401,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
             {/* Header */}
             <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-slate-200 shrink-0">
               <div className="min-w-0 pr-4">
-                <h4 className="text-base font-extrabold text-slate-900">Lịch sử phiên bản</h4>
+                <h4 className="text-base font-extrabold text-slate-900">{L('Lịch sử phiên bản', 'バージョン履歴', 'Version history')}</h4>
                 <p className="text-[11px] text-slate-450 font-mono mt-0.5 truncate" title={historyFile.name}>{historyFile.name}</p>
               </div>
               <button
@@ -1166,10 +1417,10 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <table className="w-full text-left">
                 <thead>
                   <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th className="py-2 pr-3 font-bold">Phiên bản</th>
-                    <th className="py-2 pr-3 font-bold">Sửa lúc</th>
-                    <th className="py-2 pr-3 font-bold">Dung lượng</th>
-                    <th className="py-2 font-bold">Cập nhật bởi</th>
+                    <th className="py-2 pr-3 font-bold">{L('Phiên bản', 'バージョン', 'Version')}</th>
+                    <th className="py-2 pr-3 font-bold">{L('Sửa lúc', '更新日時', 'Modified')}</th>
+                    <th className="py-2 pr-3 font-bold">{L('Dung lượng', 'サイズ', 'Size')}</th>
+                    <th className="py-2 font-bold">{L('Cập nhật bởi', '更新者', 'Updated by')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1182,12 +1433,12 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                           <div className="flex items-center gap-2 relative">
                             <span className="text-sm font-bold text-slate-800">{v.version}</span>
                             {v.isCurrent && (
-                              <span className="text-[8px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">Hiện tại</span>
+                              <span className="text-[8px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">{L('Hiện tại', '現在', 'Current')}</span>
                             )}
                             <button
                               onClick={() => setVersionMenu(versionMenu === v.version ? null : v.version)}
                               className={`p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer ${versionMenu === v.version ? 'bg-slate-200 text-slate-700' : 'opacity-0 group-hover:opacity-100'}`}
-                              title="Thao tác với phiên bản này"
+                              title={L('Thao tác với phiên bản này', 'このバージョンの操作', 'Actions for this version')}
                             >
                               <MoreVertical className="w-3.5 h-3.5" />
                             </button>
@@ -1199,7 +1450,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                                     onClick={() => { setVersionMenu(null); alert(`[MOCK] Mở phiên bản ${v.version} của ${historyFile.name}`) }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"
                                   >
-                                    <ExternalLink className="w-3.5 h-3.5 text-slate-500" /> Mở file
+                                    <ExternalLink className="w-3.5 h-3.5 text-slate-500" /> {L('Mở file', 'ファイルを開く', 'Open file')}
                                   </button>
                                   {!v.isCurrent && (
                                     <button
@@ -1210,7 +1461,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                                       }}
                                       className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-50 cursor-pointer text-brand-700 font-semibold"
                                     >
-                                      <GitCompare className="w-3.5 h-3.5" /> So sánh với bản hiện tại
+                                      <GitCompare className="w-3.5 h-3.5" /> {L('So sánh với bản hiện tại', '現在のバージョンと比較', 'Compare with current')}
                                     </button>
                                   )}
                                   {!v.isCurrent && (
@@ -1219,14 +1470,14 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                                         onClick={() => { setVersionMenu(null); alert(`[MOCK] Đã khôi phục về phiên bản ${v.version}`) }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"
                                       >
-                                        <RotateCcw className="w-3.5 h-3.5 text-slate-500" /> Khôi phục
+                                        <RotateCcw className="w-3.5 h-3.5 text-slate-500" /> {L('Khôi phục', '復元', 'Restore')}
                                       </button>
                                       <div className="border-t border-slate-100 my-1 mx-1" />
                                       <button
                                         onClick={() => { setVersionMenu(null); alert(`[MOCK] Đã xóa phiên bản ${v.version}`) }}
                                         className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 cursor-pointer text-rose-600"
                                       >
-                                        <Trash2 className="w-3.5 h-3.5" /> Xóa phiên bản
+                                        <Trash2 className="w-3.5 h-3.5" /> {L('Xóa phiên bản', 'バージョンを削除', 'Delete version')}
                                       </button>
                                     </>
                                   )}
@@ -1240,7 +1491,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                         <td className="py-3">
                           <span className="flex items-center gap-2">
                             {isAI ? (
-                              <span className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-brand-500 text-white flex items-center justify-center shrink-0 shadow-3xs" title="Cập nhật tự động bởi AI">
+                              <span className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-brand-500 text-white flex items-center justify-center shrink-0 shadow-3xs" title={L('Cập nhật tự động bởi AI', 'AIによる自動更新', 'Auto-updated by AI')}>
                                 <Sparkles className="w-3 h-3" />
                               </span>
                             ) : (
@@ -1257,7 +1508,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
             </div>
 
             <div className="px-6 py-3 border-t border-slate-100 text-[10px] text-slate-400 shrink-0">
-              Phiên bản do hệ thống tự đánh dấu mỗi lần file được cập nhật — không cần ghi version vào tên file.
+              {L('Phiên bản do hệ thống tự đánh dấu mỗi lần file được cập nhật — không cần ghi version vào tên file.', 'バージョンはファイル更新ごとにシステムが自動付与します — ファイル名にバージョンを書く必要はありません。', 'Versions are auto-tagged by the system on each update — no need to put the version in the file name.')}
             </div>
           </div>
         </div>
@@ -1278,16 +1529,16 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-slate-200 shrink-0">
                 <div className="min-w-0 pr-4">
                   <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                    <GitCompare className="w-4 h-4 text-brand-500" /> So sánh phiên bản
+                    <GitCompare className="w-4 h-4 text-brand-500" /> {L('So sánh phiên bản', 'バージョン比較', 'Compare versions')}
                   </h4>
                   <p className="text-[11px] text-slate-450 font-mono mt-0.5 truncate" title={compare.file.name}>{compare.file.name}</p>
                   <div className="flex items-center gap-2 mt-2 text-[11px] font-bold">
-                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">Bản {compare.oldV}.0</span>
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">{L('Bản', '版', 'V')} {compare.oldV}.0</span>
                     <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">Bản {compare.newV}.0 (hiện tại)</span>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">{L('Bản', '版', 'V')} {compare.newV}.0 ({L('hiện tại', '現在', 'current')})</span>
                     {supported && (
                       <span className="ml-1 text-[10px] font-semibold text-slate-400">
-                        <span className="text-emerald-600">+{adds} thêm</span> · <span className="text-rose-500">−{dels} bỏ</span>
+                        <span className="text-emerald-600">+{adds} {L('thêm', '追加', 'added')}</span> · <span className="text-rose-500">−{dels} {L('bỏ', '削除', 'removed')}</span>
                       </span>
                     )}
                   </div>
@@ -1301,7 +1552,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
                 {!supported ? (
                   <div className="border border-dashed border-slate-200 rounded-xl bg-slate-50 p-8 text-center text-xs text-slate-400">
-                    Định dạng này (bản vẽ / tài liệu nhị phân) không so sánh trực tiếp bằng văn bản được.<br />Hãy tải 2 bản về để đối chiếu.
+                    {L('Định dạng này (bản vẽ / tài liệu nhị phân) không so sánh trực tiếp bằng văn bản được.', 'この形式（図面・バイナリ資料）はテキストで直接比較できません。', 'This format (drawing / binary document) cannot be compared directly as text.')}<br />{L('Hãy tải 2 bản về để đối chiếu.', '2つのバージョンをダウンロードして照合してください。', 'Download both versions to compare.')}
                   </div>
                 ) : (
                   <div className="rounded-xl border border-slate-200 overflow-hidden font-mono text-[11px] leading-relaxed">
@@ -1325,8 +1576,8 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               </div>
 
               <div className="px-6 py-3 border-t border-slate-100 text-[10px] text-slate-400 shrink-0 flex items-center gap-3">
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-emerald-100 border border-emerald-300 inline-block" /> Thêm ở bản mới</span>
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-rose-100 border border-rose-300 inline-block" /> Bỏ so với bản cũ</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-emerald-100 border border-emerald-300 inline-block" /> {L('Thêm ở bản mới', '新バージョンで追加', 'Added in new version')}</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-rose-100 border border-rose-300 inline-block" /> {L('Bỏ so với bản cũ', '旧バージョンから削除', 'Removed vs old version')}</span>
               </div>
             </div>
           </div>

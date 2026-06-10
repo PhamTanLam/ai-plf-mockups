@@ -4,6 +4,7 @@ import { Pencil, Trash2, MoreVertical, Download, Share2, FilePlus2, Sparkles, Ar
 import type { PresalesApi, SavedOutput } from '@/hooks/usePresalesState'
 import MarkdownLite from '@/components/MarkdownLite'
 import { useI18n } from '@/i18n/I18nProvider'
+import { tcText } from '@/i18n/chat'
 
 
 export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, openSignal }: {
@@ -15,7 +16,9 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
   /** Tín hiệu mở thẳng chi tiết (từ nút trong chat). oid = output có sẵn (version = snapshot cụ thể); doc = tài liệu tổng hợp. n đổi → mở lại. */
   openSignal?: { oid?: string; version?: number; doc?: { title: string; content: string }; n: number }
 }) {
-  const { t, tf } = useI18n()
+  const { t, tf, locale } = useI18n()
+  const verLabel = (v: number) => locale === 'ja' ? `版${v}` : locale === 'en' ? `V${v}` : `Bản V${v}`
+  const zoomLabel = locale === 'ja' ? '拡大' : locale === 'en' ? 'Zoom' : 'Phóng to'
   const [menuOid, setMenuOid] = useState<string | null>(null)
   const [renameOid, setRenameOid] = useState<string | null>(null)
   const [renameVal, setRenameVal] = useState('')
@@ -67,14 +70,14 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
             {t('ps.common.backToList')}
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <strong className="text-sm text-slate-800 truncate max-w-[220px]">{detail.title}</strong>
+            <strong className="text-sm text-slate-800 truncate max-w-[220px]">{tcText(detail.title, locale)}</strong>
             {detail.version && (
-              <span className="shrink-0 text-[9px] font-bold bg-brand-500/10 text-brand-700 border border-brand-500/20 px-1.5 py-0.5 rounded-full font-mono">Bản V{detail.version}</span>
+              <span className="shrink-0 text-[9px] font-bold bg-brand-500/10 text-brand-700 border border-brand-500/20 px-1.5 py-0.5 rounded-full font-mono">{verLabel(detail.version)}</span>
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <button onClick={() => setZoomed(true)} title="Phóng to" className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
-              <Maximize2 className="w-3 h-3" /> Phóng to
+            <button onClick={() => setZoomed(true)} title={zoomLabel} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
+              <Maximize2 className="w-3 h-3" /> {zoomLabel}
             </button>
             <button onClick={() => pre.downloadOutput(detail.oid)} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
               <Download className="w-3 h-3" /> {t('ps.common.downloadMd')}
@@ -91,9 +94,9 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
             <div className="bg-white rounded-3xl border border-slate-200 shadow-pop w-full h-full max-w-[1400px] max-h-[95vh] flex flex-col animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-8 py-4 border-b border-slate-200 shrink-0">
                 <div className="flex items-center gap-2 min-w-0 pr-4">
-                  <strong className="text-base text-slate-900 truncate">{detail.title}</strong>
+                  <strong className="text-base text-slate-900 truncate">{tcText(detail.title, locale)}</strong>
                   {detail.version && (
-                    <span className="shrink-0 text-[9px] font-bold bg-brand-500/10 text-brand-700 border border-brand-500/20 px-1.5 py-0.5 rounded-full font-mono">Bản V{detail.version}</span>
+                    <span className="shrink-0 text-[9px] font-bold bg-brand-500/10 text-brand-700 border border-brand-500/20 px-1.5 py-0.5 rounded-full font-mono">{verLabel(detail.version)}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -142,7 +145,7 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
                         className="flex-1 text-xs border border-brand-500 rounded-md px-2 py-1 outline-none" />
                     ) : (
                       <span className="flex-1 min-w-0">
-                        <span className="block text-xs font-semibold text-slate-800 truncate group-hover:text-brand-700 transition-colors">{e.title}</span>
+                        <span className="block text-xs font-semibold text-slate-800 truncate group-hover:text-brand-700 transition-colors">{tcText(e.title, locale)}</span>
                         <span className="block text-[10px] text-slate-400 mt-0.5">{isNote ? t('ps.input.noteFromChat') : t('ps.input.outputLabel')} · {fmtAgo(e.ts)}</span>
                       </span>
                     )}
