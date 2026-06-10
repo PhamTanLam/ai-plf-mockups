@@ -34,6 +34,13 @@ function saveUserCases(list: CaseItem[]) {
   try { localStorage.setItem(USER_CASES_KEY, JSON.stringify(list)) } catch { /* ignore */ }
 }
 
+// Các dự án đã bị xóa (gồm cả demo case cố định) — ẩn khỏi danh sách.
+const DELETED_CASES_KEY = 'aiplf.deletedCases'
+function loadDeletedCases(): string[] {
+  try { const raw = localStorage.getItem(DELETED_CASES_KEY); if (raw) { const a = JSON.parse(raw); if (Array.isArray(a)) return a as string[] } } catch { /* ignore */ }
+  return []
+}
+
 export default function NotebookList() {
   const { t, locale, setLocale } = useI18n()
   const [siteTitle, setSiteTitle] = useState(() => localStorage.getItem('aiplf.settings.siteTitle') || 'Cowatech AI Platform')
@@ -95,8 +102,11 @@ export default function NotebookList() {
   const [newTitle, setNewTitle] = useState('')
   const [newCode, setNewCode] = useState('CASE-2026-')
 
-  // Dự án người dùng tạo (lưu localStorage) + 4 case demo cố định
-  const [cases, setCases] = useState<CaseItem[]>(() => [...loadUserCases(), ...DEMO_CASES])
+  // Dự án người dùng tạo (lưu localStorage) + 4 case demo cố định, bỏ những dự án đã xóa
+  const [cases, setCases] = useState<CaseItem[]>(() => {
+    const deleted = new Set(loadDeletedCases())
+    return [...loadUserCases(), ...DEMO_CASES].filter((c) => !deleted.has(c.id))
+  })
 
   const filteredCases = cases.filter(
     (c) =>
@@ -122,6 +132,11 @@ export default function NotebookList() {
     }
 
     saveUserCases([newCase, ...loadUserCases()])   // lưu lại để không mất khi reload
+    // Nếu mã này từng bị xóa, gỡ khỏi danh sách đã xóa để dự án mới hiển thị
+    try {
+      const deleted = loadDeletedCases().filter((d) => d !== newCase.id)
+      localStorage.setItem(DELETED_CASES_KEY, JSON.stringify(deleted))
+    } catch { /* ignore */ }
     setCases([newCase, ...cases])
     setNewTitle('')
     setNewCode('CASE-2026-')

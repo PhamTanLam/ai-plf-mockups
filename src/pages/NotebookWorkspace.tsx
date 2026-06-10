@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams, useLocation, Link } from 'react-router-dom'
+import { useParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft,
   FileText,
@@ -428,6 +428,38 @@ export default function NotebookWorkspace() {
   const [showCadTab, setShowCadTab] = useState(() => localStorage.getItem('aiplf.settings.showCadTab') !== 'false')
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('aiplf.settings.isDarkMode') === 'true')
   const [settingsActiveTab, setSettingsActiveTab] = useState<'general' | 'appearance' | 'features'>('general')
+  const [confirmDeleteProject, setConfirmDeleteProject] = useState(false)
+  const navigate = useNavigate()
+
+  // Xóa vĩnh viễn dự án hiện tại: gỡ khỏi danh sách user, ẩn nếu là demo, dọn mọi key localStorage của dự án rồi quay về danh sách.
+  const handleDeleteProject = () => {
+    if (!id) return
+    try {
+      // 1) Gỡ khỏi danh sách dự án người dùng tạo
+      const raw = localStorage.getItem('aiplf.userCases')
+      if (raw) {
+        const list = JSON.parse(raw)
+        if (Array.isArray(list)) {
+          localStorage.setItem('aiplf.userCases', JSON.stringify(list.filter((c: { id?: string }) => c.id !== id)))
+        }
+      }
+      // 2) Đánh dấu đã xóa (để ẩn cả case demo cố định)
+      const delRaw = localStorage.getItem('aiplf.deletedCases')
+      const deleted: string[] = delRaw ? (JSON.parse(delRaw) as string[]) : []
+      if (!deleted.includes(id)) deleted.push(id)
+      localStorage.setItem('aiplf.deletedCases', JSON.stringify(deleted))
+      // 3) Dọn mọi dữ liệu localStorage gắn với dự án này
+      const toRemove: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i)
+        if (k && k.startsWith('aiplf.') && k.includes(id)) toRemove.push(k)
+      }
+      toRemove.forEach((k) => localStorage.removeItem(k))
+    } catch { /* ignore */ }
+    setConfirmDeleteProject(false)
+    setIsConfigOpen(false)
+    navigate('/')
+  }
   const [tempLocale, setTempLocale] = useState(locale)
   const [tempSiteTitle, setTempSiteTitle] = useState(siteTitle)
   const [tempThemeColor, setTempThemeColor] = useState(themeColor)
@@ -1262,11 +1294,11 @@ Thành phần tham dự:
   }
   const PRE_SUGG = [
     'Tóm tắt dự án',
-    'Soạn nội dung tài liệu dự toán',
-    'Mô tả cấu thành hệ thống (đơn giản)',
     'Lập dự toán khái quát',
+    'Mô tả cấu thành hệ thống (đơn giản)',
     'Lập lịch trình khái quát',
-    'Soạn tài liệu nền đề xuất'
+    'Soạn tài liệu nền đề xuất',
+    'Tạo hồ sơ trình khách chi tiết'
   ]
 
   // Chip gợi ý cho Bước 7 theo NGỮ CẢNH (đổi sau mỗi lượt chat)
@@ -2928,6 +2960,28 @@ Thành phần tham dự:
                       <option value="AI">AI Agent (Trợ lý tự động)</option>
                     </select>
                   </div>
+
+                  {/* Danger zone — Xóa dự án */}
+                  <div className="pt-3 mt-3 border-t border-rose-100">
+                    <p className="font-bold text-rose-600 mb-1.5 uppercase tracking-wider text-[11px]">Vùng nguy hiểm (Danger Zone)</p>
+                    <div className="flex items-start justify-between gap-3 p-3 rounded-xl border border-rose-200 bg-rose-50/60">
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-slate-700">Xóa dự án này</p>
+                        <p className="text-[10px] text-slate-500 leading-relaxed">
+                          Xóa vĩnh viễn dự án <span className="font-mono font-bold text-slate-700">{id}</span> cùng toàn bộ nguồn,
+                          hội thoại và dữ liệu liên quan. Không thể hoàn tác.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteProject(true)}
+                        className="shrink-0 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition cursor-pointer shadow-sm flex items-center gap-1.5"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Xóa dự án</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -3066,6 +3120,41 @@ Thành phần tham dự:
                 className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm animate-pulse-slow"
               >
                 Lưu Setting
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hộp xác nhận xóa dự án */}
+      {confirmDeleteProject && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-[60] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 w-[400px] space-y-4 shadow-pop animate-in zoom-in-95 duration-200 text-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                <Trash2 className="w-4.5 h-4.5" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-950">Xóa dự án này?</h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Bạn sắp xóa vĩnh viễn dự án <span className="font-mono font-bold text-slate-800">{id}</span>.
+              Toàn bộ nguồn, hội thoại và dữ liệu của dự án sẽ bị xóa và <span className="font-bold">không thể khôi phục</span>.
+            </p>
+            <div className="flex justify-end gap-2 pt-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteProject(false)}
+                className="px-4 py-2 text-slate-600 hover:bg-slate-100 font-bold rounded-xl transition cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteProject}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition cursor-pointer shadow-sm flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Xóa vĩnh viễn</span>
               </button>
             </div>
           </div>
