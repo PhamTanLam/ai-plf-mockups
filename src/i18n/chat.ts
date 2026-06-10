@@ -102,6 +102,55 @@ const CHAT: Record<string, { ja: string; en: string }> = {
     ja: '現在の Structured Text ソースコードを分析しました。右側の「構文チェックを実行」ボタンを直接クリックして、AI によるリアルタイムコンパイルを試すことができます。',
     en: 'I analyzed the current Structured Text source code. You can click "Run syntax check" on the right panel to test compile in real-time with AI.'
   },
+  // ── Suggestions & Actions for Step 7 (Survey & Reentry) ──
+  'đổi PLC sang Q03UDE': { ja: 'PLCをQ03UDEに変更', en: 'Change PLC to Q03UDE' },
+  'Nâng HMI lên 10 inch': { ja: 'HMIを10インチにアップグレード', en: 'Upgrade HMI to 10-inch' },
+  'Bổ sung 1 trục servo': { ja: 'サーボ軸を1つ追加', en: 'Add 1 servo axis' },
+  'Tóm tắt chênh lệch': { ja: '差分の要約', en: 'Summarize differences' },
+  'update': { ja: '更新 (update)', en: 'Update' },
+  'Lập dự toán phát sinh': { ja: '追加見積の作成', en: 'Create change order estimate' },
+  'Xem chênh lệch đã lưu': { ja: '保存された差分を表示', en: 'View saved differences' },
+  'Xem dự toán phát sinh': { ja: '追加見積を表示', en: 'View change order estimate' },
+  'Nhật ký khảo sát & Phát sinh': { ja: '調査・追加費用記録', en: 'Survey & Change Orders Log' },
+
+  // ── Component Names & Deltas in Reentry ──
+  'PLC điều khiển': { ja: '制御PLC', en: 'Control PLC' },
+  'FX5U (Compact) → Q03UDE (Module)': { ja: 'FX5U (コンパクト) → Q03UDE (モジュール)', en: 'FX5U (Compact) → Q03UDE (Module)' },
+  'Màn hình HMI': { ja: 'HMI表示器', en: 'HMI Screen' },
+  'GOT2000 7" → 10"': { ja: 'GOT2000 7インチ → 10インチ', en: 'GOT2000 7" → 10"' },
+  'Trục Servo': { ja: 'サーボ軸', en: 'Servo Axis' },
+  '3 trục → 4 trục (bổ sung MR-J5-40A)': { ja: '3軸 → 4軸 (MR-J5-40A追加)', en: '3 axes → 4 axes (added MR-J5-40A)' },
+  'Tiêu chuẩn an toàn': { ja: '安全規格', en: 'Safety Standard' },
+  'ISO 13849 PLc → PLd (thêm Omron G9SE + 2 light curtain)': { ja: 'ISO 13849 PLc → PLd (Omron G9SE + ライトカーテン2個追加)', en: 'ISO 13849 PLc → PLd (added Omron G9SE + 2 light curtains)' },
+  'Cảm biến quang': { ja: '光電センサー', en: 'Photoelectric Sensor' },
+  '6 → 8 cái': { ja: '6個 → 8個', en: '6 → 8 units' },
+  'Ghi chú khảo sát': { ja: '調査メモ', en: 'Survey Notes' },
+
+  // ── Responses for Step 7 ──
+  'Chưa có đề xuất nào để ghi. Bạn cứ nêu chênh lệch sau khảo sát (PLC, HMI, servo, an toàn…), tôi sẽ đề xuất và hỏi xác nhận trước khi ghi.': {
+    ja: '記録する提案がありません。調査後の変更点（PLC、HMI、サーボ、安全規格など）を入力してください。提案を作成し、記録する前に確認します。',
+    en: 'No pending proposal to record. Please state the survey differences (PLC, HMI, servo, safety, etc.) and I will propose and ask for confirmation before saving.'
+  },
+  'Chưa ghi nhận chênh lệch nào. Hãy cho tôi biết thay đổi sau khảo sát (PLC, HMI, servo, an toàn…).': {
+    ja: '差分はまだ記録されていません。調査後の変更点（PLC、HMI、サーボ、安全規格など）を教えてください。',
+    en: 'No differences recorded yet. Please let me know the survey changes (PLC, HMI, servo, safety, etc.).'
+  },
+  'Chưa có chênh lệch nào để lập dự toán. Hãy ghi nhận thay đổi sau khảo sát trước.': {
+    ja: '見積を作成するための差分がありません。まず調査後の変更点を記録してください。',
+    en: 'No differences to estimate. Please record the survey changes first.'
+  },
+  'Đã lập "Dự toán phát sinh" từ các chênh lệch đã ghi nhận ✓. Bấm để xem ngay:': {
+    ja: '記録された差分から「追加見積」を作成しました ✓。クリックして表示します：',
+    en: 'Created "Change Order Estimate" from the recorded differences ✓. Click to view:'
+  },
+  'Dự toán phát sinh (ước tính minh hoạ) từ các chênh lệch đã ghi: +¥1,590,000 so với hợp đồng gốc. Gõ "lập dự toán phát sinh" nếu muốn tôi xuất thành tài liệu.': {
+    ja: '記録された差分に基づく追加見積（参考値）：元契約から +¥1,590,000。ドキュメントとして出力するには「追加見積の作成」と入力してください。',
+    en: 'Change order estimate (indicative) from recorded differences: +¥1,590,000 compared to the original contract. Type "create change order estimate" if you want me to generate the document.'
+  },
+  'Chưa có chênh lệch nào nên chưa có phát sinh để tính.': {
+    ja: '差分が記録されていないため、計算する追加費用はありません。',
+    en: 'No differences recorded, so there are no change order costs to calculate.'
+  },
 }
 
 export function tcText(text: string, locale: Locale): string {
