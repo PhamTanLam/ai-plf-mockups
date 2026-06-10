@@ -187,16 +187,13 @@ export default function SmartMaterialsTable({
             <h3 className="text-sm md:text-base font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
               {t('post.mat.title')}
             </h3>
-            <p className="text-[10.5px] text-slate-450 mt-0.5 whitespace-pre-line font-medium leading-relaxed">
-              {t('post.mat.subtitle')}
+            <p className="text-[10px] text-slate-450 mt-1 italic font-semibold tracking-wide">
+              * {t('post.mat.subtitle')}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 self-end md:self-center">
-          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[9px] font-extrabold tracking-wider uppercase font-mono shadow-2xs">
-            BẢN PHÁC THẢO THIẾT KẾ V2.2
-          </span>
           <button
             onClick={handleSaveVersion}
             className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/15 transition cursor-pointer"
