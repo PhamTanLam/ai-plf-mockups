@@ -1244,12 +1244,11 @@ Thành phần tham dự:
       ])
     } else if (activePhase === 10) {
       setActiveSuggestions([
-        'Giải thích sơ đồ đấu dây điện',
-        'Giải thích logic điều khiển PLC',
-        'Thông số kỹ thuật màn hình HMI',
-        'Danh sách I/O điểm vào/ra',
-        'Xem sơ đồ bản vẽ CAD & mã Structured Text',
-        'Tải về mã nguồn & bản vẽ thiết kế',
+        'Cập nhật tiến độ chế tạo tủ điện',
+        'Kiểm tra linh kiện đầu vào',
+        'Lịch test nội bộ trước bàn giao',
+        'Vật tư còn thiếu cần đặt bổ sung',
+        'Lập trình PLC tại xưởng',
         'Chuyển sang Bước 5: Debug'
       ])
     } else if (activePhase === 12) {

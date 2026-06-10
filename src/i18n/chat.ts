@@ -30,6 +30,12 @@ const CHAT: Record<string, { ja: string; en: string }> = {
   'Kiểm tra lỗi cú pháp mã PLC.': { ja: 'PLC コードの構文エラーをチェック', en: 'Check PLC code syntax errors' },
   'Tối ưu hóa mã PLC ST (Paraphrase).': { ja: 'PLC ST コードを最適化（言い換え）', en: 'Optimize PLC ST code (paraphrase)' },
   'Thêm còi báo động vào code.': { ja: 'コードに警報ブザーを追加', en: 'Add an alarm siren to the code' },
+  // ── Suggestions Phase 10 (Sản xuất) ──
+  'Cập nhật tiến độ chế tạo tủ điện': { ja: '制御盤製造の進捗更新', en: 'Update electrical panel manufacturing progress' },
+  'Kiểm tra linh kiện đầu vào': { ja: '入荷部品の検査', en: 'Inspect incoming components' },
+  'Lịch test nội bộ trước bàn giao': { ja: '引き渡し前の社内テスト日程', en: 'Internal test schedule before handover' },
+  'Vật tư còn thiếu cần đặt bổ sung': { ja: '不足資材の追加発注', en: 'Order missing materials' },
+  'Lập trình PLC tại xưởng': { ja: '工場でのPLCプログラミング', en: 'PLC programming at the workshop' },
   'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng': { ja: '検収書・取扱説明書を作成', en: 'Draft acceptance / user manual docs' },
   'Tải Biên bản nghiệm thu.docx': { ja: '検収記録.docx をダウンロード', en: 'Download Acceptance_record.docx' },
   'Tải Hướng dẫn vận hành HMI.pdf': { ja: 'HMI 操作説明書.pdf をダウンロード', en: 'Download HMI_operation_manual.pdf' },
