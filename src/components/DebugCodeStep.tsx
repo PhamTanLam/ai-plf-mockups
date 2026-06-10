@@ -11,8 +11,7 @@ import {
   History, 
   Terminal, 
   AlertCircle,
-  ArrowRight,
-  ArrowLeft
+  ArrowRight
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 
