@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import {
-  Download, RefreshCw, FileText
+  Download, RefreshCw, FileText, Search, ArrowLeft
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 
@@ -11,190 +11,159 @@ interface ProjectReentryProps {
   onAddLog?: (action: string) => void
 }
 
-const DEFAULT_TEXT = `# NHẬT KÝ KHẢO SÁT HIỆN TRƯỜNG & THAY ĐỔI THÔNG SỐ (SPECS DISCREPANCIES)
-Mã dự án: WW2 Welding Cell
-Ngày khảo sát: 06/06/2026
-Người phụ trách: Linh (Software SE) & Kanai (Lead Engineer)
-
-Hồ sơ này ghi nhận toàn bộ các thay đổi kỹ thuật phát sinh tại hiện trường sau khi nhận đơn hàng (Post-Sales). Dữ liệu này sẽ được AI phân tích ngầm để cập nhật bảng vật tư tại Bước 3 và thiết kế bản vẽ CAD/code PLC tại Bước 4.
-
-======================================================================
-1. THÀNH PHẦN HỆ THỐNG ĐIỀU KHIỂN & GIAO DIỆN (PLC / HMI)
-======================================================================
-- Thay đổi cấu hình PLC:
-  + Cấu hình cũ (Pre-Sales): Sử dụng PLC Mitsubishi Melsec FX5U (dòng Compact).
-  + Cấu hình mới (Sau khảo sát): Nâng cấp lên PLC Mitsubishi Melsec Q03UDE (dòng Modulized) kèm theo các Module I/O mở rộng.
-  + Lý do: Số lượng điểm I/O thực tế tăng thêm 28% do bổ sung cảm biến an toàn và cơ cấu cơ khí phụ; đồng thời yêu cầu truyền thông Ethernet tốc độ cao kết nối Robot hàn.
-
-- Thay đổi màn hình HMI:
-  + Cấu hình cũ: Màn hình GOT2000 7-inch.
-  + Cấu hình mới: Nâng cấp lên GOT2000 10-inch.
-  + Lý do: Cần diện tích hiển thị lớn hơn để tích hợp trang chẩn đoán lỗi chi tiết và sơ đồ động học 3D của Robot.
-
-======================================================================
-2. HỆ THỐNG TRUYỀN ĐỘNG & CƠ CẤU CHẤP HÀNH (SERVO MOTOR)
-======================================================================
-- Tăng số lượng trục Servo điều khiển:
-  + Cấu hình cũ: 3 Trục truyền động chính (A1, A2, A3).
-  + Cấu hình mới: 4 Trục truyền động (A1, A2, A3, A4).
-  + Chi tiết: Bổ sung thêm 1 trục Servo Motor MR-J5-40A (400W) cho băng tải nạp phôi phụ phía sau buồng hàn.
-
-- Thay đổi chiều dài cáp điều khiển Servo:
-  + Cấu hình cũ: Chiều dài cáp đồng bộ mặc định 5m.
-  + Cấu hình mới: Chiều dài cáp tăng lên thành 15m đối với các trục A2 và A3.
-  + Lý do: Bố trí tủ điện chính xa hơn khu vực buồng hàn 8m để tránh bụi và nhiệt.
-
-======================================================================
-3. TIÊU CHUẨN AN TOÀN & LIÊN KHÓA (SAFETY RELAY)
-======================================================================
-- Nâng cấp tiêu chuẩn an toàn:
-  + Cấu hình cũ: ISO 13849 PLc.
-  + Cấu hình mới: ISO 13849 PLd (Mức an toàn D).
-  + Lý do: Bổ sung Rơ le an toàn chuyên dụng Omron G9SE để giám sát mạch E-Stop liên khóa tiếp điểm phụ NC của khởi động từ chính KA1.
-  + Chi tiết: Bổ sung 2 hàng rào ánh sáng (Safety Light Curtain) tại cửa nạp và cửa xả phôi.
-
-======================================================================
-4. DANH SÁCH VẬT TƯ PHỤ & CẢM BIẾN HIỆN TRƯỜNG
-======================================================================
-- Cảm biến tiệm cận giới hạn hành trình (Proximity Sensors):
-  + Tăng từ 8 cái lên thành 10 cái (bổ sung 2 cảm biến cho hành trình giới hạn của trục Servo A4 mới).
-  
-- Cảm biến quang điện phân loại phôi (Photoelectric Sensors):
-  + Tăng từ 6 cái lên thành 8 cái (bổ sung 2 cảm biến quang phát hiện màu phôi tại phễu cấp phôi phụ).
-  
-- Nguồn cấp DC 24V tủ điện:
-  + Giữ nguyên nguồn 24VDC 10A Omron, tuy nhiên bổ sung thêm 1 bộ nguồn phụ 24VDC 5A dự phòng cho hệ thống cảm biến ngoài hiện trường.
-`
-
+/**
+ * ProjectReentry — Nhật ký khảo sát & phát sinh (Bước 7).
+ * KHÔNG nhồi sẵn nội dung mock: file chỉ tồn tại SAU KHI user ghi nhận khảo sát qua chat
+ * (AI đề xuất → user gõ "update"/"đồng ý" → mới ghi). Ba trạng thái: rỗng → card gọn → xem đầy đủ.
+ */
 export default function ProjectReentry({ onProgressChange, onAddLog }: ProjectReentryProps) {
   const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const STORAGE_KEY = `aiplf.project_reentry_text.${id || 'default'}`
-  const SYNC_KEY = `aiplf.project_reentry_synced.${id || 'default'}`
 
   const [text, setText] = useState('')
-  const [isSynced, setIsSynced] = useState(false)
+  const [opened, setOpened] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
 
-  // 1. Initial Load from LocalStorage
+  // Nạp từ localStorage — KHÔNG ghi mock mặc định
   useEffect(() => {
-    const storedText = localStorage.getItem(STORAGE_KEY)
-    if (storedText) {
-      setText(storedText)
-    } else {
-      setText(DEFAULT_TEXT)
-      localStorage.setItem(STORAGE_KEY, DEFAULT_TEXT)
+    let stored = localStorage.getItem(STORAGE_KEY) || ''
+    // Dọn dữ liệu mock/log cũ từ phiên bản trước (trước khi áp luồng xác nhận trước khi ghi)
+    if (/SPECS DISCREPANCIES|\[CẬP NHẬT /.test(stored)) {
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(`aiplf.project_reentry_synced.${id || 'default'}`)
+      stored = ''
     }
+    setText(stored)
+    onProgressChange?.(stored ? 100 : 0)
+  }, [id, STORAGE_KEY])
 
-    const storedSync = localStorage.getItem(SYNC_KEY)
-    if (storedSync === 'true') {
-      setIsSynced(true)
-      if (onProgressChange) onProgressChange(100)
-    } else {
-      setIsSynced(false)
-      if (onProgressChange) onProgressChange(100) // Khảo sát xem như đã hoàn thành đọc file
-    }
-  }, [id, STORAGE_KEY, SYNC_KEY])
-
-  // 2. Listen to storage changes from chat updates in real-time
+  // Đồng bộ realtime khi chat ghi vào localStorage
   useEffect(() => {
-    const handleStorageChange = () => {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        setText(stored)
-      }
-      const storedSync = localStorage.getItem(SYNC_KEY)
-      setIsSynced(storedSync === 'true')
+    const handler = () => {
+      const stored = localStorage.getItem(STORAGE_KEY) || ''
+      setText(stored)
+      onProgressChange?.(stored ? 100 : 0)
     }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [STORAGE_KEY, SYNC_KEY])
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
+  }, [STORAGE_KEY])
 
-  // File Download Trigger
   const handleDownload = () => {
     setIsDownloading(true)
     setTimeout(() => {
       setIsDownloading(false)
-      
-      const element = document.createElement("a")
-      const file = new Blob([text], {type: 'text/plain;charset=utf-8'})
+      const element = document.createElement('a')
+      const file = new Blob([text], { type: 'text/plain;charset=utf-8' })
       element.href = URL.createObjectURL(file)
-      element.download = "khao_sat_thay_doi_specs.txt"
+      element.download = 'khao_sat_thay_doi_specs.txt'
       document.body.appendChild(element)
       element.click()
       document.body.removeChild(element)
-
-      if (onAddLog) {
-        onAddLog('Đã tải xuống tệp nhật ký: khao_sat_thay_doi_specs.txt')
-      }
+      onAddLog?.('Đã tải xuống tệp nhật ký: khao_sat_thay_doi_specs.txt')
     }, 1000)
   }
 
-  // Calculate file metrics
+  const hasContent = text.trim().length > 0
   const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0
   const lineCount = text ? text.split('\n').length : 0
   const byteSize = text ? new Blob([text]).size : 0
   const formattedSize = (byteSize / 1024).toFixed(2) + ' KB'
 
-  return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel flex flex-col min-h-[500px]">
-      
-      {/* File Header Bar */}
-      <div className="bg-slate-50 border-b border-slate-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+  // ── TRẠNG THÁI 1: chưa có dữ liệu khảo sát → mời chat ──
+  if (!hasContent) {
+    return (
+      <div className="bg-white border border-dashed border-slate-250 rounded-2xl p-10 text-center shadow-xs flex flex-col items-center justify-center min-h-[360px] max-w-2xl mx-auto">
+        <div className="w-14 h-14 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-500 mb-4">
+          <Search className="w-7 h-7" />
+        </div>
+        <h4 className="text-sm font-bold text-slate-800">Chưa có nhật ký khảo sát</h4>
+        <p className="text-xs text-slate-500 mt-2 max-w-md leading-relaxed">
+          Sau khi khảo sát hiện trường, hãy chat với AI để ghi nhận chênh lệch so với specs gốc
+          (PLC, HMI, servo, an toàn…). AI sẽ đề xuất và <strong>hỏi xác nhận trước khi ghi</strong> vào nhật ký.
+        </p>
+        <p className="text-[11px] text-slate-400 mt-3 font-mono">→ Nhập yêu cầu ở khung chat bên phải để bắt đầu</p>
+      </div>
+    )
+  }
+
+  // ── TRẠNG THÁI 2: đã có dữ liệu, chưa mở → card gọn + nút Mở ──
+  if (!opened) {
+    return (
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-panel max-w-2xl mx-auto">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-600 shrink-0">
-            <FileText className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-600 shrink-0">
+            <FileText className="w-6 h-6" />
           </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                {t('post.reentry.title')}
-              </h4>
-              <span className="text-[10px] font-mono font-bold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
-                khao_sat_thay_doi_specs.txt
-              </span>
-              {isSynced ? (
-                <span className="text-[8px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200/60 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                  Synced
-                </span>
-              ) : (
-                <span className="text-[8px] font-bold bg-amber-50 text-amber-600 border border-amber-200/60 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                  Pending
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] text-slate-450 mt-0.5">
-              {t('post.reentry.subtitle')}
-            </p>
+          <div className="min-w-0 flex-1">
+            <h4 className="text-sm font-bold text-slate-800">{t('post.reentry.title')}</h4>
+            <p className="text-[11px] text-slate-450 font-mono mt-0.5">khao_sat_thay_doi_specs.txt · {formattedSize} · {lineCount} dòng</p>
           </div>
         </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-2 shrink-0">
+        <p className="text-xs text-slate-500 mt-3 leading-relaxed">
+          {t('post.reentry.subtitle')} — AI đã ghi nhận từ chat. Mở để xem chi tiết hoặc tải về.
+        </p>
+        <div className="flex items-center gap-2 mt-4">
+          <button
+            onClick={() => setOpened(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+          >
+            <FileText className="w-3.5 h-3.5" /> Mở nhật ký khảo sát
+          </button>
           <button
             onClick={handleDownload}
             disabled={isDownloading}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 border border-slate-250 rounded-xl text-xs font-bold transition cursor-pointer"
-            title={t('post.reentry.downloadTitle')}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-250 text-slate-700 disabled:opacity-50 text-xs font-bold rounded-xl transition cursor-pointer"
           >
-            {isDownloading ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Download className="w-3.5 h-3.5" />
-            )}
-            <span>{isDownloading ? t('ws.kickoff.downloading') : t('ws.kickoff.download')}</span>
+            {isDownloading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+            {t('ws.kickoff.download')}
           </button>
         </div>
       </div>
+    )
+  }
 
-      {/* Editor Content Area (Read-Only) */}
+  // ── TRẠNG THÁI 3: mở — xem đầy đủ file ──
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-panel flex flex-col min-h-[500px]">
+      <div className="bg-slate-50 border-b border-slate-200 p-3.5 flex items-center justify-between gap-3.5">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={() => setOpened(false)}
+            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer shrink-0"
+            title="Thu gọn"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-600 shrink-0">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">{t('post.reentry.title')}</h4>
+              <span className="text-[10px] font-mono font-bold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">khao_sat_thay_doi_specs.txt</span>
+            </div>
+            <p className="text-[10px] text-slate-450 mt-0.5">{t('post.reentry.subtitle')}</p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 border border-slate-250 rounded-xl text-xs font-bold transition cursor-pointer shrink-0"
+          title={t('post.reentry.downloadTitle')}
+        >
+          {isDownloading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+          <span>{isDownloading ? t('ws.kickoff.downloading') : t('ws.kickoff.download')}</span>
+        </button>
+      </div>
+
       <div className="flex-1 p-5 overflow-y-auto max-h-[500px] bg-slate-50/25 select-text">
-        <div className="bg-white border border-slate-150 rounded-2xl p-5 shadow-sm space-y-4 font-sans text-xs text-slate-755 leading-relaxed whitespace-pre-line">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 shadow-sm font-sans text-xs text-slate-700 leading-relaxed whitespace-pre-line">
           {text}
         </div>
       </div>
 
-      {/* Bottom Editor Status Bar */}
       <div className="bg-slate-50 border-t border-slate-200 px-4 py-2 flex items-center justify-between text-[10px] text-slate-500 font-mono shrink-0">
         <div className="flex gap-4">
           <span>{t('ws.kickoff.size')} <strong>{formattedSize}</strong></span>
@@ -207,12 +176,6 @@ export default function ProjectReentry({ onProgressChange, onAddLog }: ProjectRe
           <span>{t('ws.kickoff.encoding')} <strong>UTF-8</strong></span>
         </div>
       </div>
-
-      {/* Guide Banner */}
-      <div className="p-3.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 leading-relaxed font-sans">
-        <strong>{t('ws.kickoff.guideLabel')}</strong> {t('post.reentry.guide')}
-      </div>
-
     </div>
   )
 }

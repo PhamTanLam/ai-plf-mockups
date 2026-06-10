@@ -23,7 +23,12 @@ import {
   RotateCcw,
   Activity,
   MessageSquare,
-  ChevronDown
+  ChevronDown,
+  History,
+  Trash2,
+  PanelRightClose,
+  Pencil,
+  Search
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tcText } from '@/i18n/chat'
@@ -32,7 +37,6 @@ import { tcText } from '@/i18n/chat'
 import CadViewer from '@/components/CadViewer'
 import FlowchartEditor from '@/components/FlowchartEditor'
 import SourceViewer from '@/components/SourceViewer'
-import ProjectReentry from '@/components/ProjectReentry'
 import DocumentGenerator from '@/components/DocumentGenerator'
 import CaseInput from '@/components/CaseInput'
 import AddSourceModal from '@/components/AddSourceModal'
@@ -48,7 +52,57 @@ interface Message {
   tkey?: string
   tvars?: Record<string, string | number>
   citations?: { id: number; sourceId: string; phrase?: string; tab?: string }[]
+  /** Nút hành động nhanh dưới câu trả lời AI. `to` = điều hướng route; `openOid` = mở output có sẵn; `openDoc` = mở tài liệu tổng hợp ngay trong canvas. */
+  action?: { label: string; to?: string; openOid?: string; openDoc?: { title: string; content: string } }
   timestamp: string
+}
+
+// ── Multi-conversation: nhiều cuộc trò chuyện / lịch sử (mô phỏng, lưu localStorage theo dự án) ──
+interface ConvMeta { id: string; title: string; createdBy: 'Linh' | 'Kanai' | 'AI'; createdAt: number }
+const chatMetaKey = (pid?: string) => `aiplf.chat.${pid || 'default'}.meta`
+const chatMsgsKey = (pid: string | undefined, cid: string) => `aiplf.chat.${pid || 'default'}.msgs.${cid}`
+const newConvId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5)
+
+function loadChatState(pid: string | undefined, greetingText: string): { convs: ConvMeta[]; activeId: string; messages: Message[] } {
+  const greet = (): Message[] => [{ id: 'm1', sender: 'ai', text: greetingText, timestamp: '10:00 AM' }]
+  try {
+    const metaRaw = localStorage.getItem(chatMetaKey(pid))
+    if (metaRaw) {
+      const meta = JSON.parse(metaRaw) as { convs: ConvMeta[]; activeId: string }
+      if (meta.convs?.length) {
+        const activeId = meta.convs.some(c => c.id === meta.activeId) ? meta.activeId : meta.convs[0].id
+        let msgs: Message[] = []
+        try { msgs = JSON.parse(localStorage.getItem(chatMsgsKey(pid, activeId)) || 'null') || [] } catch { /* ignore */ }
+        return { convs: meta.convs, activeId, messages: msgs.length ? msgs : greet() }
+      }
+    }
+  } catch { /* ignore */ }
+  // Chưa có: migrate thread cũ (nếu có) thành cuộc của tôi + seed vài cuộc demo của member khác
+  let oldMsgs: Message[] | null = null
+  try { oldMsgs = JSON.parse(localStorage.getItem(`aiplf.workspace.${pid || 'default'}.messages`) || 'null') } catch { /* ignore */ }
+  const now = Date.now()
+  const cid = newConvId()
+  const seed = (title: string, by: ConvMeta['createdBy'], hoursAgo: number, userMsg: string): ConvMeta => {
+    const sid = newConvId()
+    try {
+      localStorage.setItem(chatMsgsKey(pid, sid), JSON.stringify([
+        { id: sid + 'a', sender: 'ai', text: greetingText, timestamp: '09:00 AM' },
+        { id: sid + 'u', sender: 'user', text: userMsg, timestamp: '09:01 AM' },
+        { id: sid + 'b', sender: 'ai', text: 'Đã ghi nhận và xử lý yêu cầu. Bạn có thể xem chi tiết ở các bước tương ứng.', timestamp: '09:01 AM' },
+      ]))
+    } catch { /* ignore */ }
+    return { id: sid, title, createdBy: by, createdAt: now - hoursAgo * 3600000 }
+  }
+  return {
+    convs: [
+      { id: cid, title: 'Cuộc trò chuyện 1', createdBy: 'Linh', createdAt: now },
+      seed('Review tài liệu hướng dẫn vận hành', 'Kanai', 19, 'Soạn tài liệu hướng dẫn vận hành HMI'),
+      seed('Kiểm tra mã nguồn & yêu cầu UI', 'AI', 23, 'Kiểm tra lỗi cú pháp mã PLC'),
+      seed('Đánh giá tổng quan thiết kế dự án', 'Kanai', 96, 'Tóm tắt dự án'),
+    ],
+    activeId: cid,
+    messages: (oldMsgs && oldMsgs.length) ? oldMsgs : greet(),
+  }
 }
 
 interface SourceFile {
@@ -261,6 +315,8 @@ export default function NotebookWorkspace() {
   // dịch hiển thị cho hội thoại AI mô phỏng (logic vẫn khớp theo chuỗi VN)
   const tc = (s: string) => tcText(s, locale)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  // Đề xuất ghi nhận Bước 7 đang chờ user xác nhận (gõ "update"/"đồng ý" mới ghi vào bộ nhớ)
+  const pendingReentryRef = useRef<{ name: string; value: string; mat: string } | null>(null)
 
 
   // Bước mở mặc định = theo TRẠNG THÁI dự án (router state khi click từ dashboard; fallback map demo; mới → pre-sales bước 1)
@@ -476,6 +532,10 @@ export default function NotebookWorkspace() {
 
   // Pre-sales NV1 state (mô phỏng, lưu localStorage theo case)
   const pre = usePresalesState(id || 'default')
+  // Bộ nhớ RIÊNG cho Bước 7 (post-sales delta) — tách khỏi pre-sales (baseline), tham chiếu pre làm gốc
+  const reentry = usePresalesState((id || 'default') + '__reentry')
+  // Tín hiệu mở chi tiết ngay trong canvas Bước 7 (từ nút trong chat): output có sẵn (oid) hoặc doc tổng hợp
+  const [reentryOpen, setReentryOpen] = useState<{ oid?: string; doc?: { title: string; content: string }; n: number } | null>(null)
   const [addSourceOpen, setAddSourceOpen] = useState(false)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
 
@@ -835,20 +895,104 @@ export default function NotebookWorkspace() {
   const handleProgress11 = useCallback((prog: number) => handleProgressChange(11, prog), [handleProgressChange])
 
   // Chat message thread
-  const [messages, setMessages] = useState<Message[]>(() => {
-    try {
-      const stored = localStorage.getItem(`aiplf.workspace.${id}.messages`)
-      if (stored !== null) return JSON.parse(stored)
-    } catch { /* ignore */ }
-    return [
-      {
-        id: 'm1',
-        sender: 'ai',
-        text: t('ws.greeting'),
-        timestamp: '10:00 AM',
-      },
-    ]
-  })
+  // Khởi tạo trạng thái đa-cuộc một lần (đọc localStorage / migrate thread cũ)
+  const chatInitRef = useRef<{ convs: ConvMeta[]; activeId: string; messages: Message[] }>(undefined)
+  if (!chatInitRef.current) chatInitRef.current = loadChatState(id, t('ws.greeting'))
+  const [conversations, setConversations] = useState<ConvMeta[]>(chatInitRef.current.convs)
+  const [activeConvId, setActiveConvId] = useState<string>(chatInitRef.current.activeId)
+  const [messages, setMessages] = useState<Message[]>(chatInitRef.current.messages)
+  const [showConvMenu, setShowConvMenu] = useState(false)
+  const [convSearch, setConvSearch] = useState('')
+  const [convTab, setConvTab] = useState<'mine' | 'project'>('mine')
+  const [renameConvId, setRenameConvId] = useState<string | null>(null)
+  const [renameConvVal, setRenameConvVal] = useState('')
+  const fmtConvTime = (ts: number) => {
+    const m = Math.floor((Date.now() - ts) / 60000)
+    if (m < 1) return 'vừa xong'
+    if (m < 60) return m + 'm'
+    const h = Math.floor(m / 60)
+    if (h < 24) return h + 'h'
+    return Math.floor(h / 24) + 'd'
+  }
+  // Cuộc mới chưa chat = "draft": chưa thêm vào danh sách, chỉ commit khi có tin nhắn đầu tiên
+  const draftConvRef = useRef<{ id: string; createdBy: 'Linh' | 'Kanai' | 'AI'; createdAt: number } | null>(null)
+
+  // Lưu tin nhắn + commit cuộc "draft" khi có tin nhắn đầu tiên + tự đặt tiêu đề
+  useEffect(() => {
+    const firstUser = messages.find(m => m.sender === 'user')
+    // Cuộc rỗng (chưa chat) → KHÔNG lưu để khỏi rác lịch sử
+    if (!firstUser) return
+    try { localStorage.setItem(chatMsgsKey(id, activeConvId), JSON.stringify(messages)) } catch { /* ignore */ }
+    const title = firstUser.text.slice(0, 40)
+    setConversations(prev => {
+      const exists = prev.some(c => c.id === activeConvId)
+      if (!exists) {
+        // commit draft → thêm vào danh sách với tiêu đề từ câu hỏi đầu
+        const d = draftConvRef.current
+        return [{ id: activeConvId, title, createdBy: d?.createdBy || activeUser, createdAt: d?.createdAt || Date.now() }, ...prev]
+      }
+      let changed = false
+      const next = prev.map(c => {
+        if (c.id !== activeConvId || !/^Cuộc trò chuyện \d+$/.test(c.title)) return c
+        changed = true
+        return { ...c, title }
+      })
+      return changed ? next : prev
+    })
+  }, [messages, activeConvId, id])
+
+  // Lưu danh sách cuộc + cuộc đang mở
+  useEffect(() => {
+    try { localStorage.setItem(chatMetaKey(id), JSON.stringify({ convs: conversations, activeId: activeConvId })) } catch { /* ignore */ }
+  }, [conversations, activeConvId, id])
+
+  const makeGreeting = (): Message => ({ id: `m-${Date.now()}`, sender: 'ai', text: t('ws.greeting'), timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })
+
+  const newConversation = () => {
+    const cid = newConvId()
+    // Chưa thêm vào danh sách — chỉ là draft cho tới khi có tin nhắn đầu tiên (commit ở effect)
+    draftConvRef.current = { id: cid, createdBy: activeUser, createdAt: Date.now() }
+    setActiveConvId(cid)
+    setMessages([makeGreeting()])
+    setAskedQuestions([])
+    setShowConvMenu(false)
+  }
+
+  const renameConversation = (cid: string, title: string) => {
+    const v = title.trim()
+    setRenameConvId(null)
+    if (!v) return
+    setConversations(prev => prev.map(c => c.id === cid ? { ...c, title: v } : c))
+  }
+
+  const switchConversation = (cid: string) => {
+    setShowConvMenu(false)
+    if (cid === activeConvId) return
+    let msgs: Message[] = []
+    try { msgs = JSON.parse(localStorage.getItem(chatMsgsKey(id, cid)) || 'null') || [] } catch { /* ignore */ }
+    setActiveConvId(cid)
+    setMessages(msgs.length ? msgs : [makeGreeting()])
+  }
+
+  const deleteConversation = (cid: string) => {
+    try { localStorage.removeItem(chatMsgsKey(id, cid)) } catch { /* ignore */ }
+    const next = conversations.filter(c => c.id !== cid)
+    if (!next.length) {
+      const nid = newConvId()
+      setConversations([{ id: nid, title: 'Cuộc trò chuyện 1', createdBy: activeUser, createdAt: Date.now() }])
+      setActiveConvId(nid)
+      setMessages([makeGreeting()])
+      return
+    }
+    setConversations(next)
+    if (cid === activeConvId) {
+      const target = next[0]
+      let msgs: Message[] = []
+      try { msgs = JSON.parse(localStorage.getItem(chatMsgsKey(id, target.id)) || 'null') || [] } catch { /* ignore */ }
+      setActiveConvId(target.id)
+      setMessages(msgs.length ? msgs : [makeGreeting()])
+    }
+  }
 
   // Auto-scroll chat to latest message
   useEffect(() => {
@@ -994,15 +1138,7 @@ Thành phần tham dự:
     if (activePhase === 1 || activePhase === 2 || activePhase === 3 || activePhase === null) {
       setActiveSuggestions(PRE_SUGG)
     } else if (activePhase === 7) {
-      setActiveSuggestions([
-        'Có thay đổi gì về số lượng động cơ hay PLC?',
-        'Xem chi tiết thông số chênh lệch Melsec Q?',
-        'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug',
-        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
-      ])
+      setActiveSuggestions(REENTRY_SUGG_BASE)
     } else if (activePhase === 8) {
       setActiveSuggestions([
         'Soạn biên bản Kick-off bàn giao dự án',
@@ -1064,12 +1200,12 @@ Thành phần tham dự:
 
   // đẩy 1 cặp tin nhắn (người dùng + AI) vào chat.
   // tkey/tvars (tuỳ chọn): message AI động — render bằng tf() để dịch lại theo ngôn ngữ.
-  const pushChat = (userText: string, aiText: string, sugg?: string[], tkey?: string, tvars?: Record<string, string | number>) => {
+  const pushChat = (userText: string, aiText: string, sugg?: string[], tkey?: string, tvars?: Record<string, string | number>, action?: { label: string; to?: string; openOid?: string; openDoc?: { title: string; content: string } }) => {
     const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     setMessages(prev => [
       ...prev,
       { id: `u-${Date.now()}`, sender: 'user', text: userText, timestamp: ts },
-      { id: `a-${Date.now() + 1}`, sender: 'ai', text: aiText, tkey, tvars, timestamp: ts },
+      { id: `a-${Date.now() + 1}`, sender: 'ai', text: aiText, tkey, tvars, action, timestamp: ts },
     ])
     if (sugg) setActiveSuggestions(sugg)
     setInputVal('')
@@ -1082,6 +1218,11 @@ Thành phần tham dự:
     'Lập lịch trình khái quát',
     'Soạn tài liệu nền đề xuất'
   ]
+
+  // Chip gợi ý cho Bước 7 theo NGỮ CẢNH (đổi sau mỗi lượt chat)
+  const REENTRY_SUGG_BASE = ['đổi PLC sang Q03UDE', 'Nâng HMI lên 10 inch', 'Bổ sung 1 trục servo', 'Tóm tắt chênh lệch', 'Chuyển sang Bước 2: Họp Kick-off']
+  const REENTRY_SUGG_PENDING = ['update', 'Tóm tắt chênh lệch', 'Lập dự toán phát sinh']
+  const REENTRY_SUGG_AFTER = ['Lập dự toán phát sinh', 'Nâng HMI lên 10 inch', 'Tóm tắt chênh lệch', 'Chuyển sang Bước 2: Họp Kick-off']
 
   // Chat trong các bước pre-sales (1→6): AI ghi nhớ thông tin + tóm tắt + sinh đầu ra. KHÔNG gọi API.
   const handlePresalesChat = (text: string) => {
@@ -1123,6 +1264,101 @@ Thành phần tham dự:
     handlePhaseChange(1)
     if (added.length) pushChat(text, `Mình đã ghi nhớ thêm: ${added.join(', ')}.`, PRE_SUGG, 'chat.ps.remembered', { names: added.join(', ') })
     else pushChat(text, 'Đã hiểu.', PRE_SUGG, 'chat.ps.understood')
+  }
+
+  // Chat Bước 7 — ghi nhận vào BỘ NHỚ RIÊNG (reentry), KHÔNG điều hướng. Tham chiếu pre-sales làm baseline.
+  const REENTRY_DELTAS: { kw: RegExp; name: string; delta: string; mat: string }[] = [
+    { kw: /plc|melsec/, name: 'PLC điều khiển', delta: 'FX5U (Compact) → Q03UDE (Module)', mat: 'plc' },
+    { kw: /hmi|màn hình/, name: 'Màn hình HMI', delta: 'GOT2000 7" → 10"', mat: 'hmi' },
+    { kw: /servo|trục/, name: 'Trục Servo', delta: '3 trục → 4 trục (bổ sung MR-J5-40A)', mat: 'servo' },
+    { kw: /an toàn|rơ le|safety/, name: 'Tiêu chuẩn an toàn', delta: 'ISO 13849 PLc → PLd (thêm Omron G9SE + 2 light curtain)', mat: '' },
+    { kw: /cảm biến quang|quang/, name: 'Cảm biến quang', delta: '6 → 8 cái', mat: 'quang' },
+  ]
+
+  const syncReentryMaterials = (mat: string) => {
+    if (!mat) return
+    try {
+      const materialsKey = `aiplf.materials.${id}`
+      const stored = localStorage.getItem(materialsKey)
+      if (!stored) return
+      const list = JSON.parse(stored)
+      const updated = list.map((item: any) => {
+        if (mat === 'plc' && item.name.includes('PLC')) return { ...item, quantity: 1, unitPrice: 1200 }
+        if (mat === 'servo' && item.name.includes('Servo')) return { ...item, quantity: 4 }
+        if (mat === 'quang' && item.name.includes('Photoelectric')) return { ...item, quantity: 8 }
+        if (mat === 'hmi' && item.name.includes('HMI')) return { ...item, quantity: 1, unitPrice: 850 }
+        return item
+      })
+      localStorage.setItem(materialsKey, JSON.stringify(updated))
+      window.dispatchEvent(new Event('storage'))
+      setMaterialsVersion(prev => prev + 1)
+    } catch (e) { console.error(e) }
+  }
+
+  const handleReentryChat = (text: string) => {
+    const low = text.toLowerCase()
+
+    // 1) XÁC NHẬN — chỉ khi gõ đúng từ xác nhận & đang có đề xuất chờ → mới GHI vào bộ nhớ
+    const isConfirm = /^\s*(update|cập nhật|đồng ý|đồng ?ý|ok|oke|okie|đồng|xác nhận|ghi|lưu|yes|y)\s*$/.test(low)
+    if (isConfirm) {
+      const pend = pendingReentryRef.current
+      if (!pend) {
+        pushChat(text, 'Chưa có đề xuất nào để ghi. Bạn cứ nêu chênh lệch sau khảo sát (PLC, HMI, servo, an toàn…), tôi sẽ đề xuất và hỏi xác nhận trước khi ghi.', REENTRY_SUGG_BASE)
+        return
+      }
+      reentry.addField(pend.name, pend.value)
+      syncReentryMaterials(pend.mat)
+      pendingReentryRef.current = null
+      // Dựng bản ghi chênh lệch hiện tại (các delta đã lưu + delta vừa thêm) để xem ngay trong canvas
+      const base = reentry.fields.map(f => ({ name: f.name, value: f.value }))
+      const i = base.findIndex(f => f.name.toLowerCase() === pend.name.toLowerCase())
+      if (i >= 0) base[i] = { name: pend.name, value: pend.value }; else base.push({ name: pend.name, value: pend.value })
+      const docContent = `# NHẬT KÝ KHẢO SÁT & PHÁT SINH\nMã dự án: ${id || 'CASE-2026-0245'}\nNguồn: Ghi nhận từ chat Bước 7\n\n## Chênh lệch so với specs gốc (pre-sales)\n` + base.map(f => `- ${f.name}: ${f.value}`).join('\n')
+      pushChat(text, `✓ Đã ghi "${pend.name}: ${pend.value}" vào bộ nhớ khảo sát.${pend.mat ? ' Bảng vật tư (Bước 3) đã đồng bộ.' : ''}`, REENTRY_SUGG_AFTER, undefined, undefined, { label: 'Xem chênh lệch đã lưu', openDoc: { title: 'Nhật ký khảo sát & Phát sinh', content: docContent } })
+      return
+    }
+
+    // 2) TRA CỨU — tóm tắt / xem / đối chiếu → chỉ trả lời, KHÔNG ghi
+    if (/tóm tắt|tóm lược|tổng hợp|tổng quan|xem lại|xem dữ liệu|xem chi tiết|liệt kê|thống kê|hiện trạng|so sánh|đối chiếu|chênh lệch|có gì|những gì/.test(low)) {
+      const data = reentry.summaryText()
+      pushChat(text, reentry.total
+        ? `Chênh lệch đã ghi nhận sau khảo sát (so với specs gốc pre-sales):\n${data}`
+        : 'Chưa ghi nhận chênh lệch nào. Hãy cho tôi biết thay đổi sau khảo sát (PLC, HMI, servo, an toàn…).', REENTRY_SUGG_BASE)
+      return
+    }
+
+    // 3) LẬP đầu ra (lệnh rõ ràng: "lập/tạo/xuất dự toán…") → sinh card từ bộ nhớ hiện có
+    if (/(lập|tạo|xuất|soạn).*(dự toán|báo giá|phát sinh|change order)|(dự toán|báo giá|phát sinh).*(lập|tạo|xuất|soạn)/.test(low)) {
+      if (!reentry.total) { pushChat(text, 'Chưa có chênh lệch nào để lập dự toán. Hãy ghi nhận thay đổi sau khảo sát trước.', REENTRY_SUGG_BASE); return }
+      const out = reentry.generate('estimate')
+      pushChat(text, 'Đã lập "Dự toán phát sinh" từ các chênh lệch đã ghi nhận ✓. Bấm để xem ngay:', REENTRY_SUGG_AFTER, undefined, undefined, out ? { label: 'Xem dự toán phát sinh', openOid: out.oid } : undefined)
+      return
+    }
+
+    // 4) HỎI chi phí/phát sinh (câu hỏi, chưa phải lệnh tạo) → chỉ trả lời, KHÔNG ghi
+    if (/dự toán|báo giá|chi phí|phát sinh|estimate|bao nhiêu/.test(low)) {
+      pushChat(text, reentry.total
+        ? 'Dự toán phát sinh (ước tính minh hoạ) từ các chênh lệch đã ghi: +¥1,590,000 so với hợp đồng gốc. Gõ "lập dự toán phát sinh" nếu muốn tôi xuất thành tài liệu.'
+        : 'Chưa có chênh lệch nào nên chưa có phát sinh để tính.', REENTRY_SUGG_BASE)
+      return
+    }
+
+    // 5) CUNG CẤP THÔNG TIN → AI ĐỀ XUẤT (chưa ghi), chờ user gõ "update"/"đồng ý"
+    let name = ''
+    let value = ''
+    let mat = ''
+    const mm = text.match(/^\s*(?:thêm|ghi chú)?\s*(.{2,40}?)\s*[:：]\s*(.+)$/)
+    const hit = REENTRY_DELTAS.find(d => d.kw.test(low))
+    if (mm) {
+      name = mm[1].trim(); value = mm[2].trim()
+    } else if (hit) {
+      name = hit.name; value = hit.delta; mat = hit.mat
+    } else {
+      name = 'Ghi chú khảo sát'; value = text
+    }
+
+    pendingReentryRef.current = { name, value, mat }
+    pushChat(text, `Tôi đề xuất ghi nhận — ${name}: ${value}.\n\nGõ "update" (hoặc "đồng ý") để ghi vào bộ nhớ khảo sát, hoặc nhập tiếp để chỉnh lại đề xuất.`, REENTRY_SUGG_PENDING)
   }
 
   const parseChatForMaterials = (chatText: string) => {
@@ -1213,65 +1449,10 @@ Thành phần tham dự:
       }
     }
     
-    // AI Chat interceptor for Step 1 (Phase 7 - Khảo sát & Phát sinh text document updates)
+    // Phase 7 (Khảo sát & Phát sinh) — ghi nhận vào bộ nhớ riêng (reentry), ở lại Bước 7
     if (activePhase === 7) {
-      const queryLower = text.toLowerCase()
-      let updatedNote = ''
-      let shouldUpdate = false
-      
-      if (queryLower.includes('plc') || queryLower.includes('melsec')) {
-        updatedNote = `\n- * [Cập nhật từ AI Chat]: Đã chuyển đổi dòng bộ điều khiển sang dòng cao cấp Melsec Q03UDE phục vụ robot hàn.`
-        shouldUpdate = true
-      } else if (queryLower.includes('servo') || queryLower.includes('trục')) {
-        updatedNote = `\n- * [Cập nhật từ AI Chat]: Bổ sung thêm 1 trục Servo Motor A4 (MR-J5-40A) cho băng tải nạp phôi phụ.`
-        shouldUpdate = true
-      } else if (queryLower.includes('cảm biến quang') || queryLower.includes('quang')) {
-        updatedNote = `\n- * [Cập nhật từ AI Chat]: Tăng số lượng cảm biến quang điện phân loại phôi lên 8 cái.`
-        shouldUpdate = true
-      } else if (queryLower.includes('rơ le') || queryLower.includes('an toàn') || queryLower.includes('safety')) {
-        updatedNote = `\n- * [Cập nhật từ AI Chat]: Nâng cấp tiêu chuẩn an toàn lên ISO 13849 PLd, lắp thêm rơ le an toàn Omron G9SE.`
-        shouldUpdate = true
-      } else if (queryLower.includes('hmi') || queryLower.includes('màn hình')) {
-        updatedNote = `\n- * [Cập nhật từ AI Chat]: Đổi kích thước màn hình GOT2000 từ 7-inch lên 10-inch.`
-        shouldUpdate = true
-      }
-
-      if (!updatedNote) updatedNote = `\n- [Ghi chú từ chat]: ${text}`
-
-      try {
-        const storedText = localStorage.getItem(`aiplf.project_reentry_text.${id}`)
-        const baseText = storedText || `# NHẬT KÝ KHẢO SÁT HIỆN TRƯỜNG & THAY ĐỔI SPECS (CASE-2026-0245)`
-        const newText = baseText + `\n\n[CẬP NHẬT ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]:` + updatedNote
-        localStorage.setItem(`aiplf.project_reentry_text.${id}`, newText)
-        localStorage.setItem(`aiplf.project_reentry_synced.${id}`, 'true')
-
-        if (shouldUpdate) {
-          const materialsKey = `aiplf.materials.${id}`
-          const storedMaterials = localStorage.getItem(materialsKey)
-          if (storedMaterials) {
-            const materialsList = JSON.parse(storedMaterials)
-            const updatedMat = materialsList.map((item: any) => {
-              if (queryLower.includes('plc') && item.name.includes('PLC')) return { ...item, quantity: 1, unitPrice: 1200 }
-              if (queryLower.includes('servo') && item.name.includes('Servo')) return { ...item, quantity: 4 }
-              if (queryLower.includes('quang') && item.name.includes('Photoelectric')) return { ...item, quantity: 8 }
-              if (queryLower.includes('hmi') && item.name.includes('HMI')) return { ...item, quantity: 1, unitPrice: 850 }
-              return item
-            })
-            localStorage.setItem(materialsKey, JSON.stringify(updatedMat))
-          }
-        }
-
-        window.dispatchEvent(new Event('storage'))
-        setMaterialsVersion(prev => prev + 1)
-
-        const aiResponse = shouldUpdate
-          ? `Tôi đã cập nhật yêu cầu chỉnh sửa của bạn vào Nhật ký khảo sát ở khung bên trái. Cấu hình vật tư liên quan đã được đồng bộ tự động.`
-          : `Đã ghi nhận và cập nhật vào Nhật ký khảo sát ở khung bên trái. Bạn có thể tiếp tục trao đổi hoặc bổ sung thêm thông tin.`
-        pushChat(text, aiResponse)
-        return
-      } catch (e) {
-        console.error(e)
-      }
+      handleReentryChat(text)
+      return
     }
 
     // AI Chat interceptor for Step 2 (Phase 8 - Họp Kick-off meeting minutes updates)
@@ -1935,13 +2116,13 @@ Thành phần tham dự:
                   </div>
                 </div>
               ) : activeRightTab === 'reentry' && (
-                <div className="max-w-4xl mx-auto animate-in fade-in duration-300">
-                  <ProjectReentry
-                    currentUser={activeUser}
-                    onProgressChange={handleProgress7}
-                    onAddLog={(action) => addLog(action, 7)}
-                  />
-                </div>
+                <CaseInput
+                  mode="reentry"
+                  pre={reentry}
+                  onConvertToSource={addSourceFromNote}
+                  onToast={(m) => addLog(m, 7)}
+                  openSignal={reentryOpen ?? undefined}
+                />
               )}
 
               {activeRightTab === 'caseinput' && (
@@ -2212,28 +2393,128 @@ Thành phần tham dự:
             {isCopilotExpanded ? (
               <>
                 {/* Copilot Header */}
-                <div className="p-3 border-b border-slate-200 bg-slate-100/50 flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-brand-550" />
-                    <span className="text-xs font-mono font-extrabold text-slate-800 uppercase">
+                <div className="p-3 border-b border-slate-200 bg-slate-100/50 flex items-center justify-between shrink-0 relative">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Sparkles className="w-4 h-4 text-brand-550 shrink-0" />
+                    <span className="text-xs font-mono font-extrabold text-slate-800 uppercase truncate">
                       {t('ws.copilot.title')}
                     </span>
                   </div>
-                  <button
-                    onClick={() => setIsCopilotExpanded(false)}
-                    className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition cursor-pointer"
-                    title={t('ws.copilot.collapse')}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <button
+                      onClick={newConversation}
+                      className="p-1 text-slate-500 hover:text-brand-600 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+                      title="Cuộc trò chuyện mới"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setShowConvMenu(v => !v)}
+                      className={`p-1 rounded-lg transition cursor-pointer ${showConvMenu ? 'bg-slate-200 text-brand-600' : 'text-slate-500 hover:text-brand-600 hover:bg-slate-200'}`}
+                      title="Lịch sử hội thoại"
+                    >
+                      <History className="w-4 h-4" />
+                    </button>
+                    <span className="w-px h-4 bg-slate-300 mx-1" />
+                    <button
+                      onClick={() => setIsCopilotExpanded(false)}
+                      className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+                      title={t('ws.copilot.collapse')}
+                    >
+                      <PanelRightClose className="w-4 h-4" />
+                    </button>
+                  </div>
 
-                {/* Dynamic Context Banner */}
-                <div className="px-3.5 py-2.5 bg-brand-500/10 border-b border-brand-500/20 text-[10px] text-brand-700 leading-relaxed select-none">
-                  {activePhase !== null ? (
-                    <>{tf('ws.copilot.ctxPhase', { title: phaseTitle(activePhase) })}</>
-                  ) : (
-                    <>{t('ws.copilot.ctxNone')}</>
+                  {showConvMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowConvMenu(false)} />
+                      <div className="absolute right-2 top-12 z-50 w-80 bg-white border border-slate-200 rounded-xl shadow-pop p-1.5 max-h-[440px] overflow-hidden flex flex-col">
+                        {/* Tab: Của tôi | Cả dự án */}
+                        <div className="flex gap-1 p-0.5 bg-slate-100 rounded-lg shrink-0">
+                          {([['mine', 'Chat của tôi'], ['project', 'Cả dự án']] as const).map(([key, label]) => (
+                            <button
+                              key={key}
+                              onClick={() => setConvTab(key)}
+                              className={`flex-1 py-1.5 text-[11px] font-bold rounded-md transition cursor-pointer ${convTab === key ? 'bg-white text-brand-700 shadow-3xs' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Tìm kiếm */}
+                        <div className="relative my-1 shrink-0">
+                          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            value={convSearch}
+                            onChange={e => setConvSearch(e.target.value)}
+                            placeholder="Tìm cuộc trò chuyện…"
+                            className="w-full pl-8 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-500 text-[11px] text-slate-700"
+                          />
+                        </div>
+                        <div className="overflow-y-auto min-h-0 space-y-0.5 pr-0.5">
+                          {(() => {
+                            const list = conversations
+                              .filter(c => convTab === 'mine' ? c.createdBy === activeUser : true)
+                              .filter(c => c.title.toLowerCase().includes(convSearch.toLowerCase()))
+                              .sort((a, b) => b.createdAt - a.createdAt)
+                            if (!list.length) return <div className="px-2.5 py-6 text-center text-[10px] text-slate-400">{convTab === 'mine' ? 'Bạn chưa có cuộc trò chuyện nào' : 'Chưa có cuộc trò chuyện trong dự án'}</div>
+                            return list.map(c => {
+                              const active = c.id === activeConvId
+                              const isAI = c.createdBy === 'AI'
+                              const editing = renameConvId === c.id
+                              return (
+                                <div
+                                  key={c.id}
+                                  onClick={() => { if (!editing) switchConversation(c.id) }}
+                                  className={`group flex items-center gap-2 px-2 py-1.5 rounded-lg ${editing ? '' : 'cursor-pointer'} ${active ? 'bg-brand-500/10' : 'hover:bg-slate-50'}`}
+                                >
+                                  <span className={`w-6 h-6 rounded-full text-[8px] font-bold flex items-center justify-center shrink-0 ${isAI ? 'bg-brand-500/15 text-brand-700' : 'bg-emerald-500/15 text-emerald-700'}`}>
+                                    {isAI ? 'AI' : c.createdBy[0]}
+                                  </span>
+                                  {editing ? (
+                                    <input
+                                      autoFocus
+                                      value={renameConvVal}
+                                      onClick={e => e.stopPropagation()}
+                                      onChange={e => setRenameConvVal(e.target.value)}
+                                      onKeyDown={e => { if (e.key === 'Enter') renameConversation(c.id, renameConvVal); if (e.key === 'Escape') setRenameConvId(null) }}
+                                      onBlur={() => renameConversation(c.id, renameConvVal)}
+                                      className="flex-1 min-w-0 text-xs border border-brand-500 rounded-md px-1.5 py-0.5 outline-none"
+                                    />
+                                  ) : (
+                                    <div className="min-w-0 flex-1">
+                                      <div className={`text-xs truncate ${active ? 'font-bold text-brand-700' : 'font-semibold text-slate-700'}`}>{c.title}</div>
+                                      {convTab === 'project' && <div className="text-[9px] text-slate-400">Tạo bởi {c.createdBy}</div>}
+                                    </div>
+                                  )}
+                                  {!editing && (
+                                    <>
+                                      <span className="text-[10px] text-slate-400 shrink-0 group-hover:hidden">{fmtConvTime(c.createdAt)}</span>
+                                      <div className="hidden group-hover:flex items-center shrink-0">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setRenameConvId(c.id); setRenameConvVal(c.title) }}
+                                          className="p-1 text-slate-350 hover:text-brand-600 hover:bg-brand-50 rounded-md cursor-pointer"
+                                          title="Đổi tên"
+                                        >
+                                          <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); deleteConversation(c.id) }}
+                                          className="p-1 text-slate-350 hover:text-rose-500 hover:bg-rose-50 rounded-md cursor-pointer"
+                                          title="Xóa cuộc trò chuyện"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              )
+                            })
+                          })()}
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -2298,6 +2579,22 @@ Thành phần tham dự:
                                   </span>
                                 )
                               })}
+                              {(msg.action?.openOid || msg.action?.openDoc) && (
+                                <button
+                                  onClick={() => { handlePhaseChange(7); setReentryOpen({ oid: msg.action!.openOid, doc: msg.action!.openDoc, n: Date.now() }) }}
+                                  className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                >
+                                  <FileText className="w-3.5 h-3.5" /> {msg.action.label}
+                                </button>
+                              )}
+                              {msg.action?.to && !msg.action.openOid && !msg.action.openDoc && (
+                                <Link
+                                  to={msg.action.to}
+                                  className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1 rounded-lg transition cursor-pointer no-underline"
+                                >
+                                  <FolderOpen className="w-3.5 h-3.5" /> {msg.action.label}
+                                </Link>
+                              )}
                             </div>
                           ) : (
                             <span>{tc(msg.text)}</span>
@@ -2366,7 +2663,7 @@ Thành phần tham dự:
               className="absolute inset-0 w-full h-full flex flex-col items-center justify-start pt-6 gap-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 transition cursor-pointer select-none"
             >
               <Sparkles className="w-4 h-4 text-brand-500" />
-              <span className="writing-vertical font-extrabold text-[10px] uppercase tracking-wider mt-2 font-mono">
+              <span className="[writing-mode:vertical-rl] whitespace-nowrap font-extrabold text-[10px] uppercase tracking-wider mt-2 font-mono">
                 {t('ws.copilot.open')}
               </span>
             </button>

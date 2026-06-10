@@ -1,22 +1,49 @@
-import { useState } from 'react'
-import { Pencil, Trash2, MoreVertical, Download, Share2, FilePlus2, Sparkles, RefreshCw, ArrowRight } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { Pencil, Trash2, MoreVertical, Download, Share2, FilePlus2, Sparkles, ArrowRight, Maximize2, X } from 'lucide-react'
 import type { PresalesApi, SavedOutput } from '@/hooks/usePresalesState'
 import MarkdownLite from '@/components/MarkdownLite'
 import { useI18n } from '@/i18n/I18nProvider'
 
 
-export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdvance }: {
-  mode: 'initial' | 'reentry'
+export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, openSignal }: {
+  mode?: 'initial' | 'reentry'
   pre: PresalesApi
   onConvertToSource?: (title: string) => void
   onToast?: (msg: string) => void
   onAdvance?: () => void
+  /** Tín hiệu mở thẳng chi tiết (từ nút trong chat). oid = output có sẵn; doc = tài liệu tổng hợp. n đổi → mở lại. */
+  openSignal?: { oid?: string; doc?: { title: string; content: string }; n: number }
 }) {
   const { t, tf } = useI18n()
   const [menuOid, setMenuOid] = useState<string | null>(null)
   const [renameOid, setRenameOid] = useState<string | null>(null)
   const [renameVal, setRenameVal] = useState('')
   const [detail, setDetail] = useState<SavedOutput | null>(null)
+  const [zoomed, setZoomed] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Đóng menu "..." khi click ra ngoài (document-level — chạy đúng kể cả khi tổ tiên có transform)
+  useEffect(() => {
+    if (!menuOid) return
+    const onDocDown = (ev: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(ev.target as Node)) setMenuOid(null)
+    }
+    document.addEventListener('mousedown', onDocDown)
+    return () => document.removeEventListener('mousedown', onDocDown)
+  }, [menuOid])
+
+  // Mở chi tiết khi nhận tín hiệu từ ngoài (nút trong chat): output có sẵn (oid) hoặc doc tổng hợp
+  useEffect(() => {
+    if (!openSignal) return
+    if (openSignal.doc) {
+      setDetail({ oid: '_doc', kind: 'note', title: openSignal.doc.title, ts: Date.now(), content: openSignal.doc.content })
+    } else if (openSignal.oid) {
+      const o = pre.savedOutputs.find(s => s.oid === openSignal.oid)
+      if (o) setDetail(o)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openSignal?.n])
 
   const toast = (m: string) => onToast?.(m)
   const fmtAgo = (ts: number) => {
@@ -29,30 +56,51 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
     return (
       <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 shadow-panel space-y-4 animate-in fade-in duration-300">
         <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-          <button onClick={() => setDetail(null)} className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition flex items-center gap-1 cursor-pointer">
+          <button onClick={() => { setZoomed(false); setDetail(null) }} className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition flex items-center gap-1 cursor-pointer">
             {t('ps.common.backToList')}
           </button>
           <strong className="text-sm text-slate-800 truncate max-w-[250px]">{detail.title}</strong>
-          <button onClick={() => pre.downloadOutput(detail.oid)} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
-            <Download className="w-3 h-3" /> {t('ps.common.downloadMd')}
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setZoomed(true)} title="Phóng to" className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
+              <Maximize2 className="w-3 h-3" /> Phóng to
+            </button>
+            <button onClick={() => pre.downloadOutput(detail.oid)} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
+              <Download className="w-3 h-3" /> {t('ps.common.downloadMd')}
+            </button>
+          </div>
         </div>
         <div className="prose prose-slate max-w-none text-slate-800 select-text">
           <MarkdownLite text={detail.content} />
         </div>
+
+        {/* Modal phóng to — đọc docs toàn màn hình (portal ra body để không bị containing-block của canvas giới hạn) */}
+        {zoomed && createPortal(
+          <div className="fixed inset-0 z-[100] bg-slate-900/55 backdrop-blur-xs flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200" onClick={() => setZoomed(false)}>
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-pop w-full h-full max-w-[1400px] max-h-[95vh] flex flex-col animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-8 py-4 border-b border-slate-200 shrink-0">
+                <strong className="text-base text-slate-900 truncate pr-4">{detail.title}</strong>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button onClick={() => pre.downloadOutput(detail.oid)} className="text-xs inline-flex items-center gap-1 border border-slate-200 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    <Download className="w-3.5 h-3.5" /> {t('ps.common.downloadMd')}
+                  </button>
+                  <button onClick={() => setZoomed(false)} className="p-1.5 text-slate-450 hover:text-slate-850 hover:bg-slate-100 rounded-full transition cursor-pointer">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-10 py-8 prose prose-lg prose-slate max-w-3xl mx-auto w-full text-slate-800 select-text">
+                <MarkdownLite text={detail.content} />
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     )
   }
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      {mode === 'reentry' && (
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-xs">
-          <RefreshCw className="w-3.5 h-3.5 shrink-0" />
-          <span><strong>{t('ps.input.reentryLabel')}</strong> {t('ps.input.reentryDesc')}</span>
-        </div>
-      )}
-
       {/* Trạng thái dữ liệu (bộ nhớ AI) — gọn, không phải bảng */}
       <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">
         <Sparkles className="w-3.5 h-3.5 text-brand-500 shrink-0" />
@@ -86,7 +134,7 @@ export default function CaseInput({ mode, pre, onConvertToSource, onToast, onAdv
                     <MoreVertical className="w-4 h-4" />
                   </button>
                   {menuOid === e.oid && (
-                    <div className="absolute right-2 top-11 z-20 bg-white border border-slate-200 rounded-lg shadow-pop py-1 min-w-[170px] text-xs">
+                    <div ref={menuRef} className="absolute right-2 top-11 z-20 bg-white border border-slate-200 rounded-lg shadow-pop py-1 min-w-[170px] text-xs">
                       <button onClick={() => { setRenameOid(e.oid); setRenameVal(e.title); setMenuOid(null) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><Pencil className="w-3.5 h-3.5" />{t('ps.common.rename')}</button>
                       <button onClick={() => { setMenuOid(null); toast(t('ps.input.toastShare')) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><Share2 className="w-3.5 h-3.5" />{t('ps.common.share')}</button>
                       {isNote && <button onClick={() => { setMenuOid(null); onConvertToSource?.(e.title); toast(t('ps.input.toastToSource')) }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"><FilePlus2 className="w-3.5 h-3.5" />{t('ps.input.toSource')}</button>}

@@ -341,12 +341,28 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
   const filteredFiles = [...inputFiles, ...outputFiles]
 
   // Bước 7 (ProjectReentry) ghi nhật ký khảo sát vào localStorage theo dự án.
-  // File 'in-2' trong Thư viện chính là file đó → ưu tiên hiển thị nội dung động (nếu có)
-  // thay vì previewContent tĩnh, để Thư viện phản ánh đúng "một nguồn sự thật".
-  const REENTRY_KEY = `aiplf.project_reentry_text.${id || 'default'}`
+  // Hai file "Bộ nhớ" phản ánh bộ nhớ AI thật (usePresalesState): in-1 = pre-sales (baseline),
+  // in-2 = reentry (delta Bước 7). Build nội dung từ các field đã ghi → "một nguồn sự thật".
+  const buildMemText = (memKey: string, title: string): string | null => {
+    try {
+      const raw = localStorage.getItem(memKey)
+      if (raw) {
+        const st = JSON.parse(raw)
+        const fields = (st.fields || []) as { name: string; value: string }[]
+        if (fields.length) {
+          return `# ${title}\nMã dự án: ${id || 'CASE-2026-0245'}\nNguồn: Bộ nhớ AI ghi nhận qua chat\n\n${fields.map(f => `- ${f.name}: ${f.value}`).join('\n')}`
+        }
+      }
+    } catch { /* ignore */ }
+    return null
+  }
   const getLivePreview = (file: ProjectFile): { text?: string; isLive: boolean } => {
+    if (file.id === 'in-1') {
+      const live = buildMemText(`aiplf.presales.${id || 'default'}`, 'ĐẶC TẢ DỰ ÁN (PRE-SALES)')
+      if (live) return { text: live, isLive: true }
+    }
     if (file.id === 'in-2') {
-      const live = localStorage.getItem(REENTRY_KEY)
+      const live = buildMemText(`aiplf.presales.${id || 'default'}__reentry`, 'NHẬT KÝ KHẢO SÁT & PHÁT SINH')
       if (live) return { text: live, isLive: true }
     }
     return { text: file.previewContent, isLive: false }
@@ -903,7 +919,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                         {isLive && (
                           <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/70 rounded-lg px-2 py-1 w-fit">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            Đồng bộ trực tiếp từ Bước 7 (Khảo sát &amp; Phát sinh)
+                            Đồng bộ trực tiếp từ bộ nhớ AI (cập nhật qua chat)
                           </div>
                         )}
                         {isCodeFile ? (
