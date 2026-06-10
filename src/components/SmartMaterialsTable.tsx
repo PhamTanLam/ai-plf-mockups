@@ -196,7 +196,7 @@ export default function SmartMaterialsTable({
         <div className="flex items-center gap-3 self-end md:self-center">
           <button
             onClick={handleSaveVersion}
-            className="group relative flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-brand-500/10 hover:shadow-lg hover:shadow-brand-500/20 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden border border-white/10"
+            className="group relative flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-brand-500/10 hover:shadow-lg hover:shadow-brand-500/20 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden border border-white/10 whitespace-nowrap shrink-0"
           >
             {/* Glossy light sweep effect on hover */}
             <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/15 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
