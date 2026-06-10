@@ -27,7 +27,7 @@ interface ProjectFile {
 export default function NotebookArchive() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   
   // State for search and filters
   const [libTab, setLibTab] = useState<'memory' | 'deliverables'>('deliverables')
@@ -387,10 +387,55 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
     f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     f.type.toLowerCase().includes(searchQuery.toLowerCase())
 
+  // Các khóa lưu trữ localStorage theo từng dự án
+  const REENTRY_KEY = `aiplf.project_reentry_text.${id || 'default'}`
+  const PLC_CODE_KEY = `aiplf.plc_st_code.${id || 'default'}`
+  const MANUAL_KEY = `aiplf.generated_manual.${id || 'default'}`
+  const PROTOCOL_KEY = `aiplf.generated_protocol.${id || 'default'}`
+
+  const isFileLive = (file: ProjectFile): boolean => {
+    if (file.id === 'in-2') return !!localStorage.getItem(REENTRY_KEY)
+    if (file.id === 'f-8') return !!localStorage.getItem(PLC_CODE_KEY)
+    if (file.id === 'f-7') return !!localStorage.getItem(MANUAL_KEY)
+    if (file.id === 'f-6') return !!localStorage.getItem(PROTOCOL_KEY)
+    return false
+  }
+
+  const dynamicFiles = files.map(file => {
+    let size = file.size
+    let version = file.version
+    if (file.id === 'in-2') {
+      const live = localStorage.getItem(REENTRY_KEY)
+      if (live) {
+        size = `${(live.length / 1024).toFixed(1)} KB`
+        version = 'V2 (Live)'
+      }
+    } else if (file.id === 'f-8') {
+      const live = localStorage.getItem(PLC_CODE_KEY)
+      if (live) {
+        size = `${(live.length / 1024).toFixed(1)} KB`
+        version = 'V2 (Live)'
+      }
+    } else if (file.id === 'f-7') {
+      const live = localStorage.getItem(MANUAL_KEY)
+      if (live) {
+        size = `${(live.length / 1024).toFixed(1)} KB`
+        version = 'V2 (Live)'
+      }
+    } else if (file.id === 'f-6') {
+      const live = localStorage.getItem(PROTOCOL_KEY)
+      if (live) {
+        size = `${(live.length / 1024).toFixed(1)} KB`
+        version = 'V2 (Live)'
+      }
+    }
+    return { ...file, size, version }
+  })
+
   // BỘ NHỚ (input): chỉ lọc theo tìm kiếm — bộ lọc loại file là khái niệm của Sản phẩm, không áp cho Bộ nhớ
-  const inputFiles = sortFiles(files.filter(f => f.category === 'input' && matchesSearch(f)))
+  const inputFiles = sortFiles(dynamicFiles.filter(f => f.category === 'input' && matchesSearch(f)))
   // SẢN PHẨM (output): lọc theo tìm kiếm + loại file
-  const outputFiles = sortFiles([...genOutputs, ...files].filter(f =>
+  const outputFiles = sortFiles([...genOutputs, ...dynamicFiles].filter(f =>
     f.category === 'output' && matchesSearch(f) &&
     (categoryFilter === 'all' || getFileCategory(f.name) === categoryFilter)
   ))
@@ -411,6 +456,10 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
     } catch { /* ignore */ }
     return null
   }
+
+  const activeSelectedFile = selectedPreviewFile
+    ? [...dynamicFiles, ...genOutputs].find(f => f.id === selectedPreviewFile.id) || selectedPreviewFile
+    : null
   const getLivePreview = (file: ProjectFile): { text?: string; isLive: boolean } => {
     if (file.id === 'in-1') {
       const live = buildMemText(`aiplf.presales.${id || 'default'}`, 'ĐẶC TẢ DỰ ÁN (PRE-SALES)')
@@ -418,6 +467,18 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
     }
     if (file.id === 'in-2') {
       const live = buildMemText(`aiplf.presales.${id || 'default'}__reentry`, 'NHẬT KÝ KHẢO SÁT & PHÁT SINH')
+      if (live) return { text: live, isLive: true }
+    }
+    if (file.id === 'f-8') {
+      const live = localStorage.getItem(PLC_CODE_KEY)
+      if (live) return { text: live, isLive: true }
+    }
+    if (file.id === 'f-7') {
+      const live = localStorage.getItem(MANUAL_KEY)
+      if (live) return { text: live, isLive: true }
+    }
+    if (file.id === 'f-6') {
+      const live = localStorage.getItem(PROTOCOL_KEY)
       if (live) return { text: live, isLive: true }
     }
     return { text: file.previewContent, isLive: false }
@@ -450,6 +511,12 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <span className="text-xs font-bold text-slate-800 truncate" title={file.name}>
                 {file.name}
               </span>
+              {isFileLive(file) && (
+                <span className="text-[8px] font-bold text-amber-700 bg-amber-50 border border-amber-200/50 rounded px-1.5 py-0.2 flex items-center gap-1 shrink-0 animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  Live
+                </span>
+              )}
             </div>
 
             {file.category === 'input' && (
@@ -620,39 +687,67 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
   const renderDocPreview = (type: 'docx' | 'pdf_manual' | 'pdf_memory' | 'excel') => {
     return (
       <div className="border border-slate-200 rounded-xl bg-slate-50 p-4 h-[220px] overflow-y-auto space-y-3 font-sans text-xs text-slate-700 leading-normal">
-        {type === 'docx' && (
-          <>
-            <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
-              BIÊN BẢN NGHIỆM THU KỸ THUẬT VÀ BÀN GIAO THIẾT BỊ
-            </div>
-            <p className="font-semibold text-slate-800">1. Thành phần nghiệm thu:</p>
-            <ul className="list-disc pl-4 space-y-1 text-[11px] text-slate-600">
-              <li>Đại diện Khách hàng: Trưởng bộ phận Kỹ thuật sản xuất</li>
-              <li>Đại diện Đơn vị Thiết kế: Kỹ sư Linh (Cowatech)</li>
-            </ul>
-            <p className="font-semibold text-slate-800">2. Nội dung nghiệm thu:</p>
-            <p className="text-[11px] text-slate-600">
-              Kiểm tra vận hành liên động an toàn, hệ thống Robot hàn hàn đúng chu trình, thời gian đáp ứng đạt chuẩn chất lượng IEC 61131.
-            </p>
-          </>
-        )}
-        {type === 'pdf_manual' && (
-          <>
-            <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
-              TÀI LIỆU HƯỚNG DẪN VẬN HÀNH MÀN HÌNH HMI GOT2000
-            </div>
-            <p className="font-semibold text-slate-800">1. Tổng quan giao diện:</p>
-            <p className="text-[11px] text-slate-600">
-              Màn hình HMI bao gồm 3 trang chính: Trang chủ (Home), Trang thông số điều khiển (Settings), và Trang chẩn đoán lỗi (Diagnostics).
-            </p>
-            <p className="font-semibold text-slate-800">2. Quy trình khởi động:</p>
-            <ol className="list-decimal pl-4 space-y-1 text-[11px] text-slate-600">
-              <li>Kiểm tra nguồn điện 220VAC cấp cho HMI.</li>
-              <li>Đợi màn hình hiển thị logo khởi động và tự động kết nối PLC.</li>
-              <li>Nhấn nút "Reset Lỗi" trên màn hình trước khi nhấn "Start".</li>
-            </ol>
-          </>
-        )}
+        {type === 'docx' && (() => {
+          const live = localStorage.getItem(PROTOCOL_KEY)
+          if (live) {
+            return (
+              <div className="space-y-1.5 font-sans whitespace-pre-wrap select-text">
+                <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/70 rounded-lg px-2 py-1 w-fit mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Đồng bộ trực tiếp từ Bước 6 (Tạo tài liệu AI)
+                </div>
+                {live}
+              </div>
+            )
+          }
+          return (
+            <>
+              <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
+                BIÊN BẢN NGHIỆM THU KỸ THUẬT VÀ BÀN GIAO THIẾT BỊ
+              </div>
+              <p className="font-semibold text-slate-800">1. Thành phần nghiệm thu:</p>
+              <ul className="list-disc pl-4 space-y-1 text-[11px] text-slate-600">
+                <li>Đại diện Khách hàng: Trưởng bộ phận Kỹ thuật sản xuất</li>
+                <li>Đại diện Đơn vị Thiết kế: Kỹ sư Linh (Cowatech)</li>
+              </ul>
+              <p className="font-semibold text-slate-800">2. Nội dung nghiệm thu:</p>
+              <p className="text-[11px] text-slate-600">
+                Kiểm tra vận hành liên động an toàn, hệ thống Robot hàn hàn đúng chu trình, thời gian đáp ứng đạt chuẩn chất lượng IEC 61131.
+              </p>
+            </>
+          )
+        })()}
+        {type === 'pdf_manual' && (() => {
+          const live = localStorage.getItem(MANUAL_KEY)
+          if (live) {
+            return (
+              <div className="space-y-1.5 font-sans whitespace-pre-wrap select-text">
+                <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/70 rounded-lg px-2 py-1 w-fit mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Đồng bộ trực tiếp từ Bước 6 (Tạo tài liệu AI)
+                </div>
+                {live}
+              </div>
+            )
+          }
+          return (
+            <>
+              <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
+                TÀI LIỆU HƯỚNG DẪN VẬN HÀNH MÀN HÌNH HMI GOT2000
+              </div>
+              <p className="font-semibold text-slate-800">1. Tổng quan giao diện:</p>
+              <p className="text-[11px] text-slate-600">
+                Màn hình HMI bao gồm 3 trang chính: Trang chủ (Home), Trang thông số điều khiển (Settings), và Trang chẩn đoán lỗi (Diagnostics).
+              </p>
+              <p className="font-semibold text-slate-800">2. Quy trình khởi động:</p>
+              <ol className="list-decimal pl-4 space-y-1 text-[11px] text-slate-600">
+                <li>Kiểm tra nguồn điện 220VAC cấp cho HMI.</li>
+                <li>Đợi màn hình hiển thị logo khởi động và tự động kết nối PLC.</li>
+                <li>Nhấn nút "Reset Lỗi" trên màn hình trước khi nhấn "Start".</li>
+              </ol>
+            </>
+          )
+        })()}
         {type === 'pdf_memory' && (
           <>
             <div className="text-center font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase text-[11px]">
@@ -898,7 +993,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
       </div>
 
       {/* File Preview Modal */}
-      {selectedPreviewFile && (
+      {activeSelectedFile && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 w-[560px] space-y-4 shadow-pop animate-in zoom-in-95 duration-200 text-slate-800 flex flex-col max-h-[85vh]">
             
@@ -906,12 +1001,12 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
             <div className="flex items-start justify-between border-b border-slate-200 pb-3 shrink-0">
               <div className="min-w-0 pr-4">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="text-sm font-extrabold text-slate-900 truncate" title={selectedPreviewFile.name}>
-                    {selectedPreviewFile.name}
+                  <h4 className="text-sm font-extrabold text-slate-900 truncate" title={activeSelectedFile.name}>
+                    {activeSelectedFile.name}
                   </h4>
                 </div>
                 <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                  Định dạng: {selectedPreviewFile.type} • Dung lượng: {selectedPreviewFile.size} • Phiên bản: {selectedPreviewFile.version}
+                  Định dạng: {activeSelectedFile.type} • Dung lượng: {activeSelectedFile.size} • Phiên bản: {activeSelectedFile.version}
                 </p>
               </div>
               
@@ -929,13 +1024,13 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <div className="space-y-1">
                 <h5 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">Tóm tắt nội dung (AI Extract):</h5>
                 <p className="text-[11px] text-slate-600 font-medium leading-relaxed bg-brand-500/2 border border-brand-200/20 rounded-xl p-3">
-                  {selectedPreviewFile.summary}
+                  {activeSelectedFile.summary}
                 </p>
               </div>
 
               {/* Tags Section */}
               <div className="flex flex-wrap items-center gap-1.5">
-                {selectedPreviewFile.tags.map((tag, i) => (
+                {activeSelectedFile.tags.map((tag, i) => (
                   <span key={i} className="text-[9px] font-bold text-slate-500 px-2 py-0.5 bg-slate-100 border border-slate-200 rounded">
                     {tag}
                   </span>
@@ -948,7 +1043,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                 
                 {/* Check file type for preview rendering */}
                 {(() => {
-                  const pc = selectedPreviewFile.previewContent
+                  const pc = activeSelectedFile.previewContent
                   if (pc === 'cad') {
                     return renderCadPreview()
                   } else if (pc === 'DOCX_REPORT') {
@@ -961,20 +1056,44 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                     return renderDocPreview('excel')
                   }
                   // File text (gồm bộ nhớ AI) — ưu tiên nội dung động từ Bước 7 nếu có
-                  const { text, isLive } = getLivePreview(selectedPreviewFile)
+                  const { text, isLive } = getLivePreview(activeSelectedFile)
                   if (text) {
-                    // Code (.l5k/.st/.json) → terminal editor; còn lại (md/txt — nội dung markdown) → render prose
-                    const isCodeFile = /\.(l5k|st|json)$/i.test(selectedPreviewFile.name)
+                    // Code (.l5k/.st/.json) → giao diện terminal tối; văn bản (.md/.txt, bộ nhớ) → tài liệu nền sáng dễ đọc
+                    const isCodeFile = /\.(l5k|st|json)$/i.test(activeSelectedFile.name)
                     return (
                       <div className="space-y-1.5">
                         {isLive && (
                           <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/70 rounded-lg px-2 py-1 w-fit">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            Đồng bộ trực tiếp từ bộ nhớ AI (cập nhật qua chat)
+                            {locale === 'ja' ? (
+                              activeSelectedFile.id === 'in-1'
+                                ? '提案書（プリセールス）から直接同期'
+                                : activeSelectedFile.id === 'in-2'
+                                ? 'ステップ7（調査・追加費用）から直接同期'
+                                : activeSelectedFile.id === 'f-8'
+                                ? 'ステップ5（デバッグ）から直接同期'
+                                : 'ステップ6（検収・取説）から直接同期'
+                            ) : locale === 'en' ? (
+                              activeSelectedFile.id === 'in-1'
+                                ? 'Synced directly from proposal (Pre-Sales)'
+                                : activeSelectedFile.id === 'in-2'
+                                ? 'Synced directly from Step 7 (Survey & Change Orders)'
+                                : activeSelectedFile.id === 'f-8'
+                                ? 'Synced directly from Step 5 (Debug Code)'
+                                : 'Synced directly from Step 6 (Acceptance & Manual)'
+                            ) : (
+                              activeSelectedFile.id === 'in-1'
+                                ? 'Đồng bộ trực tiếp từ hồ sơ đề xuất (Pre-Sales)'
+                                : activeSelectedFile.id === 'in-2'
+                                ? 'Đồng bộ trực tiếp từ Bước 7 (Khảo sát & Phát sinh)'
+                                : activeSelectedFile.id === 'f-8'
+                                ? 'Đồng bộ trực tiếp từ Bước 5 (Debug Code)'
+                                : 'Đồng bộ trực tiếp từ Bước 6 (Tạo tài liệu AI)'
+                            )}
                           </div>
                         )}
                         {isCodeFile ? (
-                          renderCodeBlock(text, selectedPreviewFile.name)
+                          renderCodeBlock(text, activeSelectedFile.name)
                         ) : (
                           <div className="bg-white border border-slate-200 rounded-xl p-5 overflow-auto max-h-[360px] shadow-3xs prose prose-sm prose-slate max-w-none text-slate-800 select-text">
                             <MarkdownLite text={text} />
@@ -997,7 +1116,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
               <button
                 type="button"
                 onClick={() => {
-                  handleDownload(selectedPreviewFile)
+                  handleDownload(activeSelectedFile)
                   setSelectedPreviewFile(null)
                 }}
                 disabled={downloadingFileId !== null}

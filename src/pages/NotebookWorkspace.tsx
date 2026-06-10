@@ -348,6 +348,25 @@ export default function NotebookWorkspace() {
   })
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(true)
+  const [isZenMode, setIsZenMode] = useState(false)
+  const [prevLeftSidebar, setPrevLeftSidebar] = useState(true)
+  const [prevCopilot, setPrevCopilot] = useState(true)
+  const [paraphraseCommand, setParaphraseCommand] = useState<{ type: 'compact' | 'clean_case' | 'default'; trigger: number } | null>(null)
+
+  const toggleZenMode = () => {
+    if (!isZenMode) {
+      setPrevLeftSidebar(isLeftSidebarExpanded)
+      setPrevCopilot(isCopilotExpanded)
+      setIsLeftSidebarExpanded(false)
+      setIsCopilotExpanded(false)
+      setIsZenMode(true)
+    } else {
+      setIsLeftSidebarExpanded(prevLeftSidebar)
+      setIsCopilotExpanded(prevCopilot)
+      setIsZenMode(false)
+    }
+  }
+
   const [isLeftSidebarExpanded, setIsLeftSidebarExpanded] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem(`aiplf.workspace.${id}.leftSidebarExpanded`)
@@ -792,6 +811,39 @@ export default function NotebookWorkspace() {
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
     },
+    'Tối ưu gọn mã nguồn (CASE..OF)': {
+      phaseNum: 12,
+      explanationText: 'Đã áp dụng phong cách tối ưu hóa gọn (State Machine / CASE..OF). Mã nguồn PLC ST đã được tái cấu trúc sang dạng máy trạng thái gọn đẹp hơn, giảm thiểu các khối IF lồng nhau phức tạp và cải thiện tốc độ vòng quét CPU.',
+      suggestions: [
+        'Kiểm tra lỗi cú pháp mã PLC.',
+        'Ghi chú chuẩn IEC & CASE cho mã nguồn',
+        'Khôi phục mã nguồn về bản gốc',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
+    },
+    'Ghi chú chuẩn IEC & CASE cho mã nguồn': {
+      phaseNum: 12,
+      explanationText: 'Đã áp dụng cấu trúc ghi chú chuẩn IEC & CASE. Mã nguồn đã được phân khúc sơ đồ khối rõ ràng với chú giải chi tiết từng biến số theo tiêu chuẩn IEC 61131-3.',
+      suggestions: [
+        'Kiểm tra lỗi cú pháp mã PLC.',
+        'Tối ưu gọn mã nguồn (CASE..OF)',
+        'Khôi phục mã nguồn về bản gốc',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
+    },
+    'Khôi phục mã nguồn về bản gốc': {
+      phaseNum: 12,
+      explanationText: 'Đã khôi phục lại mã Structured Text nguyên bản do AI tự động sinh. Tất cả các thay đổi tối ưu hóa trước đó đã được hoàn tác về phiên bản gốc.',
+      suggestions: [
+        'Kiểm tra lỗi cú pháp mã PLC.',
+        'Tối ưu gọn mã nguồn (CASE..OF)',
+        'Ghi chú chuẩn IEC & CASE cho mã nguồn',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
+    },
     'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng': {
       phaseNum: 11,
       explanationText: 'Đã chuyển sang Bước 6: Nghiệm thu & HDSD. Tôi đã tự động biên soạn các tài liệu kỹ thuật hoàn chỉnh: \n\n📄 [Biên bản nghiệm thu.docx]\n📄 [Hướng dẫn vận hành HMI.pdf]\n\nBạn có thể tải trực tiếp ở khung bên cạnh hoặc gõ yêu cầu cụ thể.',
@@ -1172,11 +1224,10 @@ Thành phần tham dự:
     } else if (activePhase === 12) {
       setActiveSuggestions([
         'Kiểm tra lỗi cú pháp mã PLC.',
-        'Tối ưu hóa mã PLC ST (Paraphrase).',
+        'Tối ưu gọn mã nguồn (CASE..OF)',
+        'Ghi chú chuẩn IEC & CASE cho mã nguồn',
+        'Khôi phục mã nguồn về bản gốc',
         'Thêm còi báo động vào code.',
-        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
-        'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ])
@@ -1439,7 +1490,13 @@ Thành phần tham dự:
 
         // Cập nhật code trong localStorage nếu chọn gợi ý liên quan
         const codeKey = `aiplf.plc_st_code.${id || 'default'}`
-        if (text === 'Tối ưu hóa mã PLC ST (Paraphrase).') {
+        if (text === 'Tối ưu gọn mã nguồn (CASE..OF)') {
+          setParaphraseCommand({ type: 'compact', trigger: Date.now() })
+        } else if (text === 'Ghi chú chuẩn IEC & CASE cho mã nguồn') {
+          setParaphraseCommand({ type: 'clean_case', trigger: Date.now() })
+        } else if (text === 'Khôi phục mã nguồn về bản gốc') {
+          setParaphraseCommand({ type: 'default', trigger: Date.now() })
+        } else if (text === 'Tối ưu hóa mã PLC ST (Paraphrase).') {
           localStorage.setItem(codeKey, COMPACT_ST_CODE)
           window.dispatchEvent(new Event('storage'))
         } else if (text === 'Thêm còi báo động vào code.') {
@@ -1978,42 +2035,44 @@ Thành phần tham dự:
                         <Plus className="w-3 h-3" />{t('ws.panel.addSource')}
                       </button>
                       {sources.map((src) => (
-                      <div
-                        key={src.id}
-                        onClick={() => {
-                          setActiveViewerSource(src.id)
-                          setHighlightedPhrase(undefined)
-                        }}
-                        className={`p-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col gap-1 hover-lift ${
-                          activeViewerSource === src.id
-                            ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
-                            : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-1.5">
-                          <div className="flex items-center gap-1 min-w-0">
-                            <FileText className={`w-3 h-3 shrink-0 ${src.selected ? 'text-brand-500' : 'text-slate-400'}`} />
-                            <span className={`text-[10px] font-bold truncate ${
-                              activeViewerSource === src.id ? 'text-brand-700 font-extrabold' : 'text-slate-800'
-                            }`} title={src.title}>
-                              {src.title}
-                            </span>
+                        <div
+                          key={src.id}
+                          onClick={() => {
+                            setActiveViewerSource(src.id)
+                            setHighlightedPhrase(undefined)
+                          }}
+                          className={`p-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col gap-1 hover-lift ${
+                            activeViewerSource === src.id
+                              ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
+                              : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-1.5">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <FileText className={`w-3 h-3 shrink-0 ${src.selected ? 'text-brand-500' : 'text-slate-400'}`} />
+                              <span className={`text-[10px] font-bold truncate ${
+                                activeViewerSource === src.id ? 'text-brand-700 font-extrabold' : 'text-slate-800'
+                              }`} title={src.title}>
+                                {src.title}
+                              </span>
+                            </div>
+
+                            <input
+                              type="checkbox"
+                              checked={src.selected}
+                              onChange={(e) => {
+                                e.stopPropagation()
+                                handleSourceSelect(src.id)
+                              }}
+                              className="w-2.5 h-2.5 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-white cursor-pointer shrink-0"
+                            />
                           </div>
-                          <input
-                            type="checkbox"
-                            checked={src.selected}
-                            onChange={(e) => {
-                              e.stopPropagation()
-                              handleSourceSelect(src.id)
-                            }}
-                            className="w-2.5 h-2.5 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-white cursor-pointer shrink-0"
-                          />
+
+                          <div className="flex items-center justify-between text-[8px] text-slate-500 font-semibold font-mono">
+                            <span>{src.type}</span>
+                            <span>{src.size}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between text-[8px] text-slate-500 font-semibold font-mono">
-                          <span>{src.type}</span>
-                          <span>{src.size}</span>
-                        </div>
-                      </div>
                       ))}
                     </>
                   ) : (() => {
@@ -2022,6 +2081,7 @@ Thành phần tham dự:
                       <div className="text-[10px] text-slate-400 text-center py-6 px-3">
                         {t('ws.panel.noHistory')}
                       </div>
+
                     ) : (
                       filteredLogs.map((log) => {
                         let IconComponent = Activity
@@ -2037,6 +2097,7 @@ Thành phần tham dự:
                         } else if (actLower.includes('yêu cầu') || actLower.includes('hỏi') || actLower.includes('chat') || actLower.includes('nhận đơn')) {
                           IconComponent = MessageSquare
                         }
+
                         return (
                           <div
                             key={log.id}
@@ -2045,6 +2106,7 @@ Thành phần tham dự:
                             title={`Click để chuyển nhanh tới Bước ${log.phaseNum}`}
                           >
                             <ArrowRight className="w-3 h-3 text-brand-500 opacity-0 group-hover:opacity-100 transition absolute top-2.5 right-2.5" />
+
                             <div className="flex items-center justify-between gap-1 pr-4">
                               <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500">
                                 <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-white shrink-0 ${
@@ -2076,77 +2138,75 @@ Thành phần tham dự:
                       })
                     )
                   })()}
-            </div>
-          </div>
 
-
-
-          {/* Quy trình Nghiệp vụ (Bottom, border-t) */}
-          <div className="h-[280px] flex flex-col min-h-0 bg-slate-50/50 border-t border-slate-200">
-            <div className="p-3 border-b border-slate-200 bg-slate-100/50 shrink-0 space-y-2">
-              <h3 className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">
-                {t('ws.panel.process')}
-              </h3>
-              {progressBarActivated && (
-                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-brand-500 h-full rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${maxPostSalesIndex >= 0 ? ((maxPostSalesIndex + 1) / 6) * 100 : 0}%` }}
-                  />
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-              {phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).length === 0 ? (
-                <div className="text-[10px] text-slate-400 text-center py-6 px-3 leading-relaxed">
-                  {t('ws.panel.noPhase')}
-                </div>
-              ) : (
-                phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).map((p) => {
-                  const phaseNum = p.num
-                  const isActive = activePhase === phaseNum
-                  const isPreSales = phaseNum <= 3
-
-                  return (
-                    <div
-                      key={phaseNum}
-                      onClick={isPreSales ? undefined : () => handlePhaseChange(phaseNum)}
-                      className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center gap-2 select-none hover-lift hover:border-slate-300 ${
-                        isPreSales ? 'cursor-default' : 'cursor-pointer'
-                      } ${
-                        isActive
-                          ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
-                          : 'bg-white border-slate-200 text-slate-700'
-                      }`}
-                      title={isPreSales ? `${p.title} — ${p.desc}` : `Giai đoạn: ${p.title}\nNhân sự: ${p.users}\n${p.desc}`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center border transition shrink-0 ${
-                          isActive
-                            ? 'gradient-primary border-brand-500 text-white shadow-xs'
-                            : 'bg-slate-100 border-slate-200 text-slate-400'
-                        }`}
-                      >
-                        {getPhaseIcon(phaseNum, "w-2.5 h-2.5")}
-                      </div>
-
-                      <div className="text-left min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <h4 className={`text-[10px] font-bold leading-tight truncate flex-1 ${
-                            isActive ? 'text-brand-700 font-extrabold' : 'text-slate-800'
-                          }`} title={phaseTitle(p.num)}>
-                            {phaseTitle(p.num)}
-                          </h4>
-                          {/* No checkmarks/percentages for completed steps */}
-                        </div>
-                      </div>
+              {/* Quy trình Nghiệp vụ (Bottom, border-t) */}
+              <div className="h-[280px] flex flex-col min-h-0 bg-slate-50/50 border-t border-slate-200">
+                <div className="p-3 border-b border-slate-200 bg-slate-100/50 shrink-0 space-y-2">
+                  <h3 className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">
+                    {t('ws.panel.process')}
+                  </h3>
+                  {progressBarActivated && (
+                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-brand-500 h-full rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${maxPostSalesIndex >= 0 ? ((maxPostSalesIndex + 1) / 6) * 100 : 0}%` }}
+                      />
                     </div>
-                  )
-                })
-              )}
-            </div>
-          </div>
+                  )}
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                  {phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).length === 0 ? (
+                    <div className="text-[10px] text-slate-400 text-center py-6 px-3 leading-relaxed">
+                      {t('ws.panel.noPhase')}
+                    </div>
+                  ) : (
+                    phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).map((p) => {
+                      const phaseNum = p.num
+                      const isActive = activePhase === phaseNum
+                      const isPreSales = phaseNum <= 3
+
+                      return (
+                        <div
+                          key={phaseNum}
+                          onClick={isPreSales ? undefined : () => handlePhaseChange(phaseNum)}
+                          className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center gap-2 select-none hover-lift hover:border-slate-300 ${
+                            isPreSales ? 'cursor-default' : 'cursor-pointer'
+                          } ${
+                            isActive
+                              ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
+                              : 'bg-white border-slate-200 text-slate-700'
+                          }`}
+                          title={isPreSales ? `${p.title} — ${p.desc}` : `Giai đoạn: ${p.title}\nNhân sự: ${p.users}\n${p.desc}`}
+                        >
+                          <div
+                            className={`w-5 h-5 rounded-full flex items-center justify-center border transition shrink-0 ${
+                              isActive
+                                ? 'gradient-primary border-brand-500 text-white shadow-xs'
+                                : 'bg-slate-100 border-slate-200 text-slate-400'
+                            }`}
+                          >
+                            {getPhaseIcon(phaseNum, "w-2.5 h-2.5")}
+                          </div>
+
+                          <div className="text-left min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-1">
+                              <h4 className={`text-[10px] font-bold leading-tight truncate flex-1 ${
+                                isActive ? 'text-brand-700 font-extrabold' : 'text-slate-800'
+                              }`} title={phaseTitle(p.num)}>
+                                {phaseTitle(p.num)}
+                              </h4>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
             </>
           ) : (
             <button
@@ -2166,33 +2226,35 @@ Thành phần tham dự:
         <main className="flex-1 bg-slate-50/50 flex flex-col h-full min-w-0 relative">
           
           {/* Active Phase Canvas Title Header */}
-          <div className="bg-white/95 backdrop-blur-md border-b border-slate-200 px-5 py-3.5 flex flex-col gap-3.5 flex-none shadow-xs select-none z-10">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse shrink-0" />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-extrabold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full tracking-wider font-mono">
-                      {activePhase !== null ? (activePhase <= 3 ? t('ws.badge.preOrder') : t('ws.badge.postOrder')) : t('ws.badge.pipeline')}
-                    </span>
-                    <h1 className="text-sm font-extrabold text-slate-900">
-                      {activePhase !== null ? phaseTitle(activePhase) : t('ws.canvas.detailArea')}
-                    </h1>
+          {(!isZenMode || activeRightTab !== 'debug_code') && (
+            <div className="bg-white/95 backdrop-blur-md border-b border-slate-200 px-5 py-3.5 flex flex-col gap-3.5 flex-none shadow-xs select-none z-10">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse shrink-0" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-extrabold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full tracking-wider font-mono">
+                        {activePhase !== null ? (activePhase <= 3 ? t('ws.badge.preOrder') : t('ws.badge.postOrder')) : t('ws.badge.pipeline')}
+                      </span>
+                      <h1 className="text-sm font-extrabold text-slate-900">
+                        {activePhase !== null ? phaseTitle(activePhase) : t('ws.canvas.detailArea')}
+                      </h1>
+                    </div>
+                    {activePhase === null && (
+                      <p className="mt-0.5 text-xs text-slate-500 leading-normal">
+                        {t('ws.canvas.intro')}
+                      </p>
+                    )}
                   </div>
-                  {activePhase === null && (
-                    <p className="mt-0.5 text-xs text-slate-500 leading-normal">
-                      {t('ws.canvas.intro')}
-                    </p>
-                  )}
                 </div>
+
+
               </div>
-
-
             </div>
-          </div>
+          )}
 
           {/* Dynamic Component Canvas Rendering */}
-          <div className="flex-1 overflow-y-auto p-5 min-h-0">
+          <div className={`flex-1 overflow-y-auto min-h-0 ${isZenMode && activeRightTab === 'debug_code' ? 'p-2 lg:p-4' : 'p-5'}`}>
             <div key={activeRightTab ?? 'empty'} className="animate-fade-in-up">
               {activePhase === null ? (
                 <div className="max-w-5xl mx-auto h-full flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-xs">
@@ -2357,11 +2419,14 @@ Thành phần tham dự:
               )}
 
               {activeRightTab === 'debug_code' && (
-                <div className="max-w-6xl mx-auto animate-in fade-in duration-300">
+                <div className={`${isZenMode ? 'max-w-none w-full px-0' : 'max-w-6xl mx-auto'} animate-in fade-in duration-300`}>
                   <DebugCodeStep
                     projectId={id || 'default'}
                     onProgressChange={handleProgress12}
                     onAddLog={(action) => addLog(action, 12)}
+                    isZenMode={isZenMode}
+                    toggleZenMode={toggleZenMode}
+                    paraphraseCommand={paraphraseCommand}
                   />
                 </div>
               )}
@@ -2369,6 +2434,7 @@ Thành phần tham dự:
               {activeRightTab === 'doc' && (
                 <div className="max-w-4xl mx-auto animate-in fade-in duration-300">
                   <DocumentGenerator 
+                    projectId={id || 'default'}
                     onProgressChange={handleProgress11}
                   />
                 </div>

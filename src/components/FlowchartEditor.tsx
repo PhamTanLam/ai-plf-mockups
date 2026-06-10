@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Code, Copy, RefreshCw, Layers, Check } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
+import { localizeCodeComments } from '@/i18n/chat'
 
 interface NodeItem {
   id: string
@@ -59,51 +60,51 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
     return {
       start: {
         id: 'start',
-        label: '▶ Auto Start',
+        label: t('post.flow.node.start.label') || '▶ Auto Start',
         address: 'M70',
-        description: 'Khởi động chế độ tự động vận hành (Automatic mode trigger).',
+        description: t('post.flow.node.start.desc') || 'Khởi động chế độ tự động vận hành (Automatic mode trigger).',
         stCode: startCode,
       },
       step1: {
         id: 'step1',
-        label: '① Work Grip',
+        label: t('post.flow.node.step1.label') || '① Work Grip',
         address: 'M71 / Y40',
-        description: 'Kích hoạt xi-lanh kẹp phôi vật liệu (Workpiece gripping cylinder).',
+        description: t('post.flow.node.step1.desc') || 'Kích hoạt xi-lanh kẹp phôi vật liệu (Workpiece gripping cylinder).',
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 1 THEN\n  GRIP_CYLINDER_OUT := TRUE;\n  IF GRIP_LIMIT_SWITCH THEN\n    STEP_NUMBER := 2;\n  END_IF;\nEND_IF;',
       },
       step2: {
         id: 'step2',
-        label: '② Move to Inspect',
+        label: t('post.flow.node.step2.label') || '② Move to Inspect',
         address: 'M72 / Axis 1-3',
-        description: 'Điều khiển 3 trục Servo di chuyển phôi vào tâm đo quét (Move to inspection position).',
+        description: t('post.flow.node.step2.desc') || 'Điều khiển 3 trục Servo di chuyển phôi vào tâm đo quét (Move to inspection position).',
         stCode: step2Code,
       },
       step3: {
         id: 'step3',
-        label: '③ 3D Dimension Scan',
+        label: t('post.flow.node.step3.label') || '③ 3D Dimension Scan',
         address: 'M73 / Y50',
-        description: 'Kích hoạt cảm biến laser đo quét 3D kích thước (Trigger 3D scan).',
+        description: t('post.flow.node.step3.desc') || 'Kích hoạt cảm biến laser đo quét 3D kích thước (Trigger 3D scan).',
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 3 THEN\n  LASER_SCAN_TRIGGER := TRUE;\n  IF SCAN_COMPLETE THEN\n    STEP_NUMBER := 4;\n  END_IF;\nEND_IF;',
       },
       step4: {
         id: 'step4',
-        label: '④ AI Judgment',
+        label: t('post.flow.node.step4.label') || '④ AI Judgment',
         address: 'M74 / Branch',
-        description: 'Phân tích dữ liệu đo quét bằng thuật toán kiểm định chất lượng (AI classification analysis).',
+        description: t('post.flow.node.step4.desc') || 'Phân tích dữ liệu đo quét bằng thuật toán kiểm định chất lượng (AI classification analysis).',
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 4 THEN\n  AI_RUN_INFERENCE := TRUE;\n  IF AI_RESULT_READY THEN\n    IF AI_RESULT_OK THEN\n      STEP_NUMBER := 5; // Go to OK discharge\n    ELSE\n      STEP_NUMBER := 6; // Go to NG recycle\n    END_IF;\n  END_IF;\nEND_IF;',
       },
       step5a: {
         id: 'step5a',
-        label: '⑤a Discharge OK',
+        label: t('post.flow.node.step5a.label') || '⑤a Discharge OK',
         address: 'M75 / Y60',
-        description: 'Đẩy phôi đạt chuẩn ra băng tải thành phẩm (Discharge OK product).',
+        description: t('post.flow.node.step5a.desc') || 'Đẩy phôi đạt chuẩn ra băng tải thành phẩm (Discharge OK product).',
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 5 THEN\n  DISCHARGE_OK_GATE := TRUE;\n  IF GATE_OPEN_LIMIT THEN\n    STEP_NUMBER := 7; // Done\n  END_IF;\nEND_IF;',
       },
       step6: {
         id: 'step6',
-        label: '⑤b NG Retry/Recycle',
+        label: t('post.flow.node.step6.label') || '⑤b NG Retry/Recycle',
         address: 'M76 / Y61',
-        description: 'Đẩy phôi lỗi vào khay xử lý lại (Recycle and tag defect).',
+        description: t('post.flow.node.step6.desc') || 'Đẩy phôi lỗi vào khay xử lý lại (Recycle and tag defect).',
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 6 THEN\n  DISCHARGE_NG_GATE := TRUE;\n  REJECT_COUNT := REJECT_COUNT + 1;\n  IF NG_GATE_LIMIT THEN\n    STEP_NUMBER := 7; // Done\n  END_IF;\nEND_IF;',
       },
     }
@@ -112,7 +113,7 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
   const nodes = getDynamicNodes()
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(nodes[selectedNode].stCode)
+    navigator.clipboard.writeText(localizeCodeComments(nodes[selectedNode].stCode, locale as any))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -211,85 +212,85 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
               <g className={nodeCls('start')} onClick={() => setSelectedNode('start')}>
                 <rect x="290" y="10" width="140" height="32" rx="16" />
                 <text x="360" y="30" textAnchor="middle" className="text-xs font-semibold fill-slate-600 font-mono">
-                  ▶ Auto Start
+                  {t('post.flow.svg.start') || '▶ Auto Start'}
                 </text>
               </g>
               <line x1="360" y1="42" x2="360" y2="60" className="stroke-slate-400 stroke-1.5" markerEnd="url(#arrow)" />
-
+ 
               {/* Step 1 */}
               <g className={nodeCls('step1')} onClick={() => setSelectedNode('step1')}>
                 <rect x="280" y="60" width="160" height="42" rx="4" />
                 <text x="360" y="78" textAnchor="middle" className="text-xs font-bold fill-slate-800">
-                  ① Workpiece Grip
+                  {t('post.flow.svg.step1') || '① Workpiece Grip'}
                 </text>
                 <text x="360" y="93" textAnchor="middle" className="text-[9px] font-mono fill-brand-600 font-bold">
                   M71 / Y40 (Output)
                 </text>
               </g>
               <line x1="360" y1="102" x2="360" y2="120" className="stroke-slate-400 stroke-1.5" markerEnd="url(#arrow)" />
-
+ 
               {/* Step 2 */}
               <g className={nodeCls('step2')} onClick={() => setSelectedNode('step2')}>
                 <rect x="280" y="120" width="160" height="42" rx="4" />
                 <text x="360" y="138" textAnchor="middle" className="text-xs font-bold fill-slate-800">
-                  ② Move to Inspection
+                  {t('post.flow.svg.step2') || '② Move to Inspection'}
                 </text>
                 <text x="360" y="153" textAnchor="middle" className="text-[9px] font-mono fill-brand-600 font-bold">
                   M72 / Axis 1+2+3
                 </text>
               </g>
               <line x1="360" y1="162" x2="360" y2="180" className="stroke-slate-400 stroke-1.5" markerEnd="url(#arrow)" />
-
+ 
               {/* Step 3 */}
               <g className={nodeCls('step3')} onClick={() => setSelectedNode('step3')}>
                 <rect x="280" y="180" width="160" height="42" rx="4" />
                 <text x="360" y="198" textAnchor="middle" className="text-xs font-bold fill-slate-800">
-                  ③ 3D Laser Scan
+                  {t('post.flow.svg.step3') || '③ 3D Laser Scan'}
                 </text>
                 <text x="360" y="213" textAnchor="middle" className="text-[9px] font-mono fill-brand-600 font-bold">
                   M73 / Trigger Y50
                 </text>
               </g>
               <line x1="360" y1="222" x2="360" y2="240" className="stroke-slate-400 stroke-1.5" markerEnd="url(#arrow)" />
-
+ 
               {/* Step 4 Decision */}
               <g className={nodeCls('step4')} onClick={() => setSelectedNode('step4')}>
                 <polygon points="360,240 470,290 360,340 250,290" />
                 <text x="360" y="285" textAnchor="middle" className="text-xs font-bold fill-slate-800">
-                  ④ AI Classify
+                  {t('post.flow.svg.step4') || '④ AI Classify'}
                 </text>
                 <text x="360" y="299" textAnchor="middle" className="text-[9px] font-mono fill-brand-600 font-bold">
                   M74 / inference
                 </text>
               </g>
-
+ 
               {/* Decision Branches */}
               <path d="M 470 290 L 530 290 L 530 360" className="stroke-green-600 stroke-1.5 fill-none animate-pulse" markerEnd="url(#arrow-yes)" />
               <text x="495" y="283" className="text-[10px] font-bold fill-green-600 font-mono">
                 OK
               </text>
-
+ 
               <path d="M 250 290 L 190 290 L 190 360" className="stroke-red-500 stroke-1.5 fill-none" markerEnd="url(#arrow-no)" />
               <text x="220" y="283" className="text-[10px] font-bold fill-red-500 font-mono">
                 NG
               </text>
-
+ 
               {/* Step 5a Discharge */}
               <g className={nodeCls('step5a')} onClick={() => setSelectedNode('step5a')}>
                 <rect x="455" y="360" width="150" height="42" rx="4" />
                 <text x="530" y="378" textAnchor="middle" className="text-xs font-bold fill-slate-800">
-                  ⑤a Discharge OK Product
+                  {t('post.flow.svg.step5a') || '⑤a Discharge OK Product'}
                 </text>
                 <text x="530" y="393" textAnchor="middle" className="text-[9px] font-mono fill-brand-600 font-bold">
                   M75 / Valve Y60
                 </text>
               </g>
-
+ 
               {/* Step 6 Discharge NG */}
               <g className={nodeCls('step6')} onClick={() => setSelectedNode('step6')}>
                 <rect x="115" y="360" width="150" height="42" rx="4" />
                 <text x="190" y="378" textAnchor="middle" className="text-xs font-bold fill-slate-800">
-                  ⑤b Recycle & Tag
+                  {t('post.flow.svg.step6') || '⑤b Recycle & Tag'}
                 </text>
                 <text x="190" y="393" textAnchor="middle" className="text-[9px] font-mono fill-brand-600 font-bold">
                   M76 / Alarm Y61
@@ -318,7 +319,7 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
 
             <div className="flex-1 overflow-auto p-4 flex flex-col font-mono text-sm leading-relaxed max-h-[300px]">
               <div className="flex-1 text-slate-700 overflow-y-auto whitespace-pre p-2 rounded-lg bg-white border border-slate-200">
-                {nodes[selectedNode].stCode.split('\n').map((line, idx) => (
+                {localizeCodeComments(nodes[selectedNode].stCode, locale as any).split('\n').map((line, idx) => (
                   <div key={idx} className="flex hover:bg-slate-50 px-2 py-0.5 rounded">
                     <span className="w-8 shrink-0 text-slate-400 text-xs text-right pr-3 select-none">{idx + 1}</span>
                     <span className="text-teal-600 font-semibold">
@@ -349,7 +350,7 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
               {nodes[selectedNode].label}
             </h5>
             <span className="text-[10px] font-mono bg-brand-500/10 text-brand-700 border border-brand-500/20 px-2 py-0.5 rounded font-semibold ml-auto">
-              Address: {nodes[selectedNode].address}
+              {t('post.flow.address') || 'Address'}: {nodes[selectedNode].address}
             </span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">{nodes[selectedNode].description}</p>

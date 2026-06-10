@@ -199,7 +199,11 @@ export default function CadViewer({ locale, currentUser = 'Linh', onProgressChan
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 rounded-lg bg-brand-500 text-white font-mono font-bold text-xs">{selected}</span>
             <span className="text-xs font-bold text-slate-800">
-              {selected.startsWith('A') ? 'Servo Drive Parameters' : selected.startsWith('Q') ? 'Circuit Breaker' : 'Industrial Controller'}
+              {selected.startsWith('A') 
+                ? t('post.cad.propServo') 
+                : selected.startsWith('Q') 
+                ? t('post.cad.propBreaker') 
+                : t('post.cad.propController')}
             </span>
           </div>
           <span className="text-[10px] text-slate-500">MR-J5 Series</span>
@@ -207,19 +211,19 @@ export default function CadViewer({ locale, currentUser = 'Linh', onProgressChan
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
           <div className="flex justify-between border-b border-slate-100 pb-1">
-            <span className="text-slate-500">Maker:</span>
+            <span className="text-slate-500">{t('post.cad.propMaker')}</span>
             <span className="font-bold text-slate-700">Mitsubishi Electric</span>
           </div>
           <div className="flex justify-between border-b border-slate-100 pb-1">
-            <span className="text-slate-500">Model:</span>
+            <span className="text-slate-500">{t('post.cad.propModel')}</span>
             <span className="font-mono text-slate-700">{selected === 'A4' ? 'MR-J5-40A (AI gen)' : 'MR-J5-40A'}</span>
           </div>
           <div className="flex justify-between border-b border-slate-100 pb-1">
-            <span className="text-slate-500">Voltage:</span>
+            <span className="text-slate-500">{t('post.cad.propVoltage')}</span>
             <span className="font-mono text-slate-700">AC200V 3-Phase</span>
           </div>
           <div className="flex justify-between border-b border-slate-100 pb-1">
-            <span className="text-slate-500">Capacity:</span>
+            <span className="text-slate-500">{t('post.cad.propCapacity')}</span>
             <span className="font-mono text-slate-700">400 W</span>
           </div>
         </div>
@@ -228,9 +232,9 @@ export default function CadViewer({ locale, currentUser = 'Linh', onProgressChan
           <div className="p-2.5 rounded-xl bg-brand-500/10 border border-brand-500/20 text-[10px] text-brand-700 flex items-start gap-2">
             <span className="text-brand-500">🤖</span>
             <div>
-              <span className="font-bold text-brand-650">AI Recommendation:</span>
+              <span className="font-bold text-brand-650">{t('post.cad.aiRecommendTitle')}</span>
               <p className="mt-0.5 leading-relaxed">
-                This unit was automatically suggested based on the conveyor speed calculations (1.2m/s) in the Technical Specs PDF.
+                {t('post.cad.aiRecommendDesc')}
               </p>
             </div>
           </div>
@@ -257,10 +261,10 @@ export default function CadViewer({ locale, currentUser = 'Linh', onProgressChan
             />
             <button 
               onClick={() => {
-                const val = onsiteAdjustText || 'Đấu nối KA1 NC vào PLC X20';
+                const val = onsiteAdjustText || (locale === 'ja' ? 'KA1 NCをPLC X20に配線' : locale === 'vi' ? 'Đấu nối KA1 NC vào PLC X20' : 'wire KA1 NC to PLC X20');
                 setIsSaved(true);
                 setSavedBy(currentUser);
-                alert(`Đã cập nhật bản vẽ CAD điện với nội dung sửa đổi: "${val}". Bản vẽ đã được lưu thành phiên bản mới bởi ${currentUser}.`);
+                alert(tf('post.cad.alertUpdate', { val, user: currentUser }));
               }}
               className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer shrink-0"
             >

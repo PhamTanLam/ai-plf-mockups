@@ -61,9 +61,114 @@ const CHAT: Record<string, { ja: string; en: string }> = {
   // ── Phản hồi inline (tĩnh) ──
   'Tôi đã cập nhật yêu cầu chỉnh sửa của bạn vào Nhật ký khảo sát khao_sat_thay_doi_specs.txt ở khung bên trái. \n\nĐồng thời, cấu hình vật tư liên quan đã được đồng bộ tự động sang Bước 3. Điều chỉnh vật tư. Bạn có thể kiểm tra tệp tin và tiếp tục trao đổi.': { ja: '修正のご要望を左側の調査ログ khao_sat_thay_doi_specs.txt に反映しました。\n\n併せて関連する資材構成がステップ3「資材調整」へ自動同期されました。ファイルを確認しつつ会話を続けられます。', en: 'I added your change request to the survey log khao_sat_thay_doi_specs.txt on the left.\n\nThe related materials config was also auto-synced to Step 3: Adjust materials. You can check the file and keep chatting.' },
   'Đã ghi nhận ý kiến đóng góp của bạn và cập nhật vào Biên bản cuộc họp bien_ban_kickoff_ban_giao.txt ở khung bên trái. Các thông tin phân công này đã được đồng bộ.': { ja: 'ご意見を反映し、左側の議事録 bien_ban_kickoff_ban_giao.txt を更新しました。担当割り当て情報は同期済みです。', en: 'Noted your input and updated the minutes bien_ban_kickoff_ban_giao.txt on the left. The assignment info has been synced.' },
+  
+  // ── Suggestions Phase 12 ──
+  'Tối ưu gọn mã nguồn (CASE..OF)': { ja: 'コード最適化 (CASE..OF)', en: 'Optimize source code (CASE..OF)' },
+  'Ghi chú chuẩn IEC & CASE cho mã nguồn': { ja: 'IEC準拠コメント＆CASE注釈', en: 'IEC-standard comments & CASE' },
+  'Khôi phục mã nguồn về bản gốc': { ja: 'デフォルトコードに復元', en: 'Restore default code' },
+
+  // ── AI Responses Phase 12 ──
+  'Đã áp dụng phong cách tối ưu hóa gọn (State Machine / CASE..OF). Mã nguồn PLC ST đã được tái cấu trúc sang dạng máy trạng thái gọn đẹp hơn, giảm thiểu các khối IF lồng nhau phức tạp và cải thiện tốc độ vòng quét CPU.': {
+    ja: 'ステートマシン（CASE..OF）による簡潔な最適化スタイルを適用しました。PLC ST ソースコードは、ネストした複雑な IF ブロックを最小限に抑え、CPU スキャンサイクル処理速度を向上させるステートマシン形式に再構成されました。',
+    en: 'Applied a clean state machine (CASE..OF) optimization style. The PLC ST source code has been restructured into a cleaner state machine format, minimizing nested IF blocks and improving CPU scan cycle speed.'
+  },
+  'Đã áp dụng cấu trúc ghi chú chuẩn IEC & CASE. Mã nguồn đã được phân khúc sơ đồ khối rõ ràng với chú giải chi tiết từng biến số theo tiêu chuẩn IEC 61131-3.': {
+    ja: 'IEC & CASE 準拠のコメント注釈を適用しました。ソースコードは IEC 61131-3 規格に従って、ブロック図が明確に区切られ、各変数に詳細な説明が追加されました。',
+    en: 'Applied IEC & CASE standard commenting. The source code has been segmented with clear block boundaries and detailed annotations for each variable according to the IEC 61131-3 standard.'
+  },
+  'Đã khôi phục lại mã Structured Text nguyên bản do AI tự động sinh. Tất cả các thay đổi tối ưu hóa trước đó đã được hoàn tác về phiên bản gốc.': {
+    ja: 'AI が自動生成した元の Structured Text コードに復元しました。これまでのすべての最適化変更は破棄され、初期バージョンに戻りました。',
+    en: 'Restored the original auto-generated Structured Text code. All previous optimization edits have been reverted to the initial version.'
+  },
+
+  // ── Manual Chat Queries Phase 12 ──
+  'Tôi đã tự động cập nhật mã nguồn PLC ST: Thêm còi báo động `ALARM_SIREN := TRUE;` vào bước phân loại sản phẩm lỗi NG (Bước 5b) ở khu soạn thảo bên trái. Bạn có thể chạy kiểm tra cú pháp để xác nhận.': {
+    ja: 'PLC ST ソースコードを自動更新しました：左側のエディタ内の不良品 NG 検出ステップ（5b）に警報ブザー `ALARM_SIREN := TRUE;` を追加しました。構文チェックを実行して確認できます。',
+    en: 'I auto-updated the PLC ST source code: added the alarm siren `ALARM_SIREN := TRUE;` to the NG product classification step (Step 5b) in the left editor. You can run a syntax check to confirm.'
+  },
+  'Đã thêm logic còi báo động `ALARM_SIREN := TRUE;` vào chương trình. Vui lòng xem ở khung bên trái.': {
+    ja: 'プログラムに警報ブザーのロジック `ALARM_SIREN := TRUE;` を追加しました。左側のフレームを確認してください。',
+    en: 'Added the alarm siren logic `ALARM_SIREN := TRUE;` to the program. Please check the left panel.'
+  },
+  'Mã nguồn hiện tại đã được tích hợp còi báo động lỗi `ALARM_SIREN := TRUE;` tại bước phân loại sản phẩm lỗi NG.': {
+    ja: '現在のソースコードには、不良品 NG 検出ステップに警報ブザー `ALARM_SIREN := TRUE;` が既に組み込まれています。',
+    en: 'The current source code already integrates the alarm siren `ALARM_SIREN := TRUE;` in the NG product classification step.'
+  },
+  'Tôi đã thực hiện tối ưu hóa (Paraphrase) mã nguồn PLC ST sang dạng State Machine sử dụng cấu trúc `CASE..OF` giúp chương trình gọn nhẹ hơn, giảm dung lượng bộ nhớ PLC và tăng chu kỳ quét vòng quét (scan time).': {
+    ja: 'PLC ST ソースコードを `CASE..OF` 構造を使用したステートマシン形式に最適化（言い換え）しました。プログラムがより簡潔になり、PLC メモリ使用量が削減され、スキャンサイクルタイムが向上します。',
+    en: 'I optimized (paraphrased) the PLC ST source code into a state machine format using `CASE..OF` structure to make the program cleaner, reduce PLC memory usage, and improve scan cycle time.'
+  },
+  'Tôi đã phân tích mã nguồn Structured Text hiện tại. Bạn có thể nhấn trực tiếp nút **Chạy kiểm tra cú pháp** ở cột bên phải để AI biên dịch thử thời gian thực.': {
+    ja: '現在の Structured Text ソースコードを分析しました。右側の「構文チェックを実行」ボタンを直接クリックして、AI によるリアルタイムコンパイルを試すことができます。',
+    en: 'I analyzed the current Structured Text source code. You can click "Run syntax check" on the right panel to test compile in real-time with AI.'
+  },
 }
 
 export function tcText(text: string, locale: Locale): string {
   if (locale === 'vi') return text
   return CHAT[text]?.[locale] ?? text
+}
+
+const COMMENT_REPLACEMENTS: Record<string, { ja: string; en: string }> = {
+  '// Thiết bị chấp hành & phản hồi': { ja: '// アクチュエータ＆フィードバック', en: '// Actuators & Feedback' },
+  '// Đo quét & AI phân tích': { ja: '// 測定＆AI分析', en: '// Measurement & AI Analysis' },
+  '// Phân loại đầu ra': { ja: '// 出力選別', en: '// Output sorting' },
+  '// Còi báo động lỗi': { ja: '// エラー警告ブザー', en: '// Error Alarm Siren' },
+  '// ▶ BẢO VỆ LIÊN KHÓA & KHỞI TẠO AN TOÀN (Rule Page 4)': { ja: '// ▶ 安全インターロック＆初期化 (ルールページ4)', en: '// ▶ SAFETY INTERLOCK & INITIALIZATION (Rule Page 4)' },
+  '// Khởi động chế độ tự động': { ja: '// 自動運転起動', en: '// Start automatic mode' },
+  '// ① WORKPIECE GRIP': { ja: '// ① ワーククランプ', en: '// ① WORKPIECE GRIP' },
+  '// ② SERVO MOVE TO INSPECTION': { ja: '// ② サーボ検査位置移動', en: '// ② SERVO MOVE TO INSPECTION' },
+  '// ③ 3D LASER MEASUREMENT SCAN': { ja: '// ③ 3Dレーザー測定スキャン', en: '// ③ 3D LASER MEASUREMENT SCAN' },
+  '// ④ AI INFERENCE JUDGMENT': { ja: '// ④ AI判定', en: '// ④ AI INFERENCE JUDGMENT' },
+  'STEP_NUMBER := 5; // Chuyển sang đẩy hàng OK': { ja: 'STEP_NUMBER := 5; // 良品排出へ移行', en: 'STEP_NUMBER := 5; // Go to OK discharge' },
+  'STEP_NUMBER := 6; // Chuyển sang đẩy hàng lỗi NG': { ja: 'STEP_NUMBER := 6; // 不良品NG回収へ移行', en: 'STEP_NUMBER := 6; // Go to NG recycle' },
+  '// ⑤A DISCHARGE OK PRODUCT': { ja: '// ⑤a 良品排出', en: '// ⑤a DISCHARGE OK PRODUCT' },
+  'STEP_NUMBER := 0; // Hoàn thành chu kỳ': { ja: 'STEP_NUMBER := 0; // サイクル完了', en: 'STEP_NUMBER := 0; // Cycle completed' },
+  '// ⑤B DISCHARGE NG PRODUCT & TRIGGER ALARM': { ja: '// ⑤b 不良排出＆アラーム起動', en: '// ⑤b DISCHARGE NG PRODUCT & TRIGGER ALARM' },
+  'ALARM_SIREN := TRUE; // Kích hoạt còi cảnh báo lỗi': { ja: 'ALARM_SIREN := TRUE; // 警告ブザー起動', en: 'ALARM_SIREN := TRUE; // Activate alarm siren' },
+  'STEP_NUMBER := 0; // Kết thúc lỗi': { ja: 'STEP_NUMBER := 0; // 異常終了', en: 'STEP_NUMBER := 0; // End cycle with error' },
+  '// Liên khóa khẩn cấp': { ja: '// 非常停止インターロック', en: '// Emergency Stop Interlock' },
+  '// Chu trình máy trạng thái (State Machine)': { ja: '// ステートマシンサイクル', en: '// State Machine Sequence' },
+  '1: // Kẹp phôi': { ja: '1: // ワーククランプ', en: '1: // Workpiece grip' },
+  '2: // Servo di chuyển': { ja: '2: // サーボ移動', en: '2: // Servo move' },
+  '3: // Quét laser': { ja: '3: // レーザースキャン', en: '3: // Laser scan' },
+  '4: // Phân tích AI': { ja: '4: // AI分析', en: '4: // AI inference' },
+  '5: // Trả hàng OK': { ja: '5: // 良品排出', en: '5: // Discharge OK' },
+  '6: // Trả hàng lỗi NG & Alarm': { ja: '6: // 不良品NG回収＆アラーム', en: '6: // Discharge NG & Alarm' },
+  '// Thống nhất các biến ngõ vào & ngõ ra': { ja: '// 入出力変数の定義', en: '// I/O Variables Definition' },
+  '// Cảm biến an toàn KA1': { ja: '// 安全リレー KA1 信号', en: '// Safety relay KA1 sensor' },
+  '// Nút dừng khẩn cấp': { ja: '// 非常停止', en: '// Emergency Stop' },
+  '// Chế độ tự động': { ja: '// 自動運転モード', en: '// Automatic mode' },
+  '// Nút nhấn Start': { ja: '// 起動押しボタン', en: '// Start push button' },
+  '// Bước điều khiển hiện tại': { ja: '// 現在のステップ番号', en: '// Current step number' },
+  '// Cơ cấu cơ khí chấp hành': { ja: '// アクチュエータ機構', en: '// Mechanical Actuators' },
+  '// Cảm biến & Module đo quét': { ja: '// センサー＆測定モジュール', en: '// Sensors & Measurement Module' },
+  '// Cơ cấu phân loại đầu ra': { ja: '// 排出選別機構', en: '// Output Sorting Mechanism' },
+  '// Còi báo hiệu khi phát hiện phôi NG': { ja: '// NG検出時アラームブザー', en: '// Alarm siren for NG workpiece' },
+  '// 1. CHƯƠNG TRÌNH PHỤ TRỢ: BẢO VỆ & LIÊN KHÓA KA1': { ja: '// 1. サブプログラム：安全回路＆KA1インターロック', en: '// 1. SUBPROGRAM: SAFETY & KA1 INTERLOCK' },
+  '// Kích hoạt chu kỳ tự động vận hành': { ja: '// 自動運転サイクルの起動', en: '// Activate automatic operation cycle' },
+  '// 2. CHƯƠNG TRÌNH CHÍNH: CHU TRÌNH ĐIỀU KHIỂN ROBOT HÀN': { ja: '// 2. メインプログラム：溶接ロボット制御サイクル', en: '// 2. MAIN PROGRAM: WELDING ROBOT CONTROL CYCLE' },
+  '// BƯỚC 1: Kẹp phôi hàn bằng xi lanh khí nén': { ja: '// ステップ1: エアシリンダによるワーククランプ', en: '// STEP 1: Grip workpiece with pneumatic cylinder' },
+  '// BƯỚC 2: Di chuyển 3 trục Servo đến tọa độ kiểm tra': { ja: '// ステップ2: サーボ3軸の検査位置への移動', en: '// STEP 2: Move 3 Servo axes to inspection coordinates' },
+  '// BƯỚC 3: Kích hoạt hệ thống cảm biến quét Laser 3D': { ja: '// ステップ3: 3Dレーザー測定センサーの起動', en: '// STEP 3: Trigger 3D Laser scanning sensor' },
+  '// BƯỚC 4: Khởi chạy AI inference và lấy phán quyết': { ja: '// ステップ4: AI推論の実行と判定取得', en: '// STEP 4: Run AI inference and get judgment' },
+  '// Phôi đạt -> Chuyển sang băng tải OK': { ja: '// 良品判定 -> 製品コンベアへ排出', en: '// OK Workpiece -> Move to product conveyor' },
+  '// Phôi lỗi -> Chuyển sang khay phế phẩm': { ja: '// 不良品判定 -> 回収トレイへ排出', en: '// Defect Workpiece -> Move to recycle tray' },
+  '// BƯỚC 5a: Đẩy phôi đạt chuẩn (Discharge OK)': { ja: '// ステップ5a: 良品排出ゲート作動 (Discharge OK)', en: '// STEP 5a: Discharge OK workpiece (Discharge OK)' },
+  '// BƯỚC 5b: Đẩy phôi lỗi & Báo còi (Discharge NG)': { ja: '// ステップ5b: 不良品排出ゲート作動＆ブザー (Discharge NG)', en: '// STEP 5b: Discharge NG workpiece & siren (Discharge NG)' },
+  '// Còi hú báo động sự cố sản phẩm lỗi': { ja: '// 不良品検出アラームブザー', en: '// Alarm siren for NG product' },
+  '// Kết thúc chu kỳ lỗi': { ja: '// 異常サイクルの終了', en: '// End error cycle' },
+  '// Tri thức Page 4: Khóa cứng tiếp điểm NC KA1': { ja: '// ページ4ナレッジ：KA1 NC接点のハードワイヤードインターロック', en: '// Page 4 Knowledge: Hardwired NC contact KA1 interlock' },
+  '// Tri thức Page 4: Khối khởi tạo Servo trục A1, A2, A3': { ja: '// ページ4ナレッジ：サーボ軸 A1、A2、A3 の初期化ブロック', en: '// Page 4 Knowledge: Servo initialization block for axes A1, A2, A3' },
+  '// Tối ưu thanh ghi D Mitsubishi': { ja: '// 三菱 Dレジスタの最適化', en: '// Mitsubishi D register optimization' }
+}
+
+export function localizeCodeComments(code: string, locale: Locale): string {
+  if (locale === 'vi') return code
+  let res = code
+  for (const [key, valObj] of Object.entries(COMMENT_REPLACEMENTS)) {
+    const val = valObj[locale] || valObj['en']
+    res = res.replaceAll(key, val)
+  }
+  return res
 }
