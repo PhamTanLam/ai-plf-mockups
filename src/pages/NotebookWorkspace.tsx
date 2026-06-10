@@ -22,7 +22,8 @@ import {
   ArrowRight,
   RotateCcw,
   Activity,
-  MessageSquare
+  MessageSquare,
+  ChevronDown
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tcText } from '@/i18n/chat'
@@ -34,8 +35,6 @@ import SourceViewer from '@/components/SourceViewer'
 import ProjectReentry from '@/components/ProjectReentry'
 import DocumentGenerator from '@/components/DocumentGenerator'
 import CaseInput from '@/components/CaseInput'
-import ReviewStep from '@/components/ReviewStep'
-import ProposalStep from '@/components/ProposalStep'
 import AddSourceModal from '@/components/AddSourceModal'
 import SmartMaterialsTable from '@/components/SmartMaterialsTable'
 import DebugCodeStep, { DEFAULT_ST_CODE, COMPACT_ST_CODE } from '@/components/DebugCodeStep'
@@ -74,7 +73,7 @@ interface PhaseDetail {
 }
 
 const phasesInfo: PhaseDetail[] = [
-  // PRE-SALES = chu trình lặp 3 hoạt động (Nhập/Sửa → Kiểm tra → Dự toán)
+  // PRE-SALES = 3 mốc tiến độ trong sidebar, tất cả dùng chung 1 màn CaseInput
   {
     num: 1,
     title: 'Nhập / Sửa thông tin',
@@ -89,21 +88,20 @@ const phasesInfo: PhaseDetail[] = [
   {
     num: 2,
     title: 'Kiểm tra',
-    desc: 'Rà soát/chỉnh sửa thông tin đã nhập trước khi trình dự toán (có thể bỏ qua).',
-    prompts: ['Còn mục nào cần rà soát?'],
-    tab: 'review',
+    desc: 'Rà soát thông tin đã nhập, hỏi AI tóm tắt hoặc xem lại đầu ra trước khi trình khách.',
+    prompts: ['Tóm tắt dự án giúp tôi.'],
+    tab: 'caseinput',
     sourcesToSelect: [],
     inputs: ['Câu hỏi'],
-    outputs: ['Xác nhận nội dung chỉ ra'],
+    outputs: ['Xác nhận nội dung'],
     users: 'Nhân viên kinh doanh hoặc SE',
-    note: 'Có thể bỏ qua bước này.',
   },
   {
     num: 3,
     title: 'Trình dự toán',
-    desc: 'Gom đầu ra thành hồ sơ trình khách. Có thể cập nhật (sửa → dự toán lại) đến khi chốt đơn.',
+    desc: 'Xuất hồ sơ dự toán cuối để trình khách. Cập nhật và dự toán lại đến khi chốt đơn.',
     prompts: ['Xuất hồ sơ đề xuất.'],
-    tab: 'proposal',
+    tab: 'caseinput',
     sourcesToSelect: [],
     inputs: ['Câu hỏi'],
     outputs: ['Tài liệu đề xuất'],
@@ -112,7 +110,7 @@ const phasesInfo: PhaseDetail[] = [
   // POST-SALES = 5 bước tuyến tính (Phases 7, 8, 9, 10, 11)
   {
     num: 7,
-    title: 'Tiếp nhận & Khảo sát',
+    title: 'Khảo sát & Phát sinh',
     desc: 'Nhập thông số thiết bị thực tế sau đơn hàng và đối chiếu chênh lệch specs.',
     prompts: [
       'Nhập lại chênh lệch thông số dự án sau khi nhận đơn hàng.',
@@ -472,10 +470,11 @@ export default function NotebookWorkspace() {
   // Pre-sales NV1 state (mô phỏng, lưu localStorage theo case)
   const pre = usePresalesState(id || 'default')
   const [addSourceOpen, setAddSourceOpen] = useState(false)
+  const [showStatusMenu, setShowStatusMenu] = useState(false)
 
 
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([
-    'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+    'Chuyển sang Bước 1: Khảo sát & Phát sinh',
     'Chuyển sang Bước 2: Họp Kick-off',
     'Chuyển sang Bước 3: Điều chỉnh vật tư',
     'Chuyển sang Bước 4: Thiết kế & Code tự động',
@@ -489,9 +488,9 @@ export default function NotebookWorkspace() {
     suggestions: string[]
     citations?: { id: number; sourceId: string; phrase?: string; tab?: string }[]
   }> = {
-    'Chuyển sang Bước 1: Tiếp nhận & Khảo sát': {
+    'Chuyển sang Bước 1: Khảo sát & Phát sinh': {
       phaseNum: 7,
-      explanationText: 'Đã chuyển sang Bước 1: Tiếp nhận & Khảo sát. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.',
+      explanationText: 'Đã chuyển sang Bước 1: Khảo sát & Phát sinh. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.',
       suggestions: [
         'Có thay đổi gì về số lượng động cơ hay PLC?',
         'Xem chi tiết thông số chênh lệch Melsec Q?',
@@ -509,7 +508,7 @@ export default function NotebookWorkspace() {
       suggestions: [
         'Soạn biên bản Kick-off bàn giao dự án',
         'Xem danh sách ghi chú cuộc họp kick-off.',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -524,7 +523,7 @@ export default function NotebookWorkspace() {
         'Thêm 2 cảm biến quang',
         'Nâng cấp màn hình HMI',
         'Bổ sung 1 trục Servo Motor',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -538,7 +537,7 @@ export default function NotebookWorkspace() {
       suggestions: [
         'Xem sơ đồ bản vẽ CAD & mã Structured Text',
         'Tải về mã nguồn & bản vẽ thiết kế',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 5: Debug',
@@ -553,7 +552,7 @@ export default function NotebookWorkspace() {
         'Kiểm tra lỗi cú pháp mã PLC.',
         'Tối ưu hóa mã PLC ST (Paraphrase).',
         'Thêm còi báo động vào code.',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
@@ -568,7 +567,7 @@ export default function NotebookWorkspace() {
         'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng',
         'Tải Biên bản nghiệm thu.docx',
         'Tải Hướng dẫn vận hành HMI.pdf',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
@@ -578,7 +577,7 @@ export default function NotebookWorkspace() {
     },
     'Nhập lại chênh lệch thông số dự án sau khi nhận đơn hàng': {
       phaseNum: 7,
-      explanationText: 'Đã chuyển sang Bước 1: Tiếp nhận & Khảo sát. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.',
+      explanationText: 'Đã chuyển sang Bước 1: Khảo sát & Phát sinh. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.',
       suggestions: [
         'Có thay đổi gì về số lượng động cơ hay PLC?',
         'Xem chi tiết thông số chênh lệch Melsec Q?',
@@ -607,7 +606,7 @@ export default function NotebookWorkspace() {
       explanationText: 'Đã chuyển sang Bước 2: Họp Kick-off. Tôi đã lập danh sách ghi chú bàn giao dự án và chuẩn bị sẵn biên bản cuộc họp.',
       suggestions: [
         'Xem danh sách ghi chú cuộc họp kick-off.',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -620,7 +619,7 @@ export default function NotebookWorkspace() {
       explanationText: 'Dưới đây là các ghi chú kỹ thuật quan trọng trong Biên bản họp Kick-off (hiển thị ở khung bên trái):\n- Cần kiểm tra lại nguồn cấp AC200V 3 pha cho các Servo Drive tại nhà xưởng.\n- Bản vẽ CAD mạch lực cần tách biệt dây động lực và dây tín hiệu cảm biến để chống nhiễu.',
       suggestions: [
         'Soạn biên bản Kick-off bàn giao dự án',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -634,7 +633,7 @@ export default function NotebookWorkspace() {
       suggestions: [
         'Nâng cấp màn hình HMI',
         'Bổ sung 1 trục Servo Motor',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -648,7 +647,7 @@ export default function NotebookWorkspace() {
       suggestions: [
         'Thêm 2 cảm biến quang',
         'Bổ sung 1 trục Servo Motor',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -662,7 +661,7 @@ export default function NotebookWorkspace() {
       suggestions: [
         'Thêm 2 cảm biến quang',
         'Nâng cấp màn hình HMI',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -675,7 +674,7 @@ export default function NotebookWorkspace() {
       explanationText: 'Đã chuyển sang Bước 4: Thiết kế & Code tự động. AI đã xử lý ngầm và sinh bản vẽ CAD đấu dây cùng mã Structured Text (ST) tuân thủ quy tắc E-stop KA1 và khởi tạo Servo. Bạn có thể xem trực tiếp hoặc tải về.',
       suggestions: [
         'Tải về mã nguồn & bản vẽ thiết kế',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 5: Debug',
@@ -688,7 +687,7 @@ export default function NotebookWorkspace() {
       explanationText: 'Mã nguồn PLC và Bản vẽ điện CAD đã sẵn sàng. Vui lòng bấm vào các nút Tải Bản vẽ CAD (.dwg) hoặc Tải Mã PLC (.l5k) ở thanh công cụ canvas để tải về.',
       suggestions: [
         'Xem sơ đồ bản vẽ CAD & mã Structured Text',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 5: Debug',
@@ -732,7 +731,7 @@ export default function NotebookWorkspace() {
       suggestions: [
         'Tải Biên bản nghiệm thu.docx',
         'Tải Hướng dẫn vận hành HMI.pdf',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
@@ -745,7 +744,7 @@ export default function NotebookWorkspace() {
       explanationText: 'Đang tải file Biên bản nghiệm thu.docx (45 KB) về máy của bạn...',
       suggestions: [
         'Tải Hướng dẫn vận hành HMI.pdf',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
@@ -758,7 +757,7 @@ export default function NotebookWorkspace() {
       explanationText: 'Đang tải file Hướng dẫn vận hành HMI.pdf (1.1 MB) về máy của bạn...',
       suggestions: [
         'Tải Biên bản nghiệm thu.docx',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
@@ -1000,7 +999,7 @@ Thành phần tham dự:
       setActiveSuggestions([
         'Soạn biên bản Kick-off bàn giao dự án',
         'Xem danh sách ghi chú cuộc họp kick-off.',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -1011,7 +1010,7 @@ Thành phần tham dự:
         'Thêm 2 cảm biến quang',
         'Nâng cấp màn hình HMI',
         'Bổ sung 1 trục Servo Motor',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
         'Chuyển sang Bước 5: Debug',
@@ -1021,7 +1020,7 @@ Thành phần tham dự:
       setActiveSuggestions([
         'Xem sơ đồ bản vẽ CAD & mã Structured Text',
         'Tải về mã nguồn & bản vẽ thiết kế',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 5: Debug',
@@ -1032,7 +1031,7 @@ Thành phần tham dự:
         'Kiểm tra lỗi cú pháp mã PLC.',
         'Tối ưu hóa mã PLC ST (Paraphrase).',
         'Thêm còi báo động vào code.',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
@@ -1043,7 +1042,7 @@ Thành phần tham dự:
         'Soạn tài liệu nghiệm thu / hướng dẫn sử dụng',
         'Tải Biên bản nghiệm thu.docx',
         'Tải Hướng dẫn vận hành HMI.pdf',
-        'Chuyển sang Bước 1: Tiếp nhận & Khảo sát',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
         'Chuyển sang Bước 3: Điều chỉnh vật tư',
         'Chuyển sang Bước 4: Thiết kế & Code tự động',
@@ -1078,15 +1077,16 @@ Thành phần tham dự:
 
   // Chat trong các bước pre-sales (1→6): AI ghi nhớ thông tin + tóm tắt + sinh đầu ra. KHÔNG gọi API.
   const handlePresalesChat = (text: string) => {
-    // "Nhãn: giá trị" → ghi nhớ một thông tin
+    // "Nhãn: giá trị" → ghi nhớ một thông tin → Step 1
     const mm = text.match(/^\s*(?:thêm|ghi chú)?\s*(.{2,40}?)\s*[:：]\s*(.+)$/)
     if (mm) {
       const label = mm[1].trim(), value = mm[2].trim()
       pre.addField(label, value)
+      handlePhaseChange(1)
       pushChat(text, `✓ Đã ghi nhớ ${label}: ${value}`, PRE_SUGG, 'chat.ps.recorded', { label, value })
       return
     }
-    // ý định sinh đầu ra
+    // ý định sinh đầu ra → Step 3
     let gen = ''
     if (text === 'Soạn nội dung tài liệu dự toán') gen = 'doc'
     else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') gen = 'config'
@@ -1099,16 +1099,20 @@ Thành phần tham dự:
     else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) gen = 'proposal'
     if (gen) {
       pre.generate(gen)
+      handlePhaseChange(3)
       pushChat(text, 'Đã sinh tài liệu ✓ (xem ở mục "Đã tạo").', PRE_SUGG, 'chat.ps.generated')
       return
     }
-    // trả lời
+    // tóm tắt / xem lại → Step 2
     if (/tóm tắt|xem dữ liệu|dữ liệu đã|đã ghi|nhớ gì|thông tin dự án/i.test(text)) {
       const data = pre.summaryText()
+      handlePhaseChange(2)
       pushChat(text, 'Dữ liệu dự án mình đang ghi nhớ:\n' + data, PRE_SUGG, 'chat.ps.summary', { data })
       return
     }
+    // chat chung → ghi nhớ thêm từ nội dung → Step 1
     const added = pre.rememberFromContent(text)
+    handlePhaseChange(1)
     if (added.length) pushChat(text, `Mình đã ghi nhớ thêm: ${added.join(', ')}.`, PRE_SUGG, 'chat.ps.remembered', { names: added.join(', ') })
     else pushChat(text, 'Đã hiểu.', PRE_SUGG, 'chat.ps.understood')
   }
@@ -1201,7 +1205,7 @@ Thành phần tham dự:
       }
     }
     
-    // AI Chat interceptor for Step 1 (Phase 7 - Tiếp nhận & Khảo sát text document updates)
+    // AI Chat interceptor for Step 1 (Phase 7 - Khảo sát & Phát sinh text document updates)
     if (activePhase === 7) {
       const queryLower = text.toLowerCase()
       let updatedNote = ''
@@ -1224,15 +1228,16 @@ Thành phần tham dự:
         shouldUpdate = true
       }
 
-      if (shouldUpdate) {
-        try {
-          const storedText = localStorage.getItem(`aiplf.project_reentry_text.${id}`)
-          const baseText = storedText || `# NHẬT KÝ KHẢO SÁT HIỆN TRƯỜNG & THAY ĐỔI SPECS (CASE-2026-0245)`
-          const newText = baseText + `\n\n[HẠNG MỤC CẬP NHẬT TỪ CHAT ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]:` + updatedNote
-          localStorage.setItem(`aiplf.project_reentry_text.${id}`, newText)
-          localStorage.setItem(`aiplf.project_reentry_synced.${id}`, 'true')
-          
-          // Also update the materials directly in localStorage
+      if (!updatedNote) updatedNote = `\n- [Ghi chú từ chat]: ${text}`
+
+      try {
+        const storedText = localStorage.getItem(`aiplf.project_reentry_text.${id}`)
+        const baseText = storedText || `# NHẬT KÝ KHẢO SÁT HIỆN TRƯỜNG & THAY ĐỔI SPECS (CASE-2026-0245)`
+        const newText = baseText + `\n\n[CẬP NHẬT ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]:` + updatedNote
+        localStorage.setItem(`aiplf.project_reentry_text.${id}`, newText)
+        localStorage.setItem(`aiplf.project_reentry_synced.${id}`, 'true')
+
+        if (shouldUpdate) {
           const materialsKey = `aiplf.materials.${id}`
           const storedMaterials = localStorage.getItem(materialsKey)
           if (storedMaterials) {
@@ -1246,16 +1251,18 @@ Thành phần tham dự:
             })
             localStorage.setItem(materialsKey, JSON.stringify(updatedMat))
           }
-          
-          window.dispatchEvent(new Event('storage')) // triggers re-render in ProjectReentry & SmartMaterialsTable
-          setMaterialsVersion(prev => prev + 1)
-          
-          const aiResponse = `Tôi đã cập nhật yêu cầu chỉnh sửa của bạn vào Nhật ký khảo sát khao_sat_thay_doi_specs.txt ở khung bên trái. \n\nĐồng thời, cấu hình vật tư liên quan đã được đồng bộ tự động sang Bước 3. Điều chỉnh vật tư. Bạn có thể kiểm tra tệp tin và tiếp tục trao đổi.`
-          pushChat(text, aiResponse)
-          return
-        } catch (e) {
-          console.error(e)
         }
+
+        window.dispatchEvent(new Event('storage'))
+        setMaterialsVersion(prev => prev + 1)
+
+        const aiResponse = shouldUpdate
+          ? `Tôi đã cập nhật yêu cầu chỉnh sửa của bạn vào Nhật ký khảo sát ở khung bên trái. Cấu hình vật tư liên quan đã được đồng bộ tự động.`
+          : `Đã ghi nhận và cập nhật vào Nhật ký khảo sát ở khung bên trái. Bạn có thể tiếp tục trao đổi hoặc bổ sung thêm thông tin.`
+        pushChat(text, aiResponse)
+        return
+      } catch (e) {
+        console.error(e)
       }
     }
 
@@ -1388,16 +1395,16 @@ Thành phần tham dự:
     // Check query against keywords of each phase
     const phaseKeywords: Record<number, { keywords: string[], tab: string, title: string, desc: string }> = {
       1: {
-        keywords: ['nhập thông tin', 'pre-sales', 'presales', 'trước nhận đơn', 'trích xuất', 'nhập liệu dự án', '12 nhóm'],
+        keywords: ['nhập thông tin', 'pre-sales', 'presales', 'trước nhận đơn', 'trích xuất', 'nhập liệu dự án', '12 nhóm', 'dự toán', 'kiểm tra', 'trình dự toán'],
         tab: 'caseinput',
-        title: 'Nhập thông tin dự án',
-        desc: 'Đã mở Bước 1: Nhập thông tin dự án (pre-sales). Thêm nguồn ở cột trái hoặc kể về dự án để mình trích dữ liệu; gõ "bổ sung" để mình hỏi từng mục.'
+        title: 'Dự toán Pre-Sales',
+        desc: 'Đang ở giai đoạn dự toán pre-sales. Thêm nguồn tài liệu hoặc kể về dự án để AI ghi nhớ; gõ "tóm tắt dự án" để xem lại, "lập dự toán" để sinh đầu ra.'
       },
       7: {
         keywords: ['tiếp nhận', 'khảo sát', 'nhập lại', 'reentry', 're-entry', 'chênh lệch', 'đối chiếu', 'so sánh', 'đơn hàng', 'spec', 'specs'], 
         tab: 'reentry', 
-        title: 'Tiếp nhận & Khảo sát',
-        desc: 'Tôi đã di chuyển màn hình đến Bước 1: Tiếp nhận & Khảo sát để bạn thực hiện đối chiếu chênh lệch thông số thiết bị.' 
+        title: 'Khảo sát & Phát sinh',
+        desc: 'Tôi đã di chuyển màn hình đến Bước 1: Khảo sát & Phát sinh để bạn thực hiện đối chiếu chênh lệch thông số thiết bị.' 
       },
       8: { 
         keywords: ['kick-off', 'kickoff', 'bàn giao', 'handover', 'ghi chú', 'biên bản cuộc họp', 'họp', 'notes', 'lưu ghi chú'], 
@@ -1570,7 +1577,7 @@ Thành phần tham dự:
   return (
     <div className="h-screen w-screen flex flex-col bg-gradient-mesh overflow-hidden text-slate-800 font-sans page-enter-right">
       {/* Header bar */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-2.5 flex items-center justify-between flex-none z-10 shadow-xs">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-2.5 flex items-center justify-between flex-none z-30 shadow-xs">
         <div className="flex items-center gap-3">
           <Link
             to="/"
@@ -1589,6 +1596,42 @@ Thành phần tham dự:
               <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-brand-500/10 text-brand-700 border border-brand-500/20">
                 IDE ACTIVE
               </span>
+              {/* Status chip — chỉ hiện khi đang ở pre-sales */}
+              {!progressBarActivated && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowStatusMenu(v => !v)}
+                    className="flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 transition cursor-pointer"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    Đang dự toán
+                    <ChevronDown className="w-2.5 h-2.5" />
+                  </button>
+                  {showStatusMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowStatusMenu(false)} />
+                      <div className="absolute top-full left-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50 p-1.5 space-y-0.5 animate-in fade-in duration-150">
+                        <div className="px-2.5 py-1.5 text-[10px] text-amber-700 font-semibold flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-100">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                          Đang dự toán (hiện tại)
+                        </div>
+                        <div className="border-t border-slate-100 mx-1 my-1" />
+                        <button
+                          onClick={() => {
+                            setShowStatusMenu(false)
+                            addLog('Đã nhận đơn hàng — chuyển sang giai đoạn sau nhận đơn', 7)
+                            handlePhaseChange(7)
+                          }}
+                          className="w-full text-left px-2.5 py-1.5 text-[10px] font-bold text-brand-700 hover:bg-brand-50 rounded-lg flex items-center gap-2 transition cursor-pointer"
+                        >
+                          <ArrowRight className="w-3 h-3 shrink-0" />
+                          Đã nhận đơn → chuyển post-sales
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </h2>
             <p className="text-[10px] text-slate-450 font-mono">ID: {id || 'CASE-2026-0245'}</p>
           </div>
@@ -1855,17 +1898,20 @@ Thành phần tham dự:
                 phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).map((p) => {
                   const phaseNum = p.num
                   const isActive = activePhase === phaseNum
+                  const isPreSales = phaseNum <= 3
 
                   return (
                     <div
                       key={phaseNum}
-                      onClick={() => handlePhaseChange(phaseNum)}
-                      className={`p-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex items-center gap-2 select-none hover-lift ${
+                      onClick={isPreSales ? undefined : () => handlePhaseChange(phaseNum)}
+                      className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center gap-2 select-none hover-lift hover:border-slate-300 ${
+                        isPreSales ? 'cursor-default' : 'cursor-pointer'
+                      } ${
                         isActive
                           ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
-                          : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                          : 'bg-white border-slate-200 text-slate-700'
                       }`}
-                      title={`Giai đoạn: ${p.title}\nNhân sự: ${p.users}\n${p.desc}`}
+                      title={isPreSales ? `${p.title} — ${p.desc}` : `Giai đoạn: ${p.title}\nNhân sự: ${p.users}\n${p.desc}`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full flex items-center justify-center border transition shrink-0 ${
@@ -1955,19 +2001,6 @@ Thành phần tham dự:
                   pre={pre}
                   onConvertToSource={addSourceFromNote}
                   onToast={(m) => addLog(m, activePhase ?? 1)}
-                  onAdvance={() => handlePhaseChange(2)}
-                />
-              )}
-
-              {activeRightTab === 'review' && (
-                <ReviewStep pre={pre} onAdvance={() => handlePhaseChange(3)} />
-              )}
-
-              {activeRightTab === 'proposal' && (
-                <ProposalStep
-                  pre={pre}
-                  onToast={(m) => addLog(m, activePhase ?? 3)}
-                  onAccept={() => { addLog('Đã nhận đơn hàng — chuyển sang giai đoạn sau nhận đơn', 7); handlePhaseChange(7) }}
                 />
               )}
 

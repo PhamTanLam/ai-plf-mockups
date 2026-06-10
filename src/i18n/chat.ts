@@ -7,7 +7,7 @@ import type { Locale } from '@/i18n/types'
  */
 const CHAT: Record<string, { ja: string; en: string }> = {
   // ── Chip chuyển bước ──
-  'Chuyển sang Bước 1: Tiếp nhận & Khảo sát': { ja: 'ステップ1へ: 受領・調査', en: 'Go to Step 1: Intake & Survey' },
+  'Chuyển sang Bước 1: Khảo sát & Phát sinh': { ja: 'ステップ1へ: 調査・追加費用', en: 'Go to Step 1: Survey & Change Orders' },
   'Chuyển sang Bước 2: Họp Kick-off': { ja: 'ステップ2へ: キックオフ会議', en: 'Go to Step 2: Kick-off meeting' },
   'Chuyển sang Bước 3: Điều chỉnh vật tư': { ja: 'ステップ3へ: 資材調整', en: 'Go to Step 3: Adjust materials' },
   'Chuyển sang Bước 4: Thiết kế & Code tự động': { ja: 'ステップ4へ: 設計・自動コード', en: 'Go to Step 4: Design & auto code' },
@@ -38,7 +38,7 @@ const CHAT: Record<string, { ja: string; en: string }> = {
   'Lập lịch trình khái quát': { ja: '概略スケジュールを作成', en: 'Create a rough schedule' },
   'Soạn tài liệu nền đề xuất': { ja: '提案ベース資料を作成', en: 'Draft the proposal base document' },
   // ── Câu trả lời AI (explanationText) ──
-  'Đã chuyển sang Bước 1: Tiếp nhận & Khảo sát. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.': { ja: 'ステップ1「受領・調査」に移動しました。ログ画面 khao_sat_thay_doi_specs.txt を左側に表示しています。', en: 'Moved to Step 1: Intake & Survey. The log view khao_sat_thay_doi_specs.txt is shown on the left.' },
+  'Đã chuyển sang Bước 1: Khảo sát & Phát sinh. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.': { ja: 'ステップ1「調査・追加費用」に移動しました。ログ画面 khao_sat_thay_doi_specs.txt を左側に表示しています。', en: 'Moved to Step 1: Survey & Change Orders. The log view khao_sat_thay_doi_specs.txt is shown on the left.' },
   'Đã chuyển sang Bước 2: Họp Kick-off. Giao diện biên bản bien_ban_kickoff_ban_giao.txt đã được hiển thị ở bên trái.': { ja: 'ステップ2「キックオフ会議」に移動しました。議事録 bien_ban_kickoff_ban_giao.txt を左側に表示しています。', en: 'Moved to Step 2: Kick-off meeting. The minutes bien_ban_kickoff_ban_giao.txt are shown on the left.' },
   'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Bảng vật tư thông minh đã hiển thị ở bên trái.': { ja: 'ステップ3「資材調整」に移動しました。スマート資材表を左側に表示しています。', en: 'Moved to Step 3: Adjust materials. The smart materials table is shown on the left.' },
   'Đã chuyển sang Bước 4: Thiết kế & Code tự động. AI đã sinh bản vẽ CAD và Structured Text.': { ja: 'ステップ4「設計・自動コード」に移動しました。AI が CAD 図面と Structured Text を生成しました。', en: 'Moved to Step 4: Design & auto code. The AI generated the CAD drawing and Structured Text.' },

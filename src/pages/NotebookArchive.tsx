@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { 
-  ArrowLeft, FolderOpen, FileText, Download, 
-  FileCode, Layers, Search, X, ArrowUpDown, Filter
+import {
+  ArrowLeft, ArrowRight, FolderOpen, FileText, Download,
+  FileCode, Layers, Search, X, ArrowUpDown, Filter,
+  Brain, Boxes, MoreVertical, History, Share2,
+  RotateCcw, Trash2, ExternalLink, Sparkles, GitCompare
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 
@@ -32,15 +34,78 @@ export default function NotebookArchive() {
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
   const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null)
   
-  // State for premium preview and bulk download
+  // State for premium preview
   const [selectedPreviewFile, setSelectedPreviewFile] = useState<ProjectFile | null>(null)
-  const [isDownloadingAll, setIsDownloadingAll] = useState(false)
 
-  // Simulated files list (AI output files only, expanded for search and category utility)
+  // State cho menu "..." mỗi dòng và modal lịch sử phiên bản
+  const [menuFileId, setMenuFileId] = useState<string | null>(null)
+  const [historyFile, setHistoryFile] = useState<ProjectFile | null>(null)
+  const [versionMenu, setVersionMenu] = useState<string | null>(null)
+  const [compare, setCompare] = useState<{ file: ProjectFile; oldV: number; newV: number } | null>(null)
+
+  // Simulated files list — gồm cả file ĐẦU VÀO (bộ nhớ AI) và file ĐẦU RA (sản phẩm AI sinh)
   const [files] = useState<ProjectFile[]>([
-    { 
-      id: 'f-4', 
-      name: 'PLC_Ladder_Q03UDE.l5k', 
+    // ── ĐẦU VÀO (INPUT): bộ nhớ dự án — AI sinh từ chat, dùng làm context xuyên suốt ──
+    {
+      id: 'in-1',
+      name: 'Specs_Du_An.md',
+      category: 'input',
+      type: 'Markdown Specs (Bộ nhớ AI)',
+      size: '12 KB',
+      version: 'V1',
+      createdAt: '02/06/2026 14:20',
+      author: 'AI (từ chat Pre-Sales)',
+      approvalStatus: 'approved',
+      tags: ['#Specs', '#Memory', '#PreSales'],
+      summary: 'Hồ sơ đặc tả gốc do AI tổng hợp từ thông tin khách cung cấp ở giai đoạn pre-sales. Là nguồn sự thật để AI đối chiếu khi sinh dự toán, bản vẽ và code ở các bước sau.',
+      previewContent: `# ĐẶC TẢ DỰ ÁN (PROJECT SPECS) — V1
+Mã dự án: WW2 Welding Cell
+Nguồn: Tổng hợp từ chat pre-sales (Bước 1-3)
+
+## 1. Yêu cầu khách hàng
+- Dây chuyền hàn & đo kiểm phôi tự động cho line WW2.
+- Điều khiển vị trí phôi chính xác bằng Servo Mitsubishi MR-J5.
+
+## 2. Cấu hình dự kiến (lúc báo giá)
+- PLC: Mitsubishi Melsec FX5U (dòng Compact).
+- HMI: GOT2000 7-inch.
+- Servo: 3 trục (A1, A2, A3).
+- An toàn: ISO 13849 PLc.
+
+## 3. Ràng buộc
+- Ngân sách dự kiến + thời gian giao theo dự toán đính kèm.
+
+→ AI dùng file này làm mốc để phát hiện CHÊNH LỆCH ở Bước 7 (Khảo sát & Phát sinh).`
+    },
+    {
+      id: 'in-2',
+      name: 'Khao_Sat_Phat_Sinh.txt',
+      category: 'input',
+      type: 'Nhật ký Khảo sát (Bộ nhớ AI)',
+      size: '8 KB',
+      version: 'V2',
+      createdAt: '06/06/2026 09:30',
+      author: 'AI (từ chat Bước 7)',
+      approvalStatus: 'reviewing',
+      tags: ['#KhaoSat', '#PhatSinh', '#Delta'],
+      summary: 'Bản ghi chênh lệch kỹ thuật thực tế sau khi nhận đơn, do AI cập nhật từ chat ở Bước 7. AI so file này với Specs_V1 để tính phát sinh và cập nhật bản vẽ/code.',
+      previewContent: `# NHẬT KÝ KHẢO SÁT & THAY ĐỔI THÔNG SỐ — V2
+Mã dự án: WW2 Welding Cell
+Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
+
+## Chênh lệch so với Specs_V1
+- PLC: FX5U (Compact) → Q03UDE (Modulized) + module I/O mở rộng.
+  Lý do: I/O thực tế tăng 28% + cần Ethernet tốc độ cao cho Robot hàn.
+- HMI: GOT2000 7-inch → 10-inch.
+- Servo: 3 trục → 4 trục (bổ sung MR-J5-40A cho băng tải phụ).
+- An toàn: ISO 13849 PLc → PLd (thêm rơ-le Omron G9SE + 2 light curtain).
+
+→ AI đã cập nhật bảng vật tư (Bước 3) và bản vẽ/code (Bước 4) theo delta này.`
+    },
+    // ── ĐẦU RA (OUTPUT): sản phẩm AI sinh ra từ các file đầu vào trên ──
+    {
+      id: 'f-4',
+      name: 'PLC_Ladder_Q03UDE.l5k',
       category: 'output', 
       type: 'L5K Ladder Code', 
       size: '89 KB', 
@@ -67,7 +132,7 @@ END_PROGRAM`
     },
     { 
       id: 'f-5', 
-      name: 'Electrical_Layout_v2.0.dwg', 
+      name: 'Electrical_Layout.dwg',
       category: 'output', 
       type: 'DWG AutoCAD Layout', 
       size: '1.4 MB', 
@@ -145,7 +210,7 @@ END_IF;`
     },
     { 
       id: 'f-10', 
-      name: 'PLC_Memory_Mapping_V1.pdf', 
+      name: 'PLC_Memory_Mapping.pdf',
       category: 'output', 
       type: 'PDF Memory Mapping', 
       size: '420 KB', 
@@ -173,11 +238,76 @@ END_IF;`
     if (sizeStr.toUpperCase().includes('MB')) return val * 1024
     return val
   }
+  const fmtSize = (kb: number) => kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB' : Math.round(kb) + ' KB'
 
-  // Dynamic counter for filter buttons
+  // Mốc thời gian giả cho các phiên bản cũ (mockup — hệ thống thật sẽ lấy từ lịch sử thực)
+  const MOCK_OLD_TIMES = ['04/06/2026 16:45', '01/06/2026 10:12', '28/05/2026 09:30']
+  // Lịch sử phiên bản — sinh từ field `version` (vd 'V2' → 2.0, 1.0). Version là metadata, KHÔNG nằm trong tên file.
+  const getVersionHistory = (file: ProjectFile) => {
+    const cur = parseInt(file.version.replace(/\D/g, '')) || 1
+    const baseKb = parseSizeToKb(file.size)
+    return Array.from({ length: cur }, (_, idx) => {
+      const v = cur - idx // idx 0 = phiên bản mới nhất
+      return {
+        version: `${v}.0`,
+        modified: idx === 0 ? file.createdAt : (MOCK_OLD_TIMES[idx - 1] || file.createdAt),
+        size: fmtSize(Math.max(1, baseKb * (1 - 0.08 * idx))),
+        author: file.author,
+        isCurrent: idx === 0,
+      }
+    })
+  }
+
+  // ── SO SÁNH PHIÊN BẢN ──
+  // Preview dạng đặc biệt (cad/docx/pdf/excel) không so sánh được bằng văn bản.
+  const SPECIAL_PREVIEW = new Set(['cad', 'DOCX_REPORT', 'PDF_MANUAL', 'PDF_MEMORY', 'EXCEL_TABLE'])
+  // Nội dung bản CŨ (mock) cho các file có nhiều phiên bản — để diff làm nổi phần AI bổ sung về sau.
+  const OLD_VERSION_TEXT: Record<string, string> = {
+    'in-2': `# NHẬT KÝ KHẢO SÁT & THAY ĐỔI THÔNG SỐ — V2
+Mã dự án: WW2 Welding Cell
+Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
+
+## Chênh lệch so với Specs_V1
+- PLC: FX5U (Compact) → Q03UDE (Modulized) + module I/O mở rộng.
+  Lý do: I/O thực tế tăng 28% + cần Ethernet tốc độ cao cho Robot hàn.
+- HMI: GOT2000 7-inch → 10-inch.`,
+  }
+  // Văn bản của một phiên bản (để so sánh). Trả null nếu định dạng không hỗ trợ.
+  const getComparableText = (file: ProjectFile, v: number): string | null => {
+    const base = file.previewContent
+    if (!base || SPECIAL_PREVIEW.has(base)) return null
+    const cur = parseInt(file.version.replace(/\D/g, '')) || 1
+    if (v >= cur) return base // bản hiện hành
+    if (OLD_VERSION_TEXT[file.id]) return OLD_VERSION_TEXT[file.id]
+    // Mock chung: bản cũ = bỏ 2 dòng cuối của bản hiện hành
+    const lines = base.split('\n')
+    return lines.slice(0, Math.max(1, lines.length - 2)).join('\n')
+  }
+  // Diff theo dòng (LCS) — trả về danh sách {type: same|add|del, text}
+  const diffLines = (oldStr: string, newStr: string) => {
+    const A = oldStr.split('\n'), B = newStr.split('\n')
+    const m = A.length, n = B.length
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0))
+    for (let i = m - 1; i >= 0; i--)
+      for (let j = n - 1; j >= 0; j--)
+        dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1])
+    const out: { type: 'same' | 'add' | 'del'; text: string }[] = []
+    let i = 0, j = 0
+    while (i < m && j < n) {
+      if (A[i] === B[j]) { out.push({ type: 'same', text: A[i] }); i++; j++ }
+      else if (dp[i + 1][j] >= dp[i][j + 1]) { out.push({ type: 'del', text: A[i] }); i++ }
+      else { out.push({ type: 'add', text: B[j] }); j++ }
+    }
+    while (i < m) out.push({ type: 'del', text: A[i++] })
+    while (j < n) out.push({ type: 'add', text: B[j++] })
+    return out
+  }
+
+  // Đếm cho chip lọc — chỉ tính SẢN PHẨM (bộ lọc loại không áp cho Bộ nhớ)
   const getCount = (catId: 'all' | 'code' | 'cad' | 'doc') => {
-    if (catId === 'all') return files.length
-    return files.filter(f => getFileCategory(f.name) === catId).length
+    const outs = files.filter(f => f.category === 'output')
+    if (catId === 'all') return outs.length
+    return outs.filter(f => getFileCategory(f.name) === catId).length
   }
 
   // Handle mock download
@@ -190,39 +320,163 @@ END_IF;`
     }, 1200)
   }
 
-  // Bulk ZIP download simulation
-  const handleDownloadAll = () => {
-    setIsDownloadingAll(true)
-    setTimeout(() => {
-      setIsDownloadingAll(false)
-      alert(`[MOCK EXPORT] Đã nén và tải xuống thành công file: Project_Library_Exports.zip (${filteredFiles.length} tệp)`)
-    }, 1800)
+  // Sắp xếp dùng chung
+  const sortFiles = (arr: ProjectFile[]) => [...arr].sort((a, b) => {
+    if (sortBy === 'name') return a.name.localeCompare(b.name)
+    if (sortBy === 'size') return parseSizeToKb(b.size) - parseSizeToKb(a.size)
+    return b.createdAt.localeCompare(a.createdAt) // mới nhất trước
+  })
+  const matchesSearch = (f: ProjectFile) =>
+    f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    f.type.toLowerCase().includes(searchQuery.toLowerCase())
+
+  // BỘ NHỚ (input): chỉ lọc theo tìm kiếm — bộ lọc loại file là khái niệm của Sản phẩm, không áp cho Bộ nhớ
+  const inputFiles = sortFiles(files.filter(f => f.category === 'input' && matchesSearch(f)))
+  // SẢN PHẨM (output): lọc theo tìm kiếm + loại file
+  const outputFiles = sortFiles(files.filter(f =>
+    f.category === 'output' && matchesSearch(f) &&
+    (categoryFilter === 'all' || getFileCategory(f.name) === categoryFilter)
+  ))
+  // Tổng hợp cho nút "Tải toàn bộ" và trạng thái rỗng toàn cục
+  const filteredFiles = [...inputFiles, ...outputFiles]
+
+  // Bước 7 (ProjectReentry) ghi nhật ký khảo sát vào localStorage theo dự án.
+  // File 'in-2' trong Thư viện chính là file đó → ưu tiên hiển thị nội dung động (nếu có)
+  // thay vì previewContent tĩnh, để Thư viện phản ánh đúng "một nguồn sự thật".
+  const REENTRY_KEY = `aiplf.project_reentry_text.${id || 'default'}`
+  const getLivePreview = (file: ProjectFile): { text?: string; isLive: boolean } => {
+    if (file.id === 'in-2') {
+      const live = localStorage.getItem(REENTRY_KEY)
+      if (live) return { text: live, isLive: true }
+    }
+    return { text: file.previewContent, isLive: false }
   }
 
-  // Filtering and Sorting Process
-  const filteredFiles = files
-    .filter(file => {
-      // 1. Search Query
-      const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            file.type.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      // 2. Category Filter
-      const cat = getFileCategory(file.name)
-      const matchesCategory = categoryFilter === 'all' || cat === categoryFilter
-      
-      return matchesSearch && matchesCategory
-    })
-    .sort((a, b) => {
-      // 3. Sorting
-      if (sortBy === 'name') {
-        return a.name.localeCompare(b.name)
-      } else if (sortBy === 'size') {
-        return parseSizeToKb(b.size) - parseSizeToKb(a.size)
-      } else {
-        // Date sorting (newest first, based on createdAt format 'dd/mm/yyyy hh:mm')
-        return b.createdAt.localeCompare(a.createdAt)
-      }
-    })
+  // Render 1 dòng file (dùng lại cho cả nhóm đầu vào & đầu ra)
+  const renderFileRow = (file: ProjectFile) => {
+    const isCAD = file.name.endsWith('.dwg') || file.name.endsWith('.dxf')
+    const isCode = file.name.endsWith('.l5k') || file.name.endsWith('.st')
+    return (
+      <div
+        key={file.id}
+        onClick={() => setSelectedPreviewFile(file)}
+        className="p-3.5 bg-white border border-slate-200/80 hover:border-brand-350 hover:bg-brand-500/2 hover:shadow-2xs rounded-xl flex items-center justify-between gap-3 transition duration-200 cursor-pointer group relative"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center shrink-0 ${
+            isCAD ? 'bg-indigo-50 text-indigo-600' : isCode ? 'bg-emerald-50 text-emerald-600' : 'bg-brand-50 text-brand-600'
+          }`}>
+            {isCAD ? (
+              <Layers className="w-4.5 h-4.5" />
+            ) : isCode ? (
+              <FileCode className="w-4.5 h-4.5" />
+            ) : (
+              <FileText className="w-4.5 h-4.5" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-bold text-slate-800 truncate" title={file.name}>
+                {file.name}
+              </span>
+            </div>
+
+            {file.category === 'input' && (
+              <p className="text-[10px] text-slate-500 mt-1 line-clamp-2 leading-snug">{file.summary}</p>
+            )}
+
+            <div className="flex flex-wrap gap-1 mt-1">
+              {file.tags.slice(0, 2).map((tag, i) => (
+                <span key={i} className="text-[7.5px] px-1 py-0.2 bg-slate-100 border border-slate-200 text-slate-500 rounded font-medium">
+                  {tag}
+                </span>
+              ))}
+              <span className="text-[8px] text-slate-400 font-mono self-center ml-1">
+                {file.size} • {t('post.arch.fileVersion')} {file.version} • {file.createdAt}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Menu "..." — chứa Tải xuống / Chia sẻ / Lịch sử phiên bản */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setMenuFileId(menuFileId === file.id ? null : file.id) }}
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer z-10"
+            title="Tùy chọn khác"
+          >
+            <MoreVertical className="w-3.5 h-3.5" />
+          </button>
+
+          {menuFileId === file.id && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={(e) => { e.stopPropagation(); setMenuFileId(null) }} />
+              <div className="absolute right-2 top-12 z-30 bg-white border border-slate-200 rounded-xl shadow-pop py-1 min-w-[180px] text-xs animate-in fade-in zoom-in-95 duration-150">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setMenuFileId(null); handleDownload(file) }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-500" /> Tải xuống
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setMenuFileId(null); alert(`[MOCK] Đã tạo liên kết chia sẻ cho: ${file.name}`) }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-slate-500" /> Chia sẻ
+                </button>
+                <div className="border-t border-slate-100 my-1 mx-1" />
+                <button
+                  onClick={(e) => { e.stopPropagation(); setMenuFileId(null); setHistoryFile(file) }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-50 cursor-pointer text-brand-700 font-semibold"
+                >
+                  <History className="w-3.5 h-3.5" /> Lịch sử phiên bản
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Code preview kiểu editor: header chrome + số dòng + tô màu comment (light theme dễ đọc)
+  const renderCodeBlock = (code: string, name: string) => {
+    const lines = code.split('\n')
+    const lang = /\.l5k$/i.test(name) ? 'L5K · Ladder' : /\.st$/i.test(name) ? 'Structured Text' : /\.json$/i.test(name) ? 'JSON' : 'Code'
+    return (
+      <div className="rounded-xl border border-slate-200 overflow-hidden shadow-3xs">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-slate-100 border-b border-slate-200">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-300" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-300" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-300" />
+          </div>
+          <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider">{lang}</span>
+        </div>
+        <div className="overflow-auto max-h-[340px] bg-white">
+          <table className="border-collapse font-mono text-[11.5px] leading-relaxed">
+            <tbody>
+              {lines.map((ln, i) => {
+                const ci = ln.indexOf('//')
+                const codePart = ci >= 0 ? ln.slice(0, ci) : ln
+                const commentPart = ci >= 0 ? ln.slice(ci) : ''
+                return (
+                  <tr key={i} className="hover:bg-slate-50/80">
+                    <td className="select-none text-right text-slate-300 pr-3 pl-3 align-top whitespace-nowrap border-r border-slate-100 bg-slate-50/50">{i + 1}</td>
+                    <td className="pl-4 pr-5 whitespace-pre text-slate-800 align-top">
+                      {codePart}
+                      {commentPart && <span className="text-emerald-600/80 italic">{commentPart}</span>}
+                      {!ln && ' '}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
 
   // CAD Custom SVG wiring preview rendering
   const renderCadPreview = () => {
@@ -429,193 +683,149 @@ END_IF;`
       <div className="flex-1 flex min-h-0 p-6 overflow-hidden justify-center items-start">
         
         {/* Project File Library Panel */}
-        <section className="max-w-3xl w-full h-full bg-white border border-slate-200 rounded-3xl p-6 flex flex-col min-h-0 shadow-panel">
-          <div className="flex items-center justify-between border-b border-slate-250 pb-3.5 shrink-0">
-            <div className="flex items-center gap-2">
-              <FolderOpen className="w-5 h-5 text-indigo-500 animate-pulse-slow" />
-              <div>
-                <h3 className="text-sm font-extrabold text-slate-900">
-                  {t('post.arch.fileLibTitle')}
-                </h3>
-                <p className="text-[10px] text-slate-450">
-                  {t('post.arch.fileLibSubtitle')}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleDownloadAll}
-              disabled={isDownloadingAll || filteredFiles.length === 0}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-200 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
-            >
-              {isDownloadingAll ? (
-                <>
-                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Đang nén ZIP...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Tải toàn bộ ({filteredFiles.length})</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Search, Filter & Sort Controls */}
-          <div className="mt-4 flex flex-col sm:flex-row gap-3 shrink-0">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm kiếm tài liệu, định dạng..."
-                className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-semibold text-slate-800 transition duration-200"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="p-1 hover:bg-slate-200 rounded-full absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Sort Dropdown */}
-            <div className="relative min-w-[160px]">
-              <ArrowUpDown className="w-3.5 h-3.5 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-bold text-slate-700 cursor-pointer appearance-none"
-              >
-                <option value="date">Mới cập nhật</option>
-                <option value="name">Tên tệp (A-Z)</option>
-                <option value="size">Dung lượng lớn</option>
-              </select>
+        <section className="max-w-5xl w-full h-full bg-white border border-slate-200 rounded-3xl p-6 flex flex-col min-h-0 shadow-panel">
+          {/* Header: tiêu đề */}
+          <div className="flex items-center gap-2 border-b border-slate-250 pb-3.5 shrink-0">
+            <FolderOpen className="w-5 h-5 text-indigo-500 animate-pulse-slow" />
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900">
+                {t('post.arch.fileLibTitle')}
+              </h3>
+              <p className="text-[10px] text-slate-450">
+                {t('post.arch.fileLibSubtitle')}
+              </p>
             </div>
           </div>
 
-          {/* Category Filter Tags */}
-          <div className="flex flex-wrap items-center gap-1.5 mt-3.5 shrink-0 select-none pb-3 border-b border-slate-100">
-            <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mr-2 flex items-center gap-1">
-              <Filter className="w-3 h-3 text-slate-400" />
-              Lọc theo:
-            </span>
-            {[
-              { id: 'all', label: 'Tất cả' },
-              { id: 'code', label: 'Mã nguồn PLC' },
-              { id: 'cad', label: 'Sơ đồ mạch CAD' },
-              { id: 'doc', label: 'Tài liệu & Báo cáo' }
-            ].map((cat) => {
-              const active = categoryFilter === cat.id
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setCategoryFilter(cat.id as any)}
-                  className={`px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wide transition cursor-pointer flex items-center gap-1.5 ${
-                    active
-                      ? 'bg-brand-500 text-white shadow-3xs font-black'
-                      : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <span>{cat.label}</span>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[8px] font-bold ${
-                    active ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
-                  }`}>
-                    {getCount(cat.id as any)}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+          {filteredFiles.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <FileText className="w-10 h-10 text-slate-300 mb-2 animate-bounce-slow" />
+              <p className="text-xs font-bold text-slate-400">Không tìm thấy tài liệu phù hợp</p>
+              <p className="text-[10px] text-slate-400 mt-1">Hãy thử tìm với từ khóa hoặc bộ lọc khác</p>
+            </div>
+          ) : (
+            /* Thân 2 cột: TRÁI = Bộ nhớ (nền tảng) · PHẢI = Sản phẩm bàn giao */
+            <div className="flex-1 flex min-h-0 mt-4 gap-5">
 
-          {/* Files List Directory */}
-          <div className="flex-1 overflow-y-auto mt-4 pr-1 min-h-0">
-            {filteredFiles.length === 0 ? (
-              <div className="h-64 flex flex-col items-center justify-center text-center">
-                <FileText className="w-10 h-10 text-slate-300 mb-2 animate-bounce-slow" />
-                <p className="text-xs font-bold text-slate-400">Không tìm thấy tài liệu phù hợp</p>
-                <p className="text-[10px] text-slate-400 mt-1">Hãy thử tìm với từ khóa hoặc bộ lọc khác</p>
-              </div>
-            ) : (
-              <div className="space-y-2 pb-2">
-                {filteredFiles.map((file) => {
-                  const isCAD = file.name.endsWith('.dwg') || file.name.endsWith('.dxf')
-                  const isCode = file.name.endsWith('.l5k') || file.name.endsWith('.st')
-                  
-                  return (
-                    <div 
-                      key={file.id}
-                      onClick={() => setSelectedPreviewFile(file)}
-                      className="p-3.5 bg-white border border-slate-200/80 hover:border-brand-350 hover:bg-brand-500/2 hover:shadow-2xs rounded-xl flex items-center justify-between gap-3 transition duration-200 cursor-pointer group relative"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center shrink-0 ${
-                          isCAD ? 'bg-indigo-50 text-indigo-600' : isCode ? 'bg-emerald-50 text-emerald-600' : 'bg-brand-50 text-brand-600'
-                        }`}>
-                          {isCAD ? (
-                            <Layers className="w-4.5 h-4.5" />
-                          ) : isCode ? (
-                            <FileCode className="w-4.5 h-4.5" />
-                          ) : (
-                            <FileText className="w-4.5 h-4.5" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs font-bold text-slate-800 truncate" title={file.name}>
-                              {file.name}
-                            </span>
-                            <span className={`text-[7.5px] px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider shrink-0 ${
-                              file.approvalStatus === 'approved'
-                                ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
-                                : file.approvalStatus === 'reviewing'
-                                ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
-                                : 'bg-slate-500/10 text-slate-600 border border-slate-250'
-                            }`}>
-                              {file.approvalStatus === 'approved' ? 'Đã ký số' : file.approvalStatus === 'reviewing' ? 'Chờ duyệt' : 'Bản thảo'}
-                            </span>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {file.tags.slice(0, 2).map((tag, i) => (
-                              <span key={i} className="text-[7.5px] px-1 py-0.2 bg-slate-100 border border-slate-200 text-slate-500 rounded font-medium">
-                                {tag}
-                              </span>
-                            ))}
-                            <span className="text-[8px] text-slate-400 font-mono self-center ml-1">
-                              {file.size} • {t('post.arch.fileVersion')} {file.version} • {file.createdAt}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation() // Prevent opening the preview modal
-                          handleDownload(file)
-                        }}
-                        disabled={downloadingFileId !== null}
-                        className="p-2 bg-white hover:bg-slate-200 border border-slate-250 text-slate-600 rounded-lg hover:text-slate-900 transition shrink-0 cursor-pointer z-10"
-                        title={t('post.arch.downloadFile')}
-                      >
-                        {downloadingFileId === file.id ? (
-                          <span className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin block" />
-                        ) : (
-                          <Download className="w-3.5 h-3.5" />
-                        )}
-                      </button>
+              {/* ── TRÁI: Bộ nhớ dự án (vùng nền tảng, nền tô nhẹ) ── */}
+              <aside className="w-[320px] shrink-0 flex flex-col min-h-0">
+                <div className="flex flex-col min-h-0 max-h-full rounded-2xl border border-brand-200/60 bg-brand-50/40 p-4">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-brand-100 border border-brand-200/70 flex items-center justify-center text-brand-600 shrink-0">
+                      <Brain className="w-4 h-4" />
                     </div>
-                  )
-                })}
+                    <h4 className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                      Bộ nhớ dự án
+                      <span className="text-[8px] px-1.5 py-0.2 rounded-full font-bold bg-brand-100 text-brand-700">{inputFiles.length}</span>
+                    </h4>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1.5 shrink-0 leading-relaxed">
+                    Đặc tả & nhật ký AI tự ghi nhận qua trao đổi — nền tảng để tạo sản phẩm.
+                  </p>
+                  <div className="overflow-y-auto mt-3 space-y-2 pr-0.5 min-h-0">
+                    {inputFiles.length === 0 ? (
+                      <p className="text-[10px] text-slate-400 italic px-1 py-4 text-center">Chưa có file bộ nhớ phù hợp.</p>
+                    ) : inputFiles.map(renderFileRow)}
+                  </div>
+                  <div className="shrink-0 mt-3 pt-3 border-t border-brand-200/50 text-[9px] font-semibold text-brand-700/90 flex items-center gap-1.5">
+                    <ArrowRight className="w-3 h-3 shrink-0" />
+                    AI dùng bộ nhớ này để sinh sản phẩm
+                  </div>
+                </div>
+              </aside>
+
+              {/* ── PHẢI: Sản phẩm bàn giao ── */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="shrink-0 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-brand-50 border border-brand-200/70 flex items-center justify-center text-brand-600 shrink-0">
+                      <Boxes className="w-4 h-4" />
+                    </div>
+                    <h4 className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                      Sản phẩm bàn giao
+                      <span className="text-[8px] px-1.5 py-0.2 rounded-full font-bold bg-brand-100 text-brand-700">{outputFiles.length}</span>
+                    </h4>
+                  </div>
+
+                  {/* Tìm kiếm + sắp xếp */}
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Tìm kiếm tài liệu, định dạng..."
+                        className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-semibold text-slate-800 transition duration-200"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery('')}
+                          className="p-1 hover:bg-slate-200 rounded-full absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative min-w-[150px]">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-slate-450 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as any)}
+                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-xs font-bold text-slate-700 cursor-pointer appearance-none"
+                      >
+                        <option value="date">Mới cập nhật</option>
+                        <option value="name">Tên tệp (A-Z)</option>
+                        <option value="size">Dung lượng lớn</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Chip lọc theo loại (chỉ áp cho Sản phẩm) */}
+                  <div className="flex flex-wrap items-center gap-1.5 select-none">
+                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
+                      <Filter className="w-3 h-3 text-slate-400" />
+                      Lọc:
+                    </span>
+                    {[
+                      { id: 'all', label: 'Tất cả' },
+                      { id: 'code', label: 'Mã nguồn PLC' },
+                      { id: 'cad', label: 'Sơ đồ mạch CAD' },
+                      { id: 'doc', label: 'Tài liệu & Báo cáo' }
+                    ].map((cat) => {
+                      const active = categoryFilter === cat.id
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setCategoryFilter(cat.id as any)}
+                          className={`px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wide transition cursor-pointer flex items-center gap-1.5 ${
+                            active
+                              ? 'bg-brand-500 text-white shadow-3xs font-black'
+                              : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          <span>{cat.label}</span>
+                          <span className={`px-1.5 py-0.2 rounded-full text-[8px] font-bold ${
+                            active ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                          }`}>
+                            {getCount(cat.id as any)}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto mt-3 space-y-2 pr-1 min-h-0">
+                  {outputFiles.length === 0 ? (
+                    <p className="text-[10px] text-slate-400 italic px-1 py-4 text-center">Không có sản phẩm khớp bộ lọc.</p>
+                  ) : outputFiles.map(renderFileRow)}
+                </div>
               </div>
-            )}
-          </div>
+
+            </div>
+          )}
         </section>
 
       </div>
@@ -632,19 +842,6 @@ END_IF;`
                   <h4 className="text-sm font-extrabold text-slate-900 truncate" title={selectedPreviewFile.name}>
                     {selectedPreviewFile.name}
                   </h4>
-                  <span className={`text-[8.5px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0 ${
-                    selectedPreviewFile.approvalStatus === 'approved'
-                      ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
-                      : selectedPreviewFile.approvalStatus === 'reviewing'
-                      ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
-                      : 'bg-slate-500/10 text-slate-600 border border-slate-250'
-                  }`}>
-                    {selectedPreviewFile.approvalStatus === 'approved'
-                      ? 'Đã Phê Duyệt'
-                      : selectedPreviewFile.approvalStatus === 'reviewing'
-                      ? 'Chờ Duyệt'
-                      : 'Bản Thảo'}
-                  </span>
                 </div>
                 <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                   Định dạng: {selectedPreviewFile.type} • Dung lượng: {selectedPreviewFile.size} • Phiên bản: {selectedPreviewFile.version}
@@ -684,30 +881,48 @@ END_IF;`
                 
                 {/* Check file type for preview rendering */}
                 {(() => {
-                  if (selectedPreviewFile.previewContent === 'cad') {
+                  const pc = selectedPreviewFile.previewContent
+                  if (pc === 'cad') {
                     return renderCadPreview()
-                  } else if (selectedPreviewFile.previewContent === 'DOCX_REPORT') {
+                  } else if (pc === 'DOCX_REPORT') {
                     return renderDocPreview('docx')
-                  } else if (selectedPreviewFile.previewContent === 'PDF_MANUAL') {
+                  } else if (pc === 'PDF_MANUAL') {
                     return renderDocPreview('pdf_manual')
-                  } else if (selectedPreviewFile.previewContent === 'PDF_MEMORY') {
+                  } else if (pc === 'PDF_MEMORY') {
                     return renderDocPreview('pdf_memory')
-                  } else if (selectedPreviewFile.previewContent === 'EXCEL_TABLE') {
+                  } else if (pc === 'EXCEL_TABLE') {
                     return renderDocPreview('excel')
-                  } else if (selectedPreviewFile.previewContent) {
-                    // Monospace preview block for code
+                  }
+                  // File text (gồm bộ nhớ AI) — ưu tiên nội dung động từ Bước 7 nếu có
+                  const { text, isLive } = getLivePreview(selectedPreviewFile)
+                  if (text) {
+                    // Code (.l5k/.st) → giao diện terminal tối; văn bản (.md/.txt, bộ nhớ) → tài liệu nền sáng dễ đọc
+                    const isCodeFile = /\.(l5k|st|json)$/i.test(selectedPreviewFile.name)
                     return (
-                      <pre className="bg-slate-950 text-emerald-450 p-4 border border-slate-800 rounded-xl text-[10.5px] font-mono overflow-auto max-h-[220px] leading-relaxed select-all">
-                        {selectedPreviewFile.previewContent}
-                      </pre>
-                    )
-                  } else {
-                    return (
-                      <div className="border border-slate-200 rounded-xl bg-slate-50 p-6 text-center text-[11px] text-slate-400">
-                        Không hỗ trợ xem trước cho tệp định dạng này
+                      <div className="space-y-1.5">
+                        {isLive && (
+                          <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/70 rounded-lg px-2 py-1 w-fit">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            Đồng bộ trực tiếp từ Bước 7 (Khảo sát &amp; Phát sinh)
+                          </div>
+                        )}
+                        {isCodeFile ? (
+                          renderCodeBlock(text, selectedPreviewFile.name)
+                        ) : (
+                          <div className="bg-white border border-slate-200 rounded-xl p-4 overflow-auto max-h-[340px] shadow-3xs">
+                            <pre className="text-[12px] text-slate-700 leading-relaxed whitespace-pre-wrap break-words font-sans select-text">
+                              {text}
+                            </pre>
+                          </div>
+                        )}
                       </div>
                     )
                   }
+                  return (
+                    <div className="border border-slate-200 rounded-xl bg-slate-50 p-6 text-center text-[11px] text-slate-400">
+                      Không hỗ trợ xem trước cho tệp định dạng này
+                    </div>
+                  )
                 })()}
               </div>
             </div>
@@ -731,6 +946,196 @@ END_IF;`
           </div>
         </div>
       )}
+
+      {/* Version History Modal */}
+      {historyFile && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 animate-in fade-in duration-200" onClick={() => { setHistoryFile(null); setVersionMenu(null) }}>
+          <div className="bg-white rounded-3xl border border-slate-200 w-[600px] max-w-[92vw] shadow-pop animate-in zoom-in-95 duration-200 text-slate-800 flex flex-col max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-slate-200 shrink-0">
+              <div className="min-w-0 pr-4">
+                <h4 className="text-base font-extrabold text-slate-900">Lịch sử phiên bản</h4>
+                <p className="text-[11px] text-slate-450 font-mono mt-0.5 truncate" title={historyFile.name}>{historyFile.name}</p>
+              </div>
+              <button
+                onClick={() => { setHistoryFile(null); setVersionMenu(null) }}
+                className="text-slate-450 hover:text-slate-850 p-1.5 hover:bg-slate-100 rounded-full transition cursor-pointer shrink-0"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            {/* Table — không dùng overflow để dropdown phiên bản không bị cắt */}
+            <div className="px-6 py-2">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="py-2 pr-3 font-bold">Phiên bản</th>
+                    <th className="py-2 pr-3 font-bold">Sửa lúc</th>
+                    <th className="py-2 pr-3 font-bold">Dung lượng</th>
+                    <th className="py-2 font-bold">Cập nhật bởi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getVersionHistory(historyFile).map((v) => {
+                    const isAI = v.author.trim().toUpperCase().startsWith('AI')
+                    const initials = v.author.replace(/[()]/g, '').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+                    return (
+                      <tr key={v.version} className="border-t border-slate-100 hover:bg-slate-50/60 transition group">
+                        <td className="py-3 pr-3">
+                          <div className="flex items-center gap-2 relative">
+                            <span className="text-sm font-bold text-slate-800">{v.version}</span>
+                            {v.isCurrent && (
+                              <span className="text-[8px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">Hiện tại</span>
+                            )}
+                            <button
+                              onClick={() => setVersionMenu(versionMenu === v.version ? null : v.version)}
+                              className={`p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer ${versionMenu === v.version ? 'bg-slate-200 text-slate-700' : 'opacity-0 group-hover:opacity-100'}`}
+                              title="Thao tác với phiên bản này"
+                            >
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </button>
+                            {versionMenu === v.version && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setVersionMenu(null)} />
+                                <div className="absolute left-12 top-7 z-50 bg-white border border-slate-200 rounded-xl shadow-pop py-1 min-w-[170px] text-xs animate-in fade-in zoom-in-95 duration-150">
+                                  <button
+                                    onClick={() => { setVersionMenu(null); alert(`[MOCK] Mở phiên bản ${v.version} của ${historyFile.name}`) }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5 text-slate-500" /> Mở file
+                                  </button>
+                                  {!v.isCurrent && (
+                                    <button
+                                      onClick={() => {
+                                        setVersionMenu(null)
+                                        const cur = parseInt(historyFile.version.replace(/\D/g, '')) || 1
+                                        setCompare({ file: historyFile, oldV: parseInt(v.version) || 1, newV: cur })
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-50 cursor-pointer text-brand-700 font-semibold"
+                                    >
+                                      <GitCompare className="w-3.5 h-3.5" /> So sánh với bản hiện tại
+                                    </button>
+                                  )}
+                                  {!v.isCurrent && (
+                                    <>
+                                      <button
+                                        onClick={() => { setVersionMenu(null); alert(`[MOCK] Đã khôi phục về phiên bản ${v.version}`) }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer text-slate-700"
+                                      >
+                                        <RotateCcw className="w-3.5 h-3.5 text-slate-500" /> Khôi phục
+                                      </button>
+                                      <div className="border-t border-slate-100 my-1 mx-1" />
+                                      <button
+                                        onClick={() => { setVersionMenu(null); alert(`[MOCK] Đã xóa phiên bản ${v.version}`) }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 cursor-pointer text-rose-600"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" /> Xóa phiên bản
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 pr-3 text-xs text-slate-500 font-mono">{v.modified}</td>
+                        <td className="py-3 pr-3 text-xs text-slate-500 font-mono">{v.size}</td>
+                        <td className="py-3">
+                          <span className="flex items-center gap-2">
+                            {isAI ? (
+                              <span className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-brand-500 text-white flex items-center justify-center shrink-0 shadow-3xs" title="Cập nhật tự động bởi AI">
+                                <Sparkles className="w-3 h-3" />
+                              </span>
+                            ) : (
+                              <span className="w-6 h-6 rounded-full bg-brand-500/10 text-brand-700 text-[9px] font-bold flex items-center justify-center border border-brand-200/40 shrink-0">{initials}</span>
+                            )}
+                            <span className="text-xs text-slate-700 font-medium truncate">{v.author}</span>
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="px-6 py-3 border-t border-slate-100 text-[10px] text-slate-400 shrink-0">
+              Phiên bản do hệ thống tự đánh dấu mỗi lần file được cập nhật — không cần ghi version vào tên file.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compare (diff) Modal */}
+      {compare && (() => {
+        const oldText = getComparableText(compare.file, compare.oldV)
+        const newText = getComparableText(compare.file, compare.newV)
+        const supported = oldText !== null && newText !== null
+        const rows = supported ? diffLines(oldText as string, newText as string) : []
+        const adds = rows.filter(r => r.type === 'add').length
+        const dels = rows.filter(r => r.type === 'del').length
+        return (
+          <div className="fixed inset-0 bg-slate-900/55 backdrop-blur-xs flex items-center justify-center z-[60] animate-in fade-in duration-200" onClick={() => setCompare(null)}>
+            <div className="bg-white rounded-3xl border border-slate-200 w-[680px] max-w-[94vw] shadow-pop animate-in zoom-in-95 duration-200 text-slate-800 flex flex-col max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-slate-200 shrink-0">
+                <div className="min-w-0 pr-4">
+                  <h4 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <GitCompare className="w-4 h-4 text-brand-500" /> So sánh phiên bản
+                  </h4>
+                  <p className="text-[11px] text-slate-450 font-mono mt-0.5 truncate" title={compare.file.name}>{compare.file.name}</p>
+                  <div className="flex items-center gap-2 mt-2 text-[11px] font-bold">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">Bản {compare.oldV}.0</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">Bản {compare.newV}.0 (hiện tại)</span>
+                    {supported && (
+                      <span className="ml-1 text-[10px] font-semibold text-slate-400">
+                        <span className="text-emerald-600">+{adds} thêm</span> · <span className="text-rose-500">−{dels} bỏ</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setCompare(null)} className="text-slate-450 hover:text-slate-850 p-1.5 hover:bg-slate-100 rounded-full transition cursor-pointer shrink-0">
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
+
+              {/* Diff body */}
+              <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+                {!supported ? (
+                  <div className="border border-dashed border-slate-200 rounded-xl bg-slate-50 p-8 text-center text-xs text-slate-400">
+                    Định dạng này (bản vẽ / tài liệu nhị phân) không so sánh trực tiếp bằng văn bản được.<br />Hãy tải 2 bản về để đối chiếu.
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-slate-200 overflow-hidden font-mono text-[11px] leading-relaxed">
+                    {rows.map((r, i) => (
+                      <div
+                        key={i}
+                        className={`flex gap-2 px-3 py-0.5 whitespace-pre-wrap break-words ${
+                          r.type === 'add' ? 'bg-emerald-50 text-emerald-800'
+                            : r.type === 'del' ? 'bg-rose-50 text-rose-600'
+                            : 'text-slate-500'
+                        }`}
+                      >
+                        <span className={`select-none w-3 shrink-0 font-bold ${
+                          r.type === 'add' ? 'text-emerald-500' : r.type === 'del' ? 'text-rose-400' : 'text-slate-300'
+                        }`}>{r.type === 'add' ? '+' : r.type === 'del' ? '−' : ' '}</span>
+                        <span className={r.type === 'del' ? 'line-through decoration-rose-300/60' : ''}>{r.text || ' '}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="px-6 py-3 border-t border-slate-100 text-[10px] text-slate-400 shrink-0 flex items-center gap-3">
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-emerald-100 border border-emerald-300 inline-block" /> Thêm ở bản mới</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-rose-100 border border-rose-300 inline-block" /> Bỏ so với bản cũ</span>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
     </div>
   )
