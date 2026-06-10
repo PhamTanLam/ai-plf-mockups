@@ -1234,14 +1234,13 @@ Thành phần tham dự:
       ])
     } else if (activePhase === 9) {
       setActiveSuggestions([
-        'Thêm 2 cảm biến quang',
-        'Nâng cấp màn hình HMI',
-        'Bổ sung 1 trục Servo Motor',
-        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
-        'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
-        'Chuyển sang Bước 5: Debug',
-        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+        'Giải thích sơ đồ đấu dây điện',
+        'Giải thích logic điều khiển PLC',
+        'Thông số kỹ thuật màn hình HMI',
+        'Danh sách I/O điểm vào/ra',
+        'Xem sơ đồ bản vẽ CAD & mã Structured Text',
+        'Tải về mã nguồn & bản vẽ thiết kế',
+        'Chuyển sang Bước 5: Debug'
       ])
     } else if (activePhase === 10) {
       setActiveSuggestions([
