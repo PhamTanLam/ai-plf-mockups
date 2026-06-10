@@ -227,16 +227,13 @@ export default function SmartMaterialsTable({
         </div>
       </div>
 
-      {/* SECTION 1: HARDWARE COMPONENTS SPECIFICATIONS (READ-ONLY) */}
+      {/* SECTION 1: HARDWARE COMPONENTS SPECIFICATIONS */}
       <div className="space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-1.5 gap-2">
           <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider font-mono flex items-center gap-1.5">
             <HardDrive className="w-3.5 h-3.5 text-slate-400" />
-            1. Cấu hình thiết bị & Thông số phần cứng (Chỉ đọc)
+            1. Cấu hình thiết bị & Thông số phần cứng
           </h4>
-          <span className="text-[9.5px] text-amber-600 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-xl font-medium leading-relaxed max-w-xl shadow-3xs">
-            {t('post.mat.readOnlyNotice')}
-          </span>
         </div>
         <div className="overflow-x-auto border border-slate-200 rounded-2xl">
           <table className="w-full text-left border-collapse text-[10.5px]">
