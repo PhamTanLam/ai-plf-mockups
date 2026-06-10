@@ -7,6 +7,7 @@ import {
   RotateCcw, Trash2, ExternalLink, Sparkles, GitCompare
 } from 'lucide-react'
 import MarkdownLite from '@/components/MarkdownLite'
+import { DEMO_CASE_IDS } from '@/hooks/usePresalesState'
 import { useI18n } from '@/i18n/I18nProvider'
 
 interface ProjectFile {
@@ -46,7 +47,7 @@ export default function NotebookArchive() {
   const [compare, setCompare] = useState<{ file: ProjectFile; oldV: number; newV: number } | null>(null)
 
   // Simulated files list — gồm cả file ĐẦU VÀO (bộ nhớ AI) và file ĐẦU RA (sản phẩm AI sinh)
-  const [files, setFiles] = useState<ProjectFile[]>([
+  const [files, setFiles] = useState<ProjectFile[]>(() => { const all: ProjectFile[] = [
     // ── ĐẦU VÀO (INPUT): bộ nhớ dự án — AI sinh từ chat, dùng làm context xuyên suốt ──
     {
       id: 'in-1',
@@ -224,7 +225,18 @@ END_IF;`
       summary: 'Tài liệu cấu hình địa chỉ thanh ghi nhớ Modbus TCP để truyền thông với hệ thống SCADA tầng trên.',
       previewContent: 'PDF_MEMORY'
     }
-  ])
+    ]
+    // Dự án DEMO mẫu → seed đầy đủ. Dự án mới → trống: chỉ hiện file Bộ nhớ khi đã có bộ nhớ thật, KHÔNG seed sản phẩm tĩnh.
+    if (DEMO_CASE_IDS.has(id || '')) return all
+    const pid = id || 'default'
+    const memHas = (k: string) => { try { return ((JSON.parse(localStorage.getItem(k) || 'null')?.fields?.length) || 0) > 0 } catch { return false } }
+    return all.filter(f => {
+      if (f.category === 'output') return false
+      if (f.id === 'in-1') return memHas(`aiplf.presales.${pid}`)
+      if (f.id === 'in-2') return memHas(`aiplf.presales.${pid}__reentry`)
+      return false
+    })
+  })
 
   // Đầu ra do AI sinh ở pre-sales (hồ sơ trình khách, dự toán...) — đọc từ bộ nhớ pre-sales,
   // hiển thị trong "Sản phẩm bàn giao". refreshGen để buộc tính lại sau khi xóa.

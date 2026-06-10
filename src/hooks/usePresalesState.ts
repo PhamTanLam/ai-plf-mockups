@@ -42,7 +42,7 @@ export const OUTPUTS: OutputDef[] = [
 ]
 
 // Case demo: seed sẵn "bộ nhớ" giả (dự án đang làm dở) để sinh đầu ra có dữ liệu; dự án mới bắt đầu trống.
-const DEMO_CASE_IDS = new Set(['CASE-2026-0245', 'CASE-2026-0312', 'CASE-2026-0345', 'CASE-2026-0288'])
+export const DEMO_CASE_IDS = new Set(['CASE-2026-0245', 'CASE-2026-0312', 'CASE-2026-0345', 'CASE-2026-0288'])
 const DEMO_FIELDS: { name: string; value: string }[] = [
   { name: 'Bối cảnh dự án', value: 'Khách hàng A · end-user X · 2026/09' },
   { name: 'Tóm tắt hoạt động thiết bị', value: 'Dây chuyền lắp ráp & kiểm tra' },
