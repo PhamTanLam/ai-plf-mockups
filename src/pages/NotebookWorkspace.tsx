@@ -2076,7 +2076,7 @@ export default function NotebookWorkspace() {
                         <button
                           onClick={() => {
                             setShowStatusMenu(false)
-                            addLog('Đã nhận đơn hàng — chuyển sang giai đoạn sau nhận đơn', 7)
+                            addLog(tc('Đã nhận đơn hàng — chuyển sang giai đoạn sau nhận đơn'), 7)
                             handlePhaseChange(7)
                           }}
                           className="w-full text-left px-2.5 py-1.5 text-[10px] font-bold text-brand-700 hover:bg-brand-50 rounded-lg flex items-center gap-2 transition cursor-pointer"
@@ -2599,7 +2599,7 @@ export default function NotebookWorkspace() {
                           onClick={() => {
                             alert('[MOCK DOWNLOAD] Đang tải bản vẽ CAD: Electrical_Layout_v2.0.dwg (1.4 MB)');
                             handleProgress10(100)
-                            addLog('Đã tải xuống bản vẽ CAD: Electrical_Layout_v2.0.dwg', 10)
+                            addLog(tc('Đã tải xuống bản vẽ CAD: Electrical_Layout_v2.0.dwg'), 10)
                           }}
                           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
                         >
@@ -2611,7 +2611,7 @@ export default function NotebookWorkspace() {
                           onClick={() => {
                             alert('[MOCK DOWNLOAD] Đang tải mã lệnh: PLC_Ladder_Q03UDE.l5k (89 KB)');
                             handleProgress10(100)
-                            addLog('Đã tải xuống mã lệnh PLC: PLC_Ladder_Q03UDE.l5k', 10)
+                            addLog(tc('Đã tải xuống mã lệnh PLC: PLC_Ladder_Q03UDE.l5k'), 10)
                           }}
                           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
                         >
