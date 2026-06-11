@@ -82,6 +82,8 @@ const CHAT: Record<string, { ja: string; en: string }> = {
   // ── Phản hồi inline (tĩnh) ──
   'Tôi đã cập nhật yêu cầu chỉnh sửa của bạn vào Nhật ký khảo sát khao_sat_thay_doi_specs.txt ở khung bên trái. \n\nĐồng thời, cấu hình vật tư liên quan đã được đồng bộ tự động sang Bước 3. Điều chỉnh vật tư. Bạn có thể kiểm tra tệp tin và tiếp tục trao đổi.': { ja: '修正のご要望を左側の調査ログ khao_sat_thay_doi_specs.txt に反映しました。\n\n併せて関連する資材構成がステップ3「資材調整」へ自動同期されました。ファイルを確認しつつ会話を続けられます。', en: 'I added your change request to the survey log khao_sat_thay_doi_specs.txt on the left.\n\nThe related materials config was also auto-synced to Step 3: Adjust materials. You can check the file and keep chatting.' },
   'Đã ghi nhận ý kiến đóng góp của bạn và cập nhật vào Biên bản cuộc họp bien_ban_kickoff_ban_giao.txt ở khung bên trái. Các thông tin phân công này đã được đồng bộ.': { ja: 'ご意見を反映し、左側の議事録 bien_ban_kickoff_ban_giao.txt を更新しました。担当割り当て情報は同期済みです。', en: 'Noted your input and updated the minutes bien_ban_kickoff_ban_giao.txt on the left. The assignment info has been synced.' },
+  'Đã tải xuống Biên bản Kick-off: bien_ban_kickoff_ban_giao.txt': { ja: 'キックオフ議事録をダウンロードしました: bien_ban_kickoff_ban_giao.txt', en: 'Downloaded Kick-off minutes: bien_ban_kickoff_ban_giao.txt' },
+
   
   // ── Suggestions Phase 12 ──
   'Tối ưu gọn mã nguồn (CASE..OF)': { ja: 'コード最適化 (CASE..OF)', en: 'Optimize source code (CASE..OF)' },

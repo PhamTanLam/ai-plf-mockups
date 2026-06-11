@@ -106,6 +106,113 @@ function loadChatState(pid: string | undefined, greetingText: string): { convs: 
   }
 }
 
+const getDefaultKickoffText = (locale: string) => {
+  if (locale === 'ja') {
+    return `# 引き継ぎキックオフ会議議事録 (CASE-2026-0245)
+日時：2026/06/06 09:30 - 10:30
+場所：技術会議室 / MS Teams
+出席者：
+- 金井 (Lead SE)
+- リン (Software Engineer)
+- AIアシスタント (技術サポート)
+
+---
+
+## I. 仕様変更合意事項 (SPECS)
+1. 溶接ロボット処理に対応するため、制御用PLCを三菱電機製 Q03UDE シリーズ（従来のコンパクト FX5U から）にアップグレードすることを確認。
+2. サーボ MR-J5-40A（補助グリッパ軸 A4）を1軸追加し、合計4軸に拡張。
+3. 安全基準を ISO 13849 PLd に引き上げ、オムロン製セーフティリレー G9SE（KA1接点インターロック）を追加。
+4. HMI GOT2000 操作画面を7インチから10インチへアップグレード。
+
+## II. 役割分担と引き渡しスケジュール
+1. リン (ソフトウェア担当):
+   - サーボ MR-J5 の初期化および安全インターロックを統合する PLC Structured Text (ST) プログラムの作成。
+   - 期限: 2026/06/08
+   
+2. 金井 (電気設計担当):
+   - メイン制御盤の主回路および制御回路の CAD 配線図面の設計。
+   - 期限: 2026/06/09
+   
+3. AIアシスタント (自動化アシスタント):
+   - PLC ST コードのコンパイル支援および構文エラーのチェック。
+   - HMI 操作説明書および仕様検収ドキュメントの自動生成。
+
+---
+## III. 重要技術メモ (SAVED NOTES)
+- 工場のサーボドライブ向け AC200V 三相電源を再確認すること。
+- 動力配線とセンサー信号線を分離しノイズ対策を行う CAD 図面が必要。`
+  }
+  if (locale === 'en') {
+    return `# KICK-OFF & PROJECT HANDOVER MEETING MINUTES (CASE-2026-0245)
+Time: 06/06/2026 09:30 - 10:30
+Location: Engineering Meeting Room / MS Teams
+Attendees:
+- Kanai (Lead SE)
+- Linh (Software Engineer)
+- AI Assistant (Technical Support)
+
+---
+
+## I. AGREED SPECIFICATION CHANGES (SPECS)
+1. Confirmed upgrade of control PLC to Mitsubishi Q03UDE series (replacing compact FX5U series) to support welding robot processing.
+2. Added 1 axis Servo MR-J5-40A (Auxiliary Gripper Axis A4), increasing total axis count to 4.
+3. Upgraded safety standard to ISO 13849 PLd, adding Omron G9SE safety relay interlocking KA1 contacts.
+4. Upgraded HMI control screen from GOT2000 7-inch to 10-inch.
+
+## II. WORK ASSIGNMENT & HANDOVER SCHEDULE
+1. Linh (Software Owner):
+   - Write PLC Structured Text (ST) program to initialize Servo MR-J5 and integrate safety interlocks.
+   - Deadline: 08/06/2026.
+   
+2. Kanai (Electrical Design Owner):
+   - Design CAD wiring diagram drawings for main power and control circuits of the main panel.
+   - Deadline: 09/06/2026.
+   
+3. AI Assistant (Automation Assistant):
+   - Assist in compiling and checking PLC ST code syntax.
+   - Automatically generate HMI operation manual and specs acceptance record documents.
+
+---
+## III. IMPORTANT TECHNICAL NOTES (SAVED NOTES)
+- Need to re-check the AC200V 3-phase power supply for the Servo Drives at the factory.
+- The power-circuit CAD diagram must separate power wiring from sensor signal wiring to prevent noise.`
+  }
+  // Default is Vietnamese ('vi')
+  return `# BIÊN BẢN HỌP KICK-OFF & BÀN GIAO DỰ ÁN (CASE-2026-0245)
+Thời gian: 06/06/2026 09:30 - 10:30
+Địa điểm: Phòng họp kỹ thuật / MS Teams
+Thành phần tham dự:
+- Kanai (Lead SE)
+- Linh (Software Engineer)
+- AI Assistant (Hỗ trợ Kỹ thuật)
+
+---
+
+## I. THỐNG NHẤT THAY ĐỔI THÔNG SỐ KỸ THUẬT (SPECS)
+1. Xác nhận nâng cấp cấu hình PLC điều khiển lên dòng Q03UDE của Mitsubishi (thay thế dòng compact FX5U) để đáp ứng xử lý robot hàn.
+2. Thêm 1 trục Servo MR-J5-40A (Trục tay gắp phụ A4) nâng tổng số trục lên 4 trục.
+3. Nâng cấp chuẩn an toàn hệ thống lên ISO 13849 PLd, lắp thêm rơ le an toàn Omron G9SE liên khóa tiếp điểm KA1.
+4. Nâng cấp màn hình điều khiển HMI GOT2000 từ 7-inch lên 10-inch.
+
+## II. PHÂN CÔNG CÔNG VIỆC & TIẾN ĐỘ BÀN GIAO
+1. Linh (Phụ trách Phần mềm):
+   - Viết chương trình PLC Structured Text (ST) khởi tạo Servo MR-J5 và tích hợp các liên khóa an toàn.
+   - Hạn hoàn thành: 08/06/2026.
+   
+2. Kanai (Phụ trách Thiết kế Điện):
+   - Thiết kế bản vẽ sơ đồ đấu nối CAD mạch lực và mạch điều khiển tủ điện chính.
+   - Hạn hoàn thành: 09/06/2026.
+   
+3. AI Assistant (Trợ lý tự động hóa):
+   - Hỗ trợ biên dịch và rà soát lỗi cú pháp mã PLC ST.
+   - Tự động sinh tài liệu hướng dẫn vận hành HMI và biên bản nghiệm thu specs.
+
+---
+## III. GHI CHÚ KỸ THUẬT QUAN TRỌNG (SAVED NOTES)
+- Cần kiểm tra lại nguồn cấp AC200V 3 pha cho các Servo Drive tại nhà xưởng.
+- Bản vẽ CAD mạch lực cần tách biệt dây động lực và dây tín hiệu cảm biến để chống nhiễu.`
+}
+
 interface SourceFile {
   id: string
   title: string
@@ -618,7 +725,7 @@ export default function NotebookWorkspace() {
     }
   }, [showCadTab, designSubTab]);
 
-  const KICKOFF_STORAGE_KEY = `aiplf.kickoff_notes_text.${id || 'default'}`
+  const KICKOFF_STORAGE_KEY = `aiplf.kickoff_notes_text.${id || 'default'}.${locale}`
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -1205,44 +1312,12 @@ export default function NotebookWorkspace() {
     if (stored) {
       setKickoffText(stored)
     } else {
-      const defaultText = `# BIÊN BẢN HỌP KICK-OFF & BÀN GIAO DỰ ÁN (CASE-2026-0245)
-Thời gian: 06/06/2026 09:30 - 10:30
-Địa điểm: Phòng họp kỹ thuật / MS Teams
-Thành phần tham dự:
-- Kanai (Lead SE)
-- Linh (Software Engineer)
-- AI Assistant (Hỗ trợ Kỹ thuật)
-
----
-
-## I. THỐNG NHẤT THAY ĐỔI THÔNG SỐ KỸ THUẬT (SPECS)
-1. Xác nhận nâng cấp cấu hình PLC điều khiển lên dòng Q03UDE của Mitsubishi (thay thế dòng compact FX5U) để đáp ứng xử lý robot hàn.
-2. Thêm 1 trục Servo MR-J5-40A (Trục tay gắp phụ A4) nâng tổng số trục lên 4 trục.
-3. Nâng cấp chuẩn an toàn hệ thống lên ISO 13849 PLd, lắp thêm rơ le an toàn Omron G9SE liên khóa tiếp điểm KA1.
-4. Nâng cấp màn hình điều khiển HMI GOT2000 từ 7-inch lên 10-inch.
-
-## II. PHÂN CÔNG CÔNG VIỆC & TIẾN ĐỘ BÀN GIAO
-1. Linh (Phụ trách Phần mềm):
-   - Viết chương trình PLC Structured Text (ST) khởi tạo Servo MR-J5 và tích hợp các liên khóa an toàn.
-   - Hạn hoàn thành: 08/06/2026.
-   
-2. Kanai (Phụ trách Thiết kế Điện):
-   - Thiết kế bản vẽ sơ đồ đấu nối CAD mạch lực và mạch điều khiển tủ điện chính.
-   - Hạn hoàn thành: 09/06/2026.
-   
-3. AI Assistant (Trợ lý tự động hóa):
-   - Hỗ trợ biên dịch và rà soát lỗi cú pháp mã PLC ST.
-   - Tự động sinh tài liệu hướng dẫn vận hành HMI và biên bản nghiệm thu specs.
-
----
-## III. GHI CHÚ KỸ THUẬT QUAN TRỌNG (SAVED NOTES)
-- Cần kiểm tra lại nguồn cấp AC200V 3 pha cho các Servo Drive tại nhà xưởng.
-- Bản vẽ CAD mạch lực cần tách biệt dây động lực và dây tín hiệu cảm biến để chống nhiễu.`
+      const defaultText = getDefaultKickoffText(locale)
       setKickoffText(defaultText)
       localStorage.setItem(KICKOFF_STORAGE_KEY, defaultText)
     }
     handleProgressChange(8, 100)
-  }, [id, KICKOFF_STORAGE_KEY])
+  }, [id, KICKOFF_STORAGE_KEY, locale])
 
   const [isDownloadingKickoff, setIsDownloadingKickoff] = useState(false)
   const downloadKickoffText = () => {
@@ -1256,7 +1331,7 @@ Thành phần tham dự:
       document.body.appendChild(element)
       element.click()
       document.body.removeChild(element)
-      addLog('Đã tải xuống Biên bản Kick-off: bien_ban_kickoff_ban_giao.txt', 8)
+      addLog(tc('Đã tải xuống Biên bản Kick-off: bien_ban_kickoff_ban_giao.txt'), 8)
     }, 1000)
   }
 
@@ -1615,15 +1690,22 @@ Thành phần tham dự:
     if (activePhase === 8) {
       try {
         const storedText = localStorage.getItem(KICKOFF_STORAGE_KEY)
-        const baseText = storedText || `# BIÊN BẢN HỌP KICK-OFF & BÀN GIAO DỰ ÁN (CASE-2026-0245)`
-        const newText = baseText + `\n- [Cập nhật từ AI Chat ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]: ${text}`
+        const defaultText = getDefaultKickoffText(locale)
+        const baseText = storedText || defaultText.split('\n')[0]
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const updatePrefix = locale === 'ja'
+          ? `[AIチャットからの更新 ${timeStr}]`
+          : locale === 'en'
+            ? `[Update from AI Chat ${timeStr}]`
+            : `[Cập nhật từ AI Chat ${timeStr}]`
+        const newText = baseText + `\n- ${updatePrefix}: ${text}`
         localStorage.setItem(KICKOFF_STORAGE_KEY, newText)
         setKickoffText(newText)
         
         window.dispatchEvent(new Event('storage'))
         
         const aiResponse = `Đã ghi nhận ý kiến đóng góp của bạn và cập nhật vào Biên bản cuộc họp bien_ban_kickoff_ban_giao.txt ở khung bên trái. Các thông tin phân công này đã được đồng bộ.`
-        pushChat(text, aiResponse)
+        pushChat(text, tc(aiResponse))
         return
       } catch (e) {
         console.error(e)
