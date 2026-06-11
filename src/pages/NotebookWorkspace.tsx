@@ -31,7 +31,7 @@ import {
   Search
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
-import { tcText, tField, tFieldList, tSourceMeta, tSummary } from '@/i18n/chat'
+import { tcText, tField, tFieldValue, tFieldList, tSourceMeta, tSummary } from '@/i18n/chat'
 
 // Import components
 import CadViewer from '@/components/CadViewer'
@@ -1406,17 +1406,22 @@ Thành phần tham dự:
       const base = reentry.fields.map(f => ({ name: f.name, value: f.value }))
       const i = base.findIndex(f => f.name.toLowerCase() === pend.name.toLowerCase())
       if (i >= 0) base[i] = { name: pend.name, value: pend.value }; else base.push({ name: pend.name, value: pend.value })
-      const docContent = `# NHẬT KÝ KHẢO SÁT & PHÁT SINH\nMã dự án: ${id || 'CASE-2026-0245'}\nNguồn: Ghi nhận từ chat Bước 7\n\n## Chênh lệch so với specs gốc (pre-sales)\n` + base.map(f => `- ${f.name}: ${f.value}`).join('\n')
-      pushChat(text, `✓ Đã ghi "${pend.name}: ${pend.value}" vào bộ nhớ khảo sát.${pend.mat ? ' Bảng vật tư (Bước 3) đã đồng bộ.' : ''}`, REENTRY_SUGG_AFTER, undefined, undefined, { label: 'Xem chênh lệch đã lưu', openDoc: { title: 'Nhật ký khảo sát & Phát sinh', content: docContent } })
+      const dTitle = locale === 'ja' ? '調査・追加費用ログ' : locale === 'en' ? 'SURVEY & CHANGE ORDER LOG' : 'NHẬT KÝ KHẢO SÁT & PHÁT SINH'
+      const dCode = locale === 'ja' ? 'プロジェクトコード' : locale === 'en' ? 'Project code' : 'Mã dự án'
+      const dSrc = locale === 'ja' ? '出典: ステップ7のチャットから記録' : locale === 'en' ? 'Source: Captured from Step 7 chat' : 'Nguồn: Ghi nhận từ chat Bước 7'
+      const dHead = locale === 'ja' ? '## 元仕様（プリセールス）との差分' : locale === 'en' ? '## Differences vs original specs (pre-sales)' : '## Chênh lệch so với specs gốc (pre-sales)'
+      const docContent = `# ${dTitle}\n${dCode}: ${id || 'CASE-2026-0245'}\n${dSrc}\n\n${dHead}\n` + base.map(f => `- ${tField(f.name, locale)}: ${tFieldValue(f.value, locale)}`).join('\n')
+      pushChat(text, `✓ Đã ghi "${pend.name}: ${pend.value}" vào bộ nhớ khảo sát.${pend.mat ? ' Bảng vật tư (Bước 3) đã đồng bộ.' : ''}`, REENTRY_SUGG_AFTER, pend.mat ? 'chat.reentry.recordedSync' : 'chat.reentry.recorded', { name: tField(pend.name, locale), value: tFieldValue(pend.value, locale) }, { label: 'Xem chênh lệch đã lưu', openDoc: { title: locale === 'ja' ? '調査・追加費用ログ' : locale === 'en' ? 'Survey & Change Order Log' : 'Nhật ký khảo sát & Phát sinh', content: docContent } })
       return
     }
 
     // 2) TRA CỨU — tóm tắt / xem / đối chiếu → chỉ trả lời, KHÔNG ghi
     if (/tóm tắt|tóm lược|tổng hợp|tổng quan|xem lại|xem dữ liệu|xem chi tiết|liệt kê|thống kê|hiện trạng|so sánh|đối chiếu|chênh lệch|có gì|những gì/.test(low)) {
       const data = tSummary(reentry.fields, locale)
-      pushChat(text, reentry.total
-        ? `Chênh lệch đã ghi nhận sau khảo sát (so với specs gốc pre-sales):\n${data}`
-        : 'Chưa ghi nhận chênh lệch nào. Hãy cho tôi biết thay đổi sau khảo sát (PLC, HMI, servo, an toàn…).', REENTRY_SUGG_BASE)
+      if (reentry.total)
+        pushChat(text, `Chênh lệch đã ghi nhận sau khảo sát (so với specs gốc pre-sales):\n${data}`, REENTRY_SUGG_BASE, 'chat.reentry.summary', { data })
+      else
+        pushChat(text, 'Chưa ghi nhận chênh lệch nào. Hãy cho tôi biết thay đổi sau khảo sát (PLC, HMI, servo, an toàn…).', REENTRY_SUGG_BASE)
       return
     }
 
@@ -1451,7 +1456,7 @@ Thành phần tham dự:
     }
 
     pendingReentryRef.current = { name, value, mat }
-    pushChat(text, `Tôi đề xuất ghi nhận — ${name}: ${value}.\n\nGõ "update" (hoặc "đồng ý") để ghi vào bộ nhớ khảo sát, hoặc nhập tiếp để chỉnh lại đề xuất.`, REENTRY_SUGG_PENDING)
+    pushChat(text, `Tôi đề xuất ghi nhận — ${name}: ${value}.\n\nGõ "update" (hoặc "đồng ý") để ghi vào bộ nhớ khảo sát, hoặc nhập tiếp để chỉnh lại đề xuất.`, REENTRY_SUGG_PENDING, 'chat.reentry.proposal', { name: tField(name, locale), value: tFieldValue(value, locale) })
   }
 
   const parseChatForMaterials = (chatText: string) => {

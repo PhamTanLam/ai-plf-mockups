@@ -9,7 +9,7 @@ import {
 import MarkdownLite from '@/components/MarkdownLite'
 import { DEMO_CASE_IDS } from '@/hooks/usePresalesState'
 import { useI18n } from '@/i18n/I18nProvider'
-import { tField, tFieldValue } from '@/i18n/chat'
+import { tField, tFieldValue, tcText } from '@/i18n/chat'
 
 interface ProjectFile {
   id: string
@@ -497,7 +497,7 @@ END_IF;`
           const d = new Date(o.ts)
           return {
             id: 'gen-' + o.oid,
-            name: (o.title || L('Tài liệu', '資料', 'Document')).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 48) + '.md',
+            name: (o.title ? tcText(o.title, locale) : L('Tài liệu', '資料', 'Document')).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 48) + '.md',
             category: 'output' as const,
             type: L('Hồ sơ đề xuất (AI · Pre-Sales)', '提案資料 (AI · プリセールス)', 'Proposal (AI · Pre-Sales)'),
             size: Math.max(1, Math.round((o.content || '').length / 102.4) / 10) + ' KB',
