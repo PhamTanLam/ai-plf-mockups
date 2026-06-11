@@ -750,8 +750,8 @@ export default function NotebookWorkspace() {
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([
     'Chuyển sang Bước 1: Khảo sát & Phát sinh',
     'Chuyển sang Bước 2: Họp Kick-off',
-    'Chuyển sang Bước 3: Điều chỉnh vật tư',
-    'Chuyển sang Bước 4: Thiết kế & Code tự động',
+    'Chuyển sang Bước 3: Thiết kế',
+    'Chuyển sang Bước 4: Sản xuất',
     'Chuyển sang Bước 5: Debug',
     'Chuyển sang Bước 6: Nghiệm thu & HDSD'
   ])
@@ -769,8 +769,8 @@ export default function NotebookWorkspace() {
         'Có thay đổi gì về số lượng động cơ hay PLC?',
         'Xem chi tiết thông số chênh lệch Melsec Q?',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -783,37 +783,37 @@ export default function NotebookWorkspace() {
         'Soạn biên bản Kick-off bàn giao dự án',
         'Xem danh sách ghi chú cuộc họp kick-off.',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'notes' }],
     },
-    'Chuyển sang Bước 3: Điều chỉnh vật tư': {
+    'Chuyển sang Bước 3: Thiết kế': {
       phaseNum: 9,
-      explanationText: 'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Bảng vật tư thông minh đã hiển thị ở bên trái.',
+      explanationText: 'Đã chuyển sang Bước 3: Thiết kế. Bảng đặc tả specs đã hiển thị ở bên trái.',
       suggestions: [
         'Thêm 2 cảm biến quang',
         'Nâng cấp màn hình HMI',
         'Bổ sung 1 trục Servo Motor',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'materials' }],
     },
-    'Chuyển sang Bước 4: Thiết kế & Code tự động': {
+    'Chuyển sang Bước 4: Sản xuất': {
       phaseNum: 10,
-      explanationText: 'Đã chuyển sang Bước 4: Thiết kế & Code tự động. AI đã sinh bản vẽ CAD và Structured Text.',
+      explanationText: 'Đã chuyển sang Bước 4: Sản xuất. AI đã sinh bản vẽ CAD và Structured Text.',
       suggestions: [
         'Xem sơ đồ bản vẽ CAD & mã Structured Text',
         'Tải về mã nguồn & bản vẽ thiết kế',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 3: Thiết kế',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -828,8 +828,8 @@ export default function NotebookWorkspace() {
         'Thêm còi báo động vào code.',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
@@ -843,8 +843,8 @@ export default function NotebookWorkspace() {
         'Tải Hướng dẫn vận hành HMI.pdf',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
@@ -856,8 +856,8 @@ export default function NotebookWorkspace() {
         'Có thay đổi gì về số lượng động cơ hay PLC?',
         'Xem chi tiết thông số chênh lệch Melsec Q?',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -868,8 +868,8 @@ export default function NotebookWorkspace() {
       explanationText: 'Nhật ký khảo sát ghi nhận cấu hình cũ dùng PLC FX5U (Compact) và cấu hình mới nâng cấp lên PLC Q03UDE (Module) cùng màn hình GOT2000 10-inch. Bản vẽ CAD và Mã PLC ST ở Bước 4 đã tự động cập nhật theo cấu hình mới này.',
       suggestions: [
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -881,8 +881,8 @@ export default function NotebookWorkspace() {
       suggestions: [
         'Xem danh sách ghi chú cuộc họp kick-off.',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -894,8 +894,8 @@ export default function NotebookWorkspace() {
       suggestions: [
         'Soạn biên bản Kick-off bàn giao dự án',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -903,13 +903,13 @@ export default function NotebookWorkspace() {
     },
     'Thêm 2 cảm biến quang': {
       phaseNum: 9,
-      explanationText: 'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Đang tiến hành tăng số lượng Cảm biến quang điện (Photoelectric Sensor) thêm 2 cái.',
+      explanationText: 'Đã chuyển sang Bước 3: Thiết kế. Đang tiến hành tăng số lượng Cảm biến quang điện (Photoelectric Sensor) thêm 2 cái.',
       suggestions: [
         'Nâng cấp màn hình HMI',
         'Bổ sung 1 trục Servo Motor',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -917,13 +917,13 @@ export default function NotebookWorkspace() {
     },
     'Nâng cấp màn hình HMI': {
       phaseNum: 9,
-      explanationText: 'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Đang thay đổi cấu hình màn hình HMI sang GOT2000 10-inch và áp dụng giá trị mặc định của Master Data.',
+      explanationText: 'Đã chuyển sang Bước 3: Thiết kế. Đang thay đổi cấu hình màn hình HMI sang GOT2000 10-inch và áp dụng giá trị mặc định của Master Data.',
       suggestions: [
         'Thêm 2 cảm biến quang',
         'Bổ sung 1 trục Servo Motor',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -931,13 +931,13 @@ export default function NotebookWorkspace() {
     },
     'Bổ sung 1 trục Servo Motor': {
       phaseNum: 9,
-      explanationText: 'Đã chuyển sang Bước 3: Điều chỉnh vật tư. Đang tiến hành bổ sung thêm 1 trục Servo Motor (MR-J5-40A) cho cơ cấu băng tải nạp phôi phụ.',
+      explanationText: 'Đã chuyển sang Bước 3: Thiết kế. Đang tiến hành bổ sung thêm 1 trục Servo Motor (MR-J5-40A) cho cơ cấu băng tải nạp phôi phụ.',
       suggestions: [
         'Thêm 2 cảm biến quang',
         'Nâng cấp màn hình HMI',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -945,12 +945,12 @@ export default function NotebookWorkspace() {
     },
     'Xem sơ đồ bản vẽ CAD & mã Structured Text': {
       phaseNum: 10,
-      explanationText: 'Đã chuyển sang Bước 4: Thiết kế & Code tự động. AI đã xử lý ngầm và sinh bản vẽ CAD đấu dây cùng mã Structured Text (ST) tuân thủ quy tắc E-stop KA1 và khởi tạo Servo. Bạn có thể xem trực tiếp hoặc tải về.',
+      explanationText: 'Đã chuyển sang Bước 4: Sản xuất. AI đã xử lý ngầm và sinh bản vẽ CAD đấu dây cùng mã Structured Text (ST) tuân thủ quy tắc E-stop KA1 và khởi tạo Servo. Bạn có thể xem trực tiếp hoặc tải về.',
       suggestions: [
         'Tải về mã nguồn & bản vẽ thiết kế',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 3: Thiết kế',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -963,7 +963,7 @@ export default function NotebookWorkspace() {
         'Xem sơ đồ bản vẽ CAD & mã Structured Text',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
+        'Chuyển sang Bước 3: Thiết kế',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ],
@@ -1040,8 +1040,8 @@ export default function NotebookWorkspace() {
         'Tải Hướng dẫn vận hành HMI.pdf',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
@@ -1053,8 +1053,8 @@ export default function NotebookWorkspace() {
         'Tải Hướng dẫn vận hành HMI.pdf',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
@@ -1066,8 +1066,8 @@ export default function NotebookWorkspace() {
         'Tải Biên bản nghiệm thu.docx',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug'
       ],
       citations: [{ id: 1, sourceId: 'spec', tab: 'doc' }],
@@ -1364,27 +1364,32 @@ export default function NotebookWorkspace() {
         'Soạn biên bản Kick-off bàn giao dự án',
         'Xem danh sách ghi chú cuộc họp kick-off.',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ])
     } else if (activePhase === 9) {
       setActiveSuggestions([
+        'Thêm 2 cảm biến quang',
+        'Nâng cấp màn hình HMI',
+        'Bổ sung 1 trục Servo Motor',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 4: Sản xuất',
+        'Chuyển sang Bước 5: Debug',
+        'Chuyển sang Bước 6: Nghiệm thu & HDSD'
+      ])
+    } else if (activePhase === 10) {
+      setActiveSuggestions([
+        'Xem sơ đồ bản vẽ CAD & mã Structured Text',
+        'Tải về mã nguồn & bản vẽ thiết kế',
         'Giải thích sơ đồ đấu dây điện',
         'Giải thích logic điều khiển PLC',
         'Thông số kỹ thuật màn hình HMI',
         'Danh sách I/O điểm vào/ra',
-        'Xem sơ đồ bản vẽ CAD & mã Structured Text',
-        'Tải về mã nguồn & bản vẽ thiết kế',
-        'Chuyển sang Bước 5: Debug'
-      ])
-    } else if (activePhase === 10) {
-      setActiveSuggestions([
         'Cập nhật tiến độ chế tạo tủ điện',
         'Kiểm tra linh kiện đầu vào',
-        'Lịch test nội bộ trước bàn giao',
-        'Vật tư còn thiếu cần đặt bổ sung',
         'Lập trình PLC tại xưởng',
         'Chuyển sang Bước 5: Debug'
       ])
@@ -1395,7 +1400,7 @@ export default function NotebookWorkspace() {
         'Ghi chú chuẩn IEC & CASE cho mã nguồn',
         'Khôi phục mã nguồn về bản gốc',
         'Thêm còi báo động vào code.',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 6: Nghiệm thu & HDSD'
       ])
     } else if (activePhase === 11) {
@@ -1405,8 +1410,8 @@ export default function NotebookWorkspace() {
         'Tải Hướng dẫn vận hành HMI.pdf',
         'Chuyển sang Bước 1: Khảo sát & Phát sinh',
         'Chuyển sang Bước 2: Họp Kick-off',
-        'Chuyển sang Bước 3: Điều chỉnh vật tư',
-        'Chuyển sang Bước 4: Thiết kế & Code tự động',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất',
         'Chuyển sang Bước 5: Debug'
       ])
     }
