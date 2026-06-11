@@ -2018,7 +2018,7 @@ Thành phần tham dự:
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
-            <span>{L('Setting', '設定', 'Settings')}</span>
+            <span>{L('Cài đặt', '設定', 'Settings')}</span>
           </button>
         </div>
       </header>
@@ -3197,7 +3197,7 @@ Thành phần tham dự:
                 }}
                 className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm animate-pulse-slow"
               >
-                {L('Lưu Setting', '設定を保存', 'Save Settings')}
+                {L('Lưu cài đặt', '設定を保存', 'Save Settings')}
               </button>
             </div>
           </div>
