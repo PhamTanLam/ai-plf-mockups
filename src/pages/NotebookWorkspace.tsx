@@ -28,7 +28,8 @@ import {
   Trash2,
   PanelRightClose,
   Pencil,
-  Search
+  Search,
+  MoreVertical
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tcText, tField, tFieldValue, tFieldList, tSourceMeta, tSummary } from '@/i18n/chat'
@@ -1087,6 +1088,7 @@ export default function NotebookWorkspace() {
 
   const [inputVal, setInputVal] = useState('')
   const [activeViewerSource, setActiveViewerSource] = useState<string | null>(null)
+  const [srcMenuOpen, setSrcMenuOpen] = useState<string | null>(null)
   const [highlightedPhrase, setHighlightedPhrase] = useState<string | undefined>(undefined)
 
   // Question History tracking
@@ -1834,10 +1836,11 @@ Thành phần tham dự:
     }
   }
 
-  const handleSourceSelect = (sourceId: string) => {
-    setSources(
-      sources.map((s) => (s.id === sourceId ? { ...s, selected: !s.selected } : s))
-    )
+  // Xóa nguồn khỏi danh sách (từ menu "..."). Nếu đang xem nguồn đó thì bỏ chọn viewer.
+  const handleSourceDelete = (sourceId: string) => {
+    setSources(prev => prev.filter(s => s.id !== sourceId))
+    setActiveViewerSource(prev => (prev === sourceId ? null : prev))
+    setSrcMenuOpen(null)
   }
 
   const humanSize = (b: number) => b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB'
@@ -1999,7 +2002,7 @@ Thành phần tham dự:
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
-            <span>Setting</span>
+            <span>{L('Setting', '設定', 'Settings')}</span>
           </button>
         </div>
       </header>
@@ -2108,15 +2111,33 @@ Thành phần tham dự:
                               </span>
                             </div>
 
-                            <input
-                              type="checkbox"
-                              checked={src.selected}
-                              onChange={(e) => {
-                                e.stopPropagation()
-                                handleSourceSelect(src.id)
-                              }}
-                              className="w-2.5 h-2.5 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-white cursor-pointer shrink-0"
-                            />
+                            <div className="relative shrink-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSrcMenuOpen(srcMenuOpen === src.id ? null : src.id)
+                                }}
+                                className="p-0.5 -mr-0.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition cursor-pointer"
+                                title={L('Tùy chọn', 'オプション', 'Options')}
+                              >
+                                <MoreVertical className="w-3 h-3" />
+                              </button>
+                              {srcMenuOpen === src.id && (
+                                <>
+                                  <div className="fixed inset-0 z-20" onClick={(e) => { e.stopPropagation(); setSrcMenuOpen(null) }} />
+                                  <div className="absolute right-0 top-5 z-30 bg-white border border-slate-200 rounded-lg shadow-pop py-1 min-w-[120px] text-[10px] animate-in fade-in zoom-in-95 duration-150">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); handleSourceDelete(src.id) }}
+                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-rose-50 cursor-pointer text-rose-600 font-semibold"
+                                    >
+                                      <Trash2 className="w-3 h-3" /> {L('Xóa nguồn', 'ソースを削除', 'Delete source')}
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           </div>
 
                           <div className="flex items-center justify-between text-[8px] text-slate-500 font-semibold font-mono">
