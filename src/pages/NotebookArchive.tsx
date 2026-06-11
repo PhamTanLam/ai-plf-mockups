@@ -832,13 +832,17 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                 >
                   <History className="w-3.5 h-3.5" /> {L('Lịch sử phiên bản', 'バージョン履歴', 'Version history')}
                 </button>
-                <div className="border-t border-slate-100 my-1 mx-1" />
-                <button
-                  onClick={(e) => { e.stopPropagation(); setMenuFileId(null); deleteFile(file) }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 cursor-pointer text-rose-600"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> {L('Xóa', '削除', 'Delete')}
-                </button>
+                {file.category === 'output' && (
+                  <>
+                    <div className="border-t border-slate-100 my-1 mx-1" />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setMenuFileId(null); deleteFile(file) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 cursor-pointer text-rose-600"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> {L('Xóa', '削除', 'Delete')}
+                    </button>
+                  </>
+                )}
               </div>
             </>
           )}
