@@ -348,6 +348,7 @@ export default function DebugCodeStep({
   paraphraseCommand,
 }: DebugCodeStepProps) {
   const { t, tf, locale } = useI18n()
+  const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
   const STORAGE_KEY = `aiplf.plc_st_code.${projectId}`
   const [code, setCode] = useState<string>('')
   const [copied, setCopied] = useState(false)
@@ -474,9 +475,9 @@ export default function DebugCodeStep({
       if (!foundError) {
         setSyntaxStatus('valid')
         if (onProgressChange) onProgressChange(100)
-        if (onAddLog) onAddLog('Kiểm tra cú pháp PLC ST thành công - 0 lỗi', 12)
+        if (onAddLog) onAddLog(L('Kiểm tra cú pháp PLC ST thành công - 0 lỗi', 'PLC ST 構文チェック完了 - エラー 0 件', 'PLC ST syntax check passed - 0 errors'), 12)
       } else {
-        if (onAddLog) onAddLog('Phát hiện lỗi cú pháp trong mã PLC ST', 12)
+        if (onAddLog) onAddLog(L('Phát hiện lỗi cú pháp trong mã PLC ST', 'PLC ST コードに構文エラーを検出', 'Syntax error detected in PLC ST code'), 12)
       }
     }, 1500)
   }
@@ -508,7 +509,7 @@ export default function DebugCodeStep({
         // Save to revisions
         saveRevision('AI Tự sửa lỗi cú pháp nhanh', fixedCode)
         
-        if (onAddLog) onAddLog('Sửa nhanh lỗi cú pháp bằng AI hoàn tất', 12)
+        if (onAddLog) onAddLog(L('Sửa nhanh lỗi cú pháp bằng AI hoàn tất', 'AI によるクイック構文修正が完了しました', 'AI quick-fix of syntax error completed'), 12)
       }
     }
   }
@@ -557,7 +558,7 @@ export default function DebugCodeStep({
     window.dispatchEvent(new Event('storage'))
     saveRevision(`AI Paraphrase: ${actionDesc}`, localizedTarget)
     
-    if (onAddLog) onAddLog(`Áp dụng Paraphrase: ${actionDesc}`, 12)
+    if (onAddLog) onAddLog(`${L('Áp dụng Paraphrase', 'パラフレーズ適用', 'Paraphrase applied')}: ${actionDesc}`, 12)
     if (onProgressChange) onProgressChange(100)
     
     alert(`${t('post.debug.alertApplySuccess')}: ${translateRevDesc(actionDesc, t)}`)
@@ -607,7 +608,7 @@ export default function DebugCodeStep({
             type="button"
             onClick={() => setIsRightSidebarExpanded(!isRightSidebarExpanded)}
             className="flex items-center justify-center p-2.5 bg-violet-55 hover:bg-violet-100/80 text-violet-700 border border-violet-200 rounded-xl transition cursor-pointer shadow-3xs"
-            title={isRightSidebarExpanded ? "Ẩn công cụ AI" : "Hiện công cụ AI"}
+            title={isRightSidebarExpanded ? L('Ẩn công cụ AI', 'AI ツールを非表示', 'Hide AI tools') : L('Hiện công cụ AI', 'AI ツールを表示', 'Show AI tools')}
           >
             {isRightSidebarExpanded ? (
               <ChevronDown className="w-4 h-4 text-violet-600" />

@@ -18,7 +18,8 @@ interface FlowchartEditorProps {
 
 export default function FlowchartEditor({ locale, onProgressChange }: FlowchartEditorProps) {
   void locale
-  const { t } = useI18n()
+  const { t, locale: uiLocale } = useI18n()
+  const L = (vi: string, ja: string, en: string) => uiLocale === 'ja' ? ja : uiLocale === 'en' ? en : vi
   const [activeTab, setActiveTab] = useState<'flow' | 'st'>('flow')
   const [selectedNode, setSelectedNode] = useState<string>('step4')
   const [copied, setCopied] = useState(false)
@@ -62,49 +63,49 @@ export default function FlowchartEditor({ locale, onProgressChange }: FlowchartE
         id: 'start',
         label: t('post.flow.node.start.label') || '▶ Auto Start',
         address: 'M70',
-        description: t('post.flow.node.start.desc') || 'Khởi động chế độ tự động vận hành (Automatic mode trigger).',
+        description: t('post.flow.node.start.desc') || L('Khởi động chế độ tự động vận hành (Automatic mode trigger).', '自動運転モードを起動します（自動モードトリガー）。', 'Triggers automatic operation mode.'),
         stCode: startCode,
       },
       step1: {
         id: 'step1',
         label: t('post.flow.node.step1.label') || '① Work Grip',
         address: 'M71 / Y40',
-        description: t('post.flow.node.step1.desc') || 'Kích hoạt xi-lanh kẹp phôi vật liệu (Workpiece gripping cylinder).',
+        description: t('post.flow.node.step1.desc') || L('Kích hoạt xi-lanh kẹp phôi vật liệu (Workpiece gripping cylinder).', 'ワーク把持シリンダーを作動させます。', 'Activates the workpiece gripping cylinder.'),
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 1 THEN\n  GRIP_CYLINDER_OUT := TRUE;\n  IF GRIP_LIMIT_SWITCH THEN\n    STEP_NUMBER := 2;\n  END_IF;\nEND_IF;',
       },
       step2: {
         id: 'step2',
         label: t('post.flow.node.step2.label') || '② Move to Inspect',
         address: 'M72 / Axis 1-3',
-        description: t('post.flow.node.step2.desc') || 'Điều khiển 3 trục Servo di chuyển phôi vào tâm đo quét (Move to inspection position).',
+        description: t('post.flow.node.step2.desc') || L('Điều khiển 3 trục Servo di chuyển phôi vào tâm đo quét (Move to inspection position).', '3 軸サーボでワークを検査位置へ移動させます。', 'Controls 3 servo axes to move the workpiece to the inspection position.'),
         stCode: step2Code,
       },
       step3: {
         id: 'step3',
         label: t('post.flow.node.step3.label') || '③ 3D Dimension Scan',
         address: 'M73 / Y50',
-        description: t('post.flow.node.step3.desc') || 'Kích hoạt cảm biến laser đo quét 3D kích thước (Trigger 3D scan).',
+        description: t('post.flow.node.step3.desc') || L('Kích hoạt cảm biến laser đo quét 3D kích thước (Trigger 3D scan).', '3D レーザー寸法スキャンセンサーをトリガーします。', 'Triggers the 3D laser dimension scan sensor.'),
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 3 THEN\n  LASER_SCAN_TRIGGER := TRUE;\n  IF SCAN_COMPLETE THEN\n    STEP_NUMBER := 4;\n  END_IF;\nEND_IF;',
       },
       step4: {
         id: 'step4',
         label: t('post.flow.node.step4.label') || '④ AI Judgment',
         address: 'M74 / Branch',
-        description: t('post.flow.node.step4.desc') || 'Phân tích dữ liệu đo quét bằng thuật toán kiểm định chất lượng (AI classification analysis).',
+        description: t('post.flow.node.step4.desc') || L('Phân tích dữ liệu đo quét bằng thuật toán kiểm định chất lượng (AI classification analysis).', 'AI 品質分類アルゴリズムでスキャンデータを解析します。', 'Analyzes scan data using AI quality classification algorithm.'),
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 4 THEN\n  AI_RUN_INFERENCE := TRUE;\n  IF AI_RESULT_READY THEN\n    IF AI_RESULT_OK THEN\n      STEP_NUMBER := 5; // Go to OK discharge\n    ELSE\n      STEP_NUMBER := 6; // Go to NG recycle\n    END_IF;\n  END_IF;\nEND_IF;',
       },
       step5a: {
         id: 'step5a',
         label: t('post.flow.node.step5a.label') || '⑤a Discharge OK',
         address: 'M75 / Y60',
-        description: t('post.flow.node.step5a.desc') || 'Đẩy phôi đạt chuẩn ra băng tải thành phẩm (Discharge OK product).',
+        description: t('post.flow.node.step5a.desc') || L('Đẩy phôi đạt chuẩn ra băng tải thành phẩm (Discharge OK product).', '合格ワークを製品コンベアに排出します。', 'Discharges OK-graded workpieces to the finished product conveyor.'),
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 5 THEN\n  DISCHARGE_OK_GATE := TRUE;\n  IF GATE_OPEN_LIMIT THEN\n    STEP_NUMBER := 7; // Done\n  END_IF;\nEND_IF;',
       },
       step6: {
         id: 'step6',
         label: t('post.flow.node.step6.label') || '⑤b NG Retry/Recycle',
         address: 'M76 / Y61',
-        description: t('post.flow.node.step6.desc') || 'Đẩy phôi lỗi vào khay xử lý lại (Recycle and tag defect).',
+        description: t('post.flow.node.step6.desc') || L('Đẩy phôi lỗi vào khay xử lý lại (Recycle and tag defect).', '不良ワークをリサイクルトレイへ排出し、不良タグを記録します。', 'Discharges defective workpieces to the recycle tray and records the defect tag.'),
         stCode: 'IF AUTO_MODE AND STEP_NUMBER = 6 THEN\n  DISCHARGE_NG_GATE := TRUE;\n  REJECT_COUNT := REJECT_COUNT + 1;\n  IF NG_GATE_LIMIT THEN\n    STEP_NUMBER := 7; // Done\n  END_IF;\nEND_IF;',
       },
     }

@@ -42,7 +42,8 @@ export default function SmartMaterialsTable({
   onMaterialsChange,
   showSyncBadge = true
 }: SmartMaterialsTableProps) {
-  const { t, tf } = useI18n()
+  const { t, tf, locale } = useI18n()
+  const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
   const [components, setComponents] = useState<ComponentItem[]>([])
 
   const STORAGE_KEY = `aiplf.materials.${projectId}`
@@ -116,8 +117,8 @@ export default function SmartMaterialsTable({
   // Dynamic I/O mapping list based on configured quantities
   const getDynamicIoMapping = () => {
     const mapping: { address: string; type: string; signal: string; connectedTo: string }[] = [
-      { address: 'X0.0', type: 'Input', signal: 'E-STOP_PUSH_BUTTON', connectedTo: t('post.design.io.estop') || 'Nút nhấn dừng khẩn cấp cabinet' },
-      { address: 'X0.1', type: 'Input', signal: 'SAFETY_GATE_CLOSED', connectedTo: t('post.design.io.safety') || 'Cửa che chắn liên khóa an toàn KA1' }
+      { address: 'X0.0', type: 'Input', signal: 'E-STOP_PUSH_BUTTON', connectedTo: t('post.design.io.estop') || L('Nút nhấn dừng khẩn cấp cabinet', '非常停止押しボタン（キャビネット）', 'Emergency stop push button (cabinet)') },
+      { address: 'X0.1', type: 'Input', signal: 'SAFETY_GATE_CLOSED', connectedTo: t('post.design.io.safety') || L('Cửa che chắn liên khóa an toàn KA1', '安全扉インターロック KA1', 'Safety gate interlock KA1') }
     ]
 
     const proxQty = components.find(c => c.id === 'mat-3')?.quantity || 8
@@ -130,7 +131,7 @@ export default function SmartMaterialsTable({
         address: `X1.${i}`,
         type: 'Input',
         signal: `PROX_SENSOR_AXIS_${Math.floor(i / 2) + 1}_${i % 2 === 0 ? 'LIMIT_PLUS' : 'LIMIT_MINUS'}`,
-        connectedTo: tf('post.design.io.limit', { n: Math.floor(i / 2) + 1 }) || `Cảm biến giới hạn hành trình trục A${Math.floor(i / 2) + 1}`
+        connectedTo: tf('post.design.io.limit', { n: Math.floor(i / 2) + 1 }) || L(`Cảm biến giới hạn hành trình trục A${Math.floor(i / 2) + 1}`, `軸A${Math.floor(i / 2) + 1} ストロークリミットセンサ`, `Stroke limit sensor axis A${Math.floor(i / 2) + 1}`)
       })
     }
 
@@ -140,7 +141,7 @@ export default function SmartMaterialsTable({
         address: `X2.${i}`,
         type: 'Input',
         signal: `PHOTO_SENSOR_CONVEYOR_${i + 1}`,
-        connectedTo: tf('post.design.io.photo', { n: i + 1 }) || `Cảm biến quang phát hiện phôi #${i + 1}`
+        connectedTo: tf('post.design.io.photo', { n: i + 1 }) || L(`Cảm biến quang phát hiện phôi #${i + 1}`, `光電センサ ワーク検出 #${i + 1}`, `Photoelectric sensor workpiece detection #${i + 1}`)
       })
     }
 
@@ -150,19 +151,19 @@ export default function SmartMaterialsTable({
         address: `X3.${i}`,
         type: 'Input',
         signal: `SERVO_ALARM_AXIS_${i + 1}`,
-        connectedTo: tf('post.design.io.servoAlarm', { n: i + 1 }) || `Tín hiệu lỗi Driver Servo Trục A${i + 1}`
+        connectedTo: tf('post.design.io.servoAlarm', { n: i + 1 }) || L(`Tín hiệu lỗi Driver Servo Trục A${i + 1}`, `サーボドライバ アラーム信号 軸A${i + 1}`, `Servo driver alarm signal axis A${i + 1}`)
       })
       mapping.push({
         address: `Y1.${i}`,
         type: 'Output',
         signal: `SERVO_ENABLE_AXIS_${i + 1}`,
-        connectedTo: tf('post.design.io.servoEnable', { n: i + 1 }) || `Kích hoạt nguồn động lực Trục A${i + 1}`
+        connectedTo: tf('post.design.io.servoEnable', { n: i + 1 }) || L(`Kích hoạt nguồn động lực Trục A${i + 1}`, `サーボ主電源 イネーブル 軸A${i + 1}`, `Servo main power enable axis A${i + 1}`)
       })
     }
 
     mapping.push(
-      { address: 'Y0.0', type: 'Output', signal: 'RED_LAMP_ALARM', connectedTo: t('post.design.io.lampAlarm') || 'Đèn tháp cảnh báo lỗi còi hú' },
-      { address: 'Y0.1', type: 'Output', signal: 'GREEN_LAMP_RUNNING', connectedTo: t('post.design.io.lampRun') || 'Đèn tháp trạng thái hệ thống chạy tự động' }
+      { address: 'Y0.0', type: 'Output', signal: 'RED_LAMP_ALARM', connectedTo: t('post.design.io.lampAlarm') || L('Đèn tháp cảnh báo lỗi còi hú', 'シグナルタワー 赤（アラーム・ブザー）', 'Tower light red – alarm & buzzer') },
+      { address: 'Y0.1', type: 'Output', signal: 'GREEN_LAMP_RUNNING', connectedTo: t('post.design.io.lampRun') || L('Đèn tháp trạng thái hệ thống chạy tự động', 'シグナルタワー 緑（自動運転中）', 'Tower light green – system running auto') }
     )
 
     return mapping
@@ -207,19 +208,19 @@ export default function SmartMaterialsTable({
       {/* METADATA SUMMARY BAR */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[10.5px]">
         <div>
-          <span className="text-slate-400 font-bold uppercase text-[9px] block">{t('post.design.designer') || 'Người thiết kế'}</span>
+          <span className="text-slate-400 font-bold uppercase text-[9px] block">{t('post.design.designer') || L('Người thiết kế', '設計者', 'Designer')}</span>
           <span className="font-extrabold text-slate-800 mt-1 block">{tf('post.design.designerVal', { user: currentUser })}</span>
         </div>
         <div>
-          <span className="text-slate-400 font-bold uppercase text-[9px] block">{t('post.design.ioConsumption') || 'Mức Tiêu thụ I/O'}</span>
+          <span className="text-slate-400 font-bold uppercase text-[9px] block">{t('post.design.ioConsumption') || L('Mức Tiêu thụ I/O', 'I/O 使用量', 'I/O Consumption')}</span>
           <span className="font-extrabold text-brand-600 mt-1 block font-mono">{tf('post.design.ioEstimated', { total: totalIoPoints })}</span>
         </div>
         <div>
-          <span className="text-slate-400 font-bold uppercase text-[9px] block">{t('post.design.networkLink') || 'Mạng liên kết'}</span>
+          <span className="text-slate-400 font-bold uppercase text-[9px] block">{t('post.design.networkLink') || L('Mạng liên kết', 'ネットワーク構成', 'Network Link')}</span>
           <span className="font-extrabold text-slate-800 mt-1 block font-mono">Modbus TCP & SSCNET</span>
         </div>
         <div>
-          <span className="text-slate-400 font-bold uppercase text-[9px] block">{t('post.design.safetyStandard') || 'Quy chuẩn áp dụng'}</span>
+          <span className="text-slate-400 font-bold uppercase text-[9px] block">{t('post.design.safetyStandard') || L('Quy chuẩn áp dụng', '適用規格', 'Applied Standard')}</span>
           <span className="font-extrabold text-slate-800 mt-1 block">IEC 61131-3 & JIS C 8201</span>
         </div>
       </div>
@@ -229,7 +230,7 @@ export default function SmartMaterialsTable({
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-1.5 gap-2">
           <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider font-mono flex items-center gap-1.5">
             <HardDrive className="w-3.5 h-3.5 text-slate-400" />
-            {t('post.design.sec1Title') || '1. Cấu hình thiết bị & Thông số phần cứng'}
+            {t('post.design.sec1Title') || L('1. Cấu hình thiết bị & Thông số phần cứng', '1. 機器構成 & ハードウェア仕様', '1. Device Configuration & Hardware Specifications')}
           </h4>
         </div>
         <div className="overflow-x-auto border border-slate-200 rounded-2xl">
@@ -285,13 +286,13 @@ export default function SmartMaterialsTable({
       <div className="space-y-3">
         <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider font-mono flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
           <Layers className="w-3.5 h-3.5 text-slate-400" />
-          {t('post.design.sec2Title') || '2. Phương án đề xuất thiết kế hệ thống (AI Design Proposal)'}
+          {t('post.design.sec2Title') || L('2. Phương án đề xuất thiết kế hệ thống (AI Design Proposal)', '2. システム設計提案（AI Design Proposal）', '2. System Design Proposal (AI Design Proposal)')}
         </h4>
         
         <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl space-y-4 text-[10.5px] leading-relaxed">
           <div>
             <span className="font-extrabold text-slate-800 text-[11.5px] block border-l-2 border-brand-500 pl-2">
-              {t('post.design.sec2aTitle') || 'A. Phương án thiết kế phần cứng điện (Hardware electrical solution)'}
+              {t('post.design.sec2aTitle') || L('A. Phương án thiết kế phần cứng điện (Hardware electrical solution)', 'A. 電気ハードウェア設計方針（Hardware electrical solution）', 'A. Electrical Hardware Design Approach (Hardware electrical solution)')}
             </span>
             <p className="text-slate-500 mt-2 pl-2.5 font-semibold leading-relaxed">
               {tf('post.design.sec2aBody', { servoCount, proxCount, photoCount })}
@@ -299,7 +300,7 @@ export default function SmartMaterialsTable({
           </div>
           <div>
             <span className="font-extrabold text-slate-800 text-[11.5px] block border-l-2 border-brand-500 pl-2">
-              {t('post.design.sec2bTitle') || 'B. Phương án thiết kế logic điều khiển & Giao diện HMI (Control logic & Visualization)'}
+              {t('post.design.sec2bTitle') || L('B. Phương án thiết kế logic điều khiển & Giao diện HMI (Control logic & Visualization)', 'B. 制御ロジック & HMI インターフェース設計方針（Control logic & Visualization）', 'B. Control Logic & HMI Interface Design Approach (Control logic & Visualization)')}
             </span>
             <p className="text-slate-500 mt-2 pl-2.5 font-semibold leading-relaxed">
               {tf('post.design.sec2bBody', { hmiSpecs })}
@@ -312,7 +313,7 @@ export default function SmartMaterialsTable({
       <div className="space-y-3">
         <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider font-mono flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
           <Terminal className="w-3.5 h-3.5 text-slate-400" />
-          {t('post.design.sec3Title') || '3. Bản đồ phân bổ địa chỉ I/O dự kiến'}
+          {t('post.design.sec3Title') || L('3. Bản đồ phân bổ địa chỉ I/O dự kiến', '3. I/O アドレス割付マップ（予定）', '3. Planned I/O Address Allocation Map')}
         </h4>
         <div className="overflow-x-auto border border-slate-200 rounded-2xl max-h-[260px]">
           <table className="w-full text-left border-collapse text-[10.5px] font-mono">
@@ -321,7 +322,7 @@ export default function SmartMaterialsTable({
                 <th className="py-2 px-3">{t('post.design.colAddress') || 'PLC Address'}</th>
                 <th className="py-2 px-2">{t('post.design.colSignal') || 'Signal Code'}</th>
                 <th className="py-2 px-2">{t('post.design.colType') || 'Terminal Type'}</th>
-                <th className="py-2 px-3 font-sans">{t('post.design.colDesc') || 'Mô tả / Thành phần kết nối'}</th>
+                <th className="py-2 px-3 font-sans">{t('post.design.colDesc') || L('Mô tả / Thành phần kết nối', '説明 / 接続先', 'Description / Connected Component')}</th>
               </tr>
             </thead>
             <tbody>
@@ -345,10 +346,10 @@ export default function SmartMaterialsTable({
       <div className="space-y-2 border-t border-slate-100 pt-4">
         <h5 className="font-extrabold text-slate-800 text-[11px] flex items-center gap-1.5">
           <CheckCircle className="w-4 h-4 text-emerald-500" />
-          {t('post.design.sec4Title') || '4. Cam kết liên khóa an toàn & Bảo vệ mạch lực (JIS C 8201)'}
+          {t('post.design.sec4Title') || L('4. Cam kết liên khóa an toàn & Bảo vệ mạch lực (JIS C 8201)', '4. 安全インターロック & 主回路保護（JIS C 8201）', '4. Safety Interlock & Main Circuit Protection (JIS C 8201)')}
         </h5>
         <p className="text-[10px] text-slate-500 leading-relaxed pl-5 font-semibold">
-          {t('post.design.sec4Body') || 'Hệ thống an toàn sử dụng rơ le an toàn G9SE liên khóa độc lập phần cứng với mạch lực cấp nguồn AC200V cho các Servo. Nếu cửa an toàn KA1 mở hoặc nhấn nút dừng khẩn cấp E-Stop, rơ le an toàn ngắt trực tiếp nguồn cuộn hút của Contactor chính, đảm bảo ngắt động cơ khẩn cấp (JIS C 8201).'}
+          {t('post.design.sec4Body') || L('Hệ thống an toàn sử dụng rơ le an toàn G9SE liên khóa độc lập phần cứng với mạch lực cấp nguồn AC200V cho các Servo. Nếu cửa an toàn KA1 mở hoặc nhấn nút dừng khẩn cấp E-Stop, rơ le an toàn ngắt trực tiếp nguồn cuộn hút của Contactor chính, đảm bảo ngắt động cơ khẩn cấp (JIS C 8201).', '安全システムは安全リレー G9SE によりサーボ用 AC200V 主回路をハードウェアで独立インターロックします。安全扉 KA1 の開放または非常停止 E-Stop の押下時、安全リレーが主コンタクタのコイル電源を直接遮断し、緊急停止を保証します（JIS C 8201）。', 'The safety system uses the G9SE safety relay to independently hardware-interlock the AC200V main circuit powering the servos. If safety gate KA1 opens or the E-Stop button is pressed, the safety relay directly cuts the main contactor coil supply, ensuring emergency motor shutdown (JIS C 8201).')}
         </p>
       </div>
 

@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Play, Pause, RotateCcw, Volume2, Sparkles, Download, Disc } from 'lucide-react'
+import { useI18n } from '@/i18n/I18nProvider'
 
-export default function AudioOverview({ locale }: { locale: string }) {
+export default function AudioOverview(_props: { locale?: string }) {
+  const { locale } = useI18n()
+  const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(30) // percentage
   const [currentTime, setCurrentTime] = useState(98) // in seconds (01:38)
@@ -47,10 +50,10 @@ export default function AudioOverview({ locale }: { locale: string }) {
           </div>
           <div>
             <h4 className="text-xs font-mono font-bold text-slate-850">
-              {locale === 'ja' ? 'AI 音声サマリー (ポッドキャスト)' : locale === 'vi' ? 'Audio Tóm tắt AI (Podcast)' : 'AI Audio Overview (Podcast)'}
+              {L('Audio Tóm tắt AI (Podcast)', 'AI 音声サマリー (ポッドキャスト)', 'AI Audio Overview (Podcast)')}
             </h4>
             <p className="text-[10px] text-slate-450">
-              {locale === 'ja' ? '2人のAI司会者がPLC仕様を解説' : locale === 'vi' ? '2 MC ảo đối thoại phân tích thông số PLC' : 'Two AI hosts discussing the PLC design'}
+              {L('2 MC ảo đối thoại phân tích thông số PLC', '2人のAI司会者がPLC仕様を解説', 'Two AI hosts discussing the PLC design')}
             </p>
           </div>
         </div>
@@ -121,10 +124,10 @@ export default function AudioOverview({ locale }: { locale: string }) {
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
         <span className="text-[10px] text-slate-500 flex items-center gap-1">
           <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-          {locale === 'ja' ? '音声データは最新のソースに基づいています' : locale === 'vi' ? 'Dữ liệu âm thanh đồng bộ theo spec mới nhất' : 'Generated from current workspace documents'}
+          {L('Dữ liệu âm thanh đồng bộ theo spec mới nhất', '音声データは最新のソースに基づいています', 'Generated from current workspace documents')}
         </span>
         <button className="text-[10px] font-mono font-bold text-brand-600 hover:text-brand-700 hover:underline cursor-pointer">
-          {locale === 'ja' ? '再生成' : locale === 'vi' ? 'Tái tạo' : 'Regenerate'}
+          {L('Tái tạo', '再生成', 'Regenerate')}
         </button>
       </div>
     </div>

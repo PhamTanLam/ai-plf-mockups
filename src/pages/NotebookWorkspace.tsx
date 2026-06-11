@@ -2040,7 +2040,7 @@ Thành phần tham dự:
                     type="button"
                     onClick={() => setIsLeftSidebarExpanded(false)}
                     className="p-1 hover:bg-slate-200/80 text-slate-450 hover:text-slate-700 rounded transition cursor-pointer shrink-0 ml-0.5"
-                    title="Thu gọn sidebar"
+                    title={L('Thu gọn sidebar', 'サイドバーを折りたたむ', 'Collapse sidebar')}
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                   </button>
@@ -2071,7 +2071,7 @@ Thành phần tham dự:
                         { id: 'h3', user: 'Linh', action: 'Đồng bộ chênh lệch thông số sang biên bản kick-off', timestamp: '10:15 AM', phaseNum: 8 },
                       ])}
                       className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5 cursor-pointer ml-auto transition-colors"
-                      title="Reset lịch sử"
+                      title={L('Reset lịch sử', '履歴をリセット', 'Reset history')}
                     >
                       <RotateCcw className="w-2.5 h-2.5" />
                       <span>Reset</span>
@@ -2263,7 +2263,7 @@ Thành phần tham dự:
             <button
               onClick={() => setIsLeftSidebarExpanded(true)}
               className="absolute inset-0 w-full h-full flex flex-col items-center justify-start pt-6 gap-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 transition cursor-pointer select-none"
-              title="Mở rộng sidebar"
+              title={L('Mở rộng sidebar', 'サイドバーを展開', 'Expand sidebar')}
             >
               <FileText className="w-4 h-4 text-brand-500" />
               <span className="[writing-mode:vertical-rl] whitespace-nowrap font-extrabold text-[10px] uppercase tracking-wider mt-2 font-mono">
@@ -2609,14 +2609,14 @@ Thành phần tham dự:
                     <button
                       onClick={newConversation}
                       className="p-1 text-slate-500 hover:text-brand-600 hover:bg-slate-200 rounded-lg transition cursor-pointer"
-                      title="Cuộc trò chuyện mới"
+                      title={L('Cuộc trò chuyện mới', '新しい会話', 'New conversation')}
                     >
                       <Plus className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setShowConvMenu(v => !v)}
                       className={`p-1 rounded-lg transition cursor-pointer ${showConvMenu ? 'bg-slate-200 text-brand-600' : 'text-slate-500 hover:text-brand-600 hover:bg-slate-200'}`}
-                      title="Lịch sử hội thoại"
+                      title={L('Lịch sử hội thoại', '会話履歴', 'Conversation history')}
                     >
                       <History className="w-4 h-4" />
                     </button>
@@ -2652,7 +2652,7 @@ Thành phần tham dự:
                           <input
                             value={convSearch}
                             onChange={e => setConvSearch(e.target.value)}
-                            placeholder="Tìm cuộc trò chuyện…"
+                            placeholder={L('Tìm cuộc trò chuyện…', '会話を検索…', 'Search conversations…')}
                             className="w-full pl-8 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-500 text-[11px] text-slate-700"
                           />
                         </div>
@@ -2699,14 +2699,14 @@ Thành phần tham dự:
                                         <button
                                           onClick={(e) => { e.stopPropagation(); setRenameConvId(c.id); setRenameConvVal(c.title) }}
                                           className="p-1 text-slate-350 hover:text-brand-600 hover:bg-brand-50 rounded-md cursor-pointer"
-                                          title="Đổi tên"
+                                          title={L('Đổi tên', '名前を変更', 'Rename')}
                                         >
                                           <Pencil className="w-3.5 h-3.5" />
                                         </button>
                                         <button
                                           onClick={(e) => { e.stopPropagation(); deleteConversation(c.id) }}
                                           className="p-1 text-slate-350 hover:text-rose-500 hover:bg-rose-50 rounded-md cursor-pointer"
-                                          title="Xóa cuộc trò chuyện"
+                                          title={L('Xóa cuộc trò chuyện', '会話を削除', 'Delete conversation')}
                                         >
                                           <Trash2 className="w-3.5 h-3.5" />
                                         </button>

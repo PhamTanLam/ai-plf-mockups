@@ -43,6 +43,7 @@ function loadDeletedCases(): string[] {
 
 export default function NotebookList() {
   const { t, locale, setLocale } = useI18n()
+  const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
   const [siteTitle, setSiteTitle] = useState(() => localStorage.getItem('aiplf.settings.siteTitle') || 'Cowatech AI Platform')
   
   useEffect(() => {
@@ -318,7 +319,7 @@ export default function NotebookList() {
               <button
                 onClick={() => setShowNewModal(false)}
                 className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition cursor-pointer"
-                title="Đóng"
+                title={L('Đóng', '閉じる', 'Close')}
               >
                 <X className="w-4 h-4" />
               </button>

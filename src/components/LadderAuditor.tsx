@@ -19,7 +19,8 @@ interface LadderAuditorProps {
 
 export default function LadderAuditor({ locale, onProgressChange }: LadderAuditorProps) {
   void locale
-  const { t } = useI18n()
+  const { t, locale: uiLocale } = useI18n()
+  const L = (vi: string, ja: string, en: string) => uiLocale === 'ja' ? ja : uiLocale === 'en' ? en : vi
   const [selectedRung, setSelectedRung] = useState<number>(81)
   const [solvedItems, setSolvedItems] = useState<string[]>([])
 
@@ -36,27 +37,27 @@ export default function LadderAuditor({ locale, onProgressChange }: LadderAudito
       rungId: 81,
       severity: 'error',
       code: 'ISO 13849-1',
-      message: 'Mạch liên khóa an toàn thiếu phản hồi tiếp điểm phụ',
-      description: 'Tiếp điểm của cuộn hút van an toàn KA1 đang được đấu nối trực tiếp mà không đi qua phản hồi kiểm tra tiếp điểm phụ (feedback loop) về PLC. Điều này vi phạm tiêu chuẩn ISO 13849 PLd.',
-      solution: 'Đấu nối tiếp điểm phụ NC của rơ-le an toàn KA1 nối tiếp vào cổng tín hiệu đầu vào X20 của PLC để giám sát tình trạng kẹt tiếp điểm cơ khí.',
+      message: L('Mạch liên khóa an toàn thiếu phản hồi tiếp điểm phụ', '安全インターロック回路に補助接点フィードバックがありません', 'Safety interlock circuit missing auxiliary contact feedback'),
+      description: L('Tiếp điểm của cuộn hút van an toàn KA1 đang được đấu nối trực tiếp mà không đi qua phản hồi kiểm tra tiếp điểm phụ (feedback loop) về PLC. Điều này vi phạm tiêu chuẩn ISO 13849 PLd.', '安全バルブリレー KA1 の補助接点フィードバックループを経由せず、PLC に直接配線されています。これは ISO 13849 PLd 規格違反です。', 'The auxiliary contact of safety valve coil KA1 is wired directly to the PLC without passing through a feedback loop for contact monitoring. This violates the ISO 13849 PLd standard.'),
+      solution: L('Đấu nối tiếp điểm phụ NC của rơ-le an toàn KA1 nối tiếp vào cổng tín hiệu đầu vào X20 của PLC để giám sát tình trạng kẹt tiếp điểm cơ khí.', '安全リレー KA1 の NC 補助接点を PLC 入力ポート X20 に直列接続し、接点溶着の監視を行ってください。', 'Wire the NC auxiliary contact of safety relay KA1 in series to PLC input port X20 to monitor for welded contact faults.'),
     },
     {
       id: 'WARN-002',
       rungId: 78,
       severity: 'warning',
       code: 'IEC 60204-1',
-      message: 'Nút ấn chạy tự động không có chế độ duy trì an toàn',
-      description: 'Tín hiệu PB2 kích hoạt chế độ chạy tự động (rung 78) chưa được khóa chéo (interlock) với cảnh báo còi hoặc đèn nhấp nháy trước khi máy vận hành.',
-      solution: 'Thêm tiếp điểm thường đóng của đèn cảnh báo hoạt động (M50) hoặc khóa liên động an toàn trước lệnh kích hoạt tự động.',
+      message: L('Nút ấn chạy tự động không có chế độ duy trì an toàn', '自動運転起動ボタンに安全保持モードがありません', 'Auto-run start button lacks safety hold mode'),
+      description: L('Tín hiệu PB2 kích hoạt chế độ chạy tự động (rung 78) chưa được khóa chéo (interlock) với cảnh báo còi hoặc đèn nhấp nháy trước khi máy vận hành.', 'PB2 信号による自動運転モード起動（ラング 78）は、機械動作前にブザーまたは点滅灯とのインターロックが取られていません。', 'The PB2 signal that triggers automatic operation mode (rung 78) is not interlocked with a warning buzzer or flashing indicator light before machine operation.'),
+      solution: L('Thêm tiếp điểm thường đóng của đèn cảnh báo hoạt động (M50) hoặc khóa liên động an toàn trước lệnh kích hoạt tự động.', '動作中警告灯（M50）の NC 接点、または安全インターロック接点を自動起動指令の前段に追加してください。', 'Add the NC contact of the active warning lamp (M50) or a safety interlock contact in series before the automatic start command.'),
     },
     {
       id: 'INFO-003',
       rungId: 79,
       severity: 'info',
       code: 'OPTIMIZE',
-      message: 'Tối ưu hóa thời gian quét vòng quét (Scan time)',
-      description: 'Lệnh điều khiển di chuyển xy-lanh (X40) có thể gộp vào chung một block chức năng điều hướng tích hợp để tăng hiệu năng xử lý vòng quét của CPU Mitsubishi Q-Series.',
-      solution: 'Chuyển đổi các rungs lệnh tuần tự thành cấu trúc thanh ghi dịch hoặc lệnh bước SFC.',
+      message: L('Tối ưu hóa thời gian quét vòng quét (Scan time)', 'スキャンタイム最適化の提案', 'Scan time optimization suggestion'),
+      description: L('Lệnh điều khiển di chuyển xy-lanh (X40) có thể gộp vào chung một block chức năng điều hướng tích hợp để tăng hiệu năng xử lý vòng quét của CPU Mitsubishi Q-Series.', 'シリンダー移動制御命令（X40）を統合ナビゲーション機能ブロックにまとめることで、Mitsubishi Q-Series CPU のスキャン処理効率を向上できます。', 'The cylinder movement control instruction (X40) can be consolidated into a unified navigation function block to improve scan cycle processing efficiency on the Mitsubishi Q-Series CPU.'),
+      solution: L('Chuyển đổi các rungs lệnh tuần tự thành cấu trúc thanh ghi dịch hoặc lệnh bước SFC.', '順次命令ラングをシフトレジスタ構造または SFC ステップ命令に変換してください。', 'Convert sequential instruction rungs to a shift register structure or SFC step instructions.'),
     },
   ]
 
