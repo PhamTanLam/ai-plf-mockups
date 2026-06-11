@@ -1100,8 +1100,20 @@ export default function NotebookWorkspace() {
   const handlePhaseChange = (phaseNum: number) => {
     setActivePhase(phaseNum)
     setActivatedPhases((prev) => {
-      if (prev.includes(phaseNum)) return prev
-      return [...prev, phaseNum]
+      const postSalesOrder = [7, 8, 9, 10, 12, 11]
+      let toAdd = [phaseNum]
+      if (postSalesOrder.includes(phaseNum)) {
+        const idx = postSalesOrder.indexOf(phaseNum)
+        toAdd = postSalesOrder.slice(0, idx + 1)
+      }
+      
+      const newActivated = [...prev]
+      toAdd.forEach(num => {
+        if (!newActivated.includes(num)) {
+          newActivated.push(num)
+        }
+      })
+      return newActivated
     })
 
     let updatedHasUsedPreSales = hasUsedPreSales
