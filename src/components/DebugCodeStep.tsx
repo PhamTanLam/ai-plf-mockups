@@ -656,29 +656,32 @@ export default function DebugCodeStep({
             title={isRightSidebarExpanded ? L('Ẩn công cụ AI', 'AI ツールを非表示', 'Hide AI tools') : L('Hiện công cụ AI', 'AI ツールを表示', 'Show AI tools')}
           >
             {isRightSidebarExpanded ? (
-              <ChevronDown className="w-4 h-4 text-violet-600" />
+          <ChevronDown className="w-4 h-4 text-violet-600" />
             ) : (
               <Wand2 className="w-4 h-4 text-violet-600 animate-pulse" />
             )}
           </button>
-          
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 py-2.5 px-3 bg-violet-50 hover:bg-violet-100 text-violet-750 border border-violet-200 rounded-xl transition cursor-pointer shadow-3xs font-bold text-xs"
-            title={t('post.debug.importCode')}
-          >
-            <Upload className="w-4 h-4 text-violet-600" />
-            <span>{t('post.debug.importCode')}</span>
-          </button>
+          {code.trim() !== '' && (
+            <>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 py-2.5 px-3 bg-violet-50 hover:bg-violet-100 text-violet-755 border border-violet-200 rounded-xl transition cursor-pointer shadow-3xs font-bold text-xs"
+                title={t('post.debug.importCode')}
+              >
+                <Upload className="w-4 h-4 text-violet-600" />
+                <span>{t('post.debug.importCode')}</span>
+              </button>
 
-          <button
-            onClick={handleCopy}
-            className="flex items-center justify-center p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition cursor-pointer shadow-3xs"
-            title={copied ? t('post.debug.copied') : t('post.debug.copyAll')}
-          >
-            {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-          </button>
+              <button
+                onClick={handleCopy}
+                className="flex items-center justify-center p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition cursor-pointer shadow-3xs"
+                title={copied ? t('post.debug.copied') : t('post.debug.copyAll')}
+              >
+                {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
