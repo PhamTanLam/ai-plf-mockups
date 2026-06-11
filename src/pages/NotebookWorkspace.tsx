@@ -1089,6 +1089,8 @@ export default function NotebookWorkspace() {
   const [inputVal, setInputVal] = useState('')
   const [activeViewerSource, setActiveViewerSource] = useState<string | null>(null)
   const [srcMenuOpen, setSrcMenuOpen] = useState<string | null>(null)
+  const [renamingSrcId, setRenamingSrcId] = useState<string | null>(null)
+  const [renameSrcText, setRenameSrcText] = useState('')
   const [highlightedPhrase, setHighlightedPhrase] = useState<string | undefined>(undefined)
 
   // Question History tracking
@@ -1843,6 +1845,20 @@ Thành phần tham dự:
     setSrcMenuOpen(null)
   }
 
+  // Bắt đầu đổi tên nguồn (inline) / lưu tên mới.
+  const startRenameSource = (sourceId: string, current: string) => {
+    setRenamingSrcId(sourceId)
+    setRenameSrcText(current)
+    setSrcMenuOpen(null)
+  }
+  const commitRenameSource = () => {
+    const name = renameSrcText.trim()
+    if (renamingSrcId && name) {
+      setSources(prev => prev.map(s => (s.id === renamingSrcId ? { ...s, title: name } : s)))
+    }
+    setRenamingSrcId(null)
+  }
+
   const humanSize = (b: number) => b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB'
 
   // Thêm nguồn từ modal (file: chỉ metadata; văn bản dán: trích từ nội dung)
@@ -2104,11 +2120,26 @@ Thành phần tham dự:
                           <div className="flex items-start justify-between gap-1.5">
                             <div className="flex items-center gap-1 min-w-0">
                               <FileText className={`w-3 h-3 shrink-0 ${src.selected ? 'text-brand-500' : 'text-slate-400'}`} />
-                              <span className={`text-[10px] font-bold truncate ${
-                                activeViewerSource === src.id ? 'text-brand-700 font-extrabold' : 'text-slate-800'
-                              }`} title={src.title}>
-                                {src.title}
-                              </span>
+                              {renamingSrcId === src.id ? (
+                                <input
+                                  autoFocus
+                                  value={renameSrcText}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) => setRenameSrcText(e.target.value)}
+                                  onBlur={commitRenameSource}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') commitRenameSource()
+                                    else if (e.key === 'Escape') setRenamingSrcId(null)
+                                  }}
+                                  className="text-[10px] font-bold w-full min-w-0 px-1 py-0.5 border border-brand-400 rounded bg-white text-slate-800 outline-none"
+                                />
+                              ) : (
+                                <span className={`text-[10px] font-bold truncate ${
+                                  activeViewerSource === src.id ? 'text-brand-700 font-extrabold' : 'text-slate-800'
+                                }`} title={src.title}>
+                                  {src.title}
+                                </span>
+                              )}
                             </div>
 
                             <div className="relative shrink-0">
@@ -2127,6 +2158,14 @@ Thành phần tham dự:
                                 <>
                                   <div className="fixed inset-0 z-20" onClick={(e) => { e.stopPropagation(); setSrcMenuOpen(null) }} />
                                   <div className="absolute right-0 top-5 z-30 bg-white border border-slate-200 rounded-lg shadow-pop py-1 min-w-[120px] text-[10px] animate-in fade-in zoom-in-95 duration-150">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); startRenameSource(src.id, src.title) }}
+                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-50 cursor-pointer text-slate-700 font-semibold"
+                                    >
+                                      <Pencil className="w-3 h-3 text-slate-500" /> {L('Đổi tên', '名前を変更', 'Rename')}
+                                    </button>
+                                    <div className="border-t border-slate-100 my-1 mx-1" />
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); handleSourceDelete(src.id) }}
