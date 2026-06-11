@@ -8,7 +8,7 @@ import type { Dictionary } from '@/i18n/types'
 export const chatdyn: Dictionary = {
   ja: {
     'chat.ps.recorded': '✓ {label} を記録しました: {value}',
-    'chat.ps.generated': '資料を生成しました ✓（「作成済み」を参照）。',
+    'chat.ps.generated': '資料を生成しました ✓（「AIドラフト」を参照）。',
     'chat.ps.summary': '把握している案件データ:\n{data}',
     'chat.ps.remembered': '追加で記憶しました: {names}。「案件を要約」と入力すると全体を表示します。',
     'chat.ps.understood': '了解しました。詳細を教えていただくか、「案件を要約」で把握内容を確認できます。',
@@ -28,7 +28,7 @@ export const chatdyn: Dictionary = {
   },
   en: {
     'chat.ps.recorded': '✓ Recorded {label}: {value}',
-    'chat.ps.generated': 'Document generated ✓ (see "Created").',
+    'chat.ps.generated': 'Document generated ✓ (see "AI drafts").',
     'chat.ps.summary': "Project data I'm tracking:\n{data}",
     'chat.ps.remembered': 'I noted: {names}. Type "summarize project" to see everything.',
     'chat.ps.understood': 'Understood. Tell me more, or type "summarize project" to see what I have.',
@@ -48,7 +48,7 @@ export const chatdyn: Dictionary = {
   },
   vi: {
     'chat.ps.recorded': '✓ Đã ghi nhớ {label}: {value}',
-    'chat.ps.generated': 'Đã sinh tài liệu ✓ (xem ở mục "Đã tạo").',
+    'chat.ps.generated': 'Đã sinh bản nháp ✓ (xem ở mục "Bản nháp AI").',
     'chat.ps.summary': 'Dữ liệu dự án mình đang ghi nhớ:\n{data}',
     'chat.ps.remembered': 'Mình đã ghi nhớ thêm: {names}. Gõ "tóm tắt dự án" để xem toàn bộ.',
     'chat.ps.understood': 'Đã hiểu. Bạn kể thêm chi tiết, hoặc gõ "tóm tắt dự án" để xem mình đang nhớ gì.',
