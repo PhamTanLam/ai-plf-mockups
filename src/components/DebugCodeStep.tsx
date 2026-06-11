@@ -356,6 +356,7 @@ export default function DebugCodeStep({
   const { t, tf, locale } = useI18n()
   const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
   const STORAGE_KEY = `aiplf.plc_st_code.${projectId}`
+  const LOADED_FLAG_KEY = `aiplf.plc_st_code_loaded.${projectId}`
   const [code, setCode] = useState<string>('')
   const [copied, setCopied] = useState(false)
   const [syntaxStatus, setSyntaxStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle')
@@ -383,8 +384,9 @@ export default function DebugCodeStep({
   // 1. Load initial code from localStorage or set defaults
   useEffect(() => {
     try {
+      const isLoaded = localStorage.getItem(LOADED_FLAG_KEY) === 'true'
       const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
+      if (isLoaded && stored) {
         setCode(stored)
       } else {
         setCode('')
@@ -396,7 +398,7 @@ export default function DebugCodeStep({
       if (storedRev) {
         setRevisions(JSON.parse(storedRev))
       } else {
-        if (stored) {
+        if (isLoaded && stored) {
           const initialRevs = [
             { id: 'rev-1', time: '16:05:12', desc: 'AI sinh mã gốc ban đầu', code: stored }
           ]
@@ -409,12 +411,15 @@ export default function DebugCodeStep({
     } catch {
       setCode('')
     }
-  }, [projectId, locale])
+  }, [projectId, locale, LOADED_FLAG_KEY, STORAGE_KEY])
 
   // Sync to outer components on code change
   const handleCodeChange = (newVal: string) => {
     setCode(newVal)
     localStorage.setItem(STORAGE_KEY, newVal)
+    if (newVal.trim() !== '') {
+      localStorage.setItem(LOADED_FLAG_KEY, 'true')
+    }
     window.dispatchEvent(new Event('storage')) // Notify parent & chat
     
     // Automatically flag that code has been changed manually
@@ -511,6 +516,9 @@ export default function DebugCodeStep({
         const fixedCode = lines.join('\n')
         setCode(fixedCode)
         localStorage.setItem(STORAGE_KEY, fixedCode)
+        if (fixedCode.trim() !== '') {
+          localStorage.setItem(LOADED_FLAG_KEY, 'true')
+        }
         window.dispatchEvent(new Event('storage'))
         
         setSyntaxStatus('valid')
@@ -593,6 +601,9 @@ export default function DebugCodeStep({
     const localizedTarget = localizeCodeComments(targetCode, locale)
     setCode(localizedTarget)
     localStorage.setItem(STORAGE_KEY, localizedTarget)
+    if (localizedTarget.trim() !== '') {
+      localStorage.setItem(LOADED_FLAG_KEY, 'true')
+    }
     window.dispatchEvent(new Event('storage'))
     saveRevision(`AI Paraphrase: ${actionDesc}`, localizedTarget)
     
@@ -612,11 +623,14 @@ export default function DebugCodeStep({
     const handleStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         setCode(e.newValue)
+        if (e.newValue.trim() !== '') {
+          localStorage.setItem(LOADED_FLAG_KEY, 'true')
+        }
       }
     }
     window.addEventListener('storage', handleStorage)
     return () => window.removeEventListener('storage', handleStorage)
-  }, [STORAGE_KEY])
+  }, [STORAGE_KEY, LOADED_FLAG_KEY])
 
   // Count lines for editor numbers
   const lineCount = code.split('\n').length
