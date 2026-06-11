@@ -314,6 +314,7 @@ export default function NotebookWorkspace() {
   const phaseTitle = (num: number | null | undefined) => (num != null ? t(`ws.phase.${num}.title`) : '')
   // dịch hiển thị cho hội thoại AI mô phỏng (logic vẫn khớp theo chuỗi VN)
   const tc = (s: string) => tcText(s, locale)
+  const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
   const chatEndRef = useRef<HTMLDivElement>(null)
   // Đề xuất ghi nhận Bước 7 đang chờ user xác nhận (gõ "update"/"đồng ý" mới ghi vào bộ nhớ)
   const pendingReentryRef = useRef<{ name: string; value: string; mat: string } | null>(null)
@@ -2890,7 +2891,7 @@ Thành phần tham dự:
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <h3 className="text-sm font-bold text-slate-950 font-mono uppercase tracking-wider flex items-center gap-1.5">
                 <Settings className="w-4 h-4 text-brand-500" />
-                <span>Cấu hình Hệ thống (Setting)</span>
+                <span>{L('Cấu hình Hệ thống (Setting)', 'システム設定 (Setting)', 'System Settings')}</span>
               </h3>
               <button
                 onClick={() => {
@@ -2913,7 +2914,7 @@ Thành phần tham dự:
                     : 'border-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
-                Cấu hình chung
+                {L('Cấu hình chung', '一般設定', 'General')}
               </button>
               <button
                 type="button"
@@ -2924,7 +2925,7 @@ Thành phần tham dự:
                     : 'border-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
-                Giao diện & Chủ đề
+                {L('Giao diện & Chủ đề', '外観・テーマ', 'Appearance & Theme')}
               </button>
               <button
                 type="button"
@@ -2935,7 +2936,7 @@ Thành phần tham dự:
                     : 'border-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
-                Quản lý tính năng
+                {L('Quản lý tính năng', '機能管理', 'Feature management')}
               </button>
             </div>
             
@@ -2943,18 +2944,18 @@ Thành phần tham dự:
               {settingsActiveTab === 'general' && (
                 <div className="space-y-3.5 animate-in fade-in duration-150">
                   <div className="space-y-1">
-                    <label className="font-bold text-slate-500">Tên project (Project Title)</label>
+                    <label className="font-bold text-slate-500">{L('Tên project (Project Title)', 'プロジェクト名 (Project Title)', 'Project Title')}</label>
                     <input
                       type="text"
                       value={tempSiteTitle}
                       onChange={(e) => setTempSiteTitle(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-800 font-medium"
-                      placeholder="Nhập tên dự án..."
+                      placeholder={L('Nhập tên dự án...', 'プロジェクト名を入力…', 'Enter project name…')}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-bold text-slate-500">Ngôn ngữ Hệ thống (System Language)</label>
+                    <label className="font-bold text-slate-500">{L('Ngôn ngữ Hệ thống (System Language)', 'システム言語 (System Language)', 'System Language')}</label>
                     <select
                       value={tempLocale}
                       onChange={(e) => setTempLocale(e.target.value as any)}
@@ -2967,27 +2968,26 @@ Thành phần tham dự:
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-bold text-slate-500">Vai trò Đăng nhập (Active Role)</label>
+                    <label className="font-bold text-slate-500">{L('Vai trò Đăng nhập (Active Role)', 'ログイン役割 (Active Role)', 'Active Role')}</label>
                     <select
                       value={tempActiveUser}
                       onChange={(e) => setTempActiveUser(e.target.value as any)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-855 font-medium cursor-pointer"
                     >
-                      <option value="Linh">Linh (Kỹ sư Việt Nam)</option>
-                      <option value="Kanai">Kanai (Chuyên gia Nhật Bản)</option>
-                      <option value="AI">AI Agent (Trợ lý tự động)</option>
+                      <option value="Linh">{L('Linh (Kỹ sư Việt Nam)', 'Linh（ベトナム人エンジニア）', 'Linh (Vietnamese engineer)')}</option>
+                      <option value="Kanai">{L('Kanai (Chuyên gia Nhật Bản)', 'Kanai（日本人スペシャリスト）', 'Kanai (Japanese specialist)')}</option>
+                      <option value="AI">{L('AI Agent (Trợ lý tự động)', 'AIエージェント（自動アシスタント）', 'AI Agent (automated assistant)')}</option>
                     </select>
                   </div>
 
                   {/* Danger zone — Xóa dự án */}
                   <div className="pt-3 mt-3 border-t border-rose-100">
-                    <p className="font-bold text-rose-600 mb-1.5 uppercase tracking-wider text-[11px]">Vùng nguy hiểm (Danger Zone)</p>
+                    <p className="font-bold text-rose-600 mb-1.5 uppercase tracking-wider text-[11px]">{L('Vùng nguy hiểm (Danger Zone)', '危険ゾーン (Danger Zone)', 'Danger Zone')}</p>
                     <div className="flex items-start justify-between gap-3 p-3 rounded-xl border border-rose-200 bg-rose-50/60">
                       <div className="space-y-0.5">
-                        <p className="font-bold text-slate-700">Xóa dự án này</p>
+                        <p className="font-bold text-slate-700">{L('Xóa dự án này', 'このプロジェクトを削除', 'Delete this project')}</p>
                         <p className="text-[10px] text-slate-500 leading-relaxed">
-                          Xóa vĩnh viễn dự án <span className="font-mono font-bold text-slate-700">{id}</span> cùng toàn bộ nguồn,
-                          hội thoại và dữ liệu liên quan. Không thể hoàn tác.
+                          {L('Xóa vĩnh viễn dự án', 'プロジェクトを完全に削除', 'Permanently delete project')} <span className="font-mono font-bold text-slate-700">{id}</span> {L('cùng toàn bộ nguồn, hội thoại và dữ liệu liên quan. Không thể hoàn tác.', 'とすべてのソース・会話・関連データを削除します。元に戻せません。', 'and all sources, conversations and related data. This cannot be undone.')}
                         </p>
                       </div>
                       <button
@@ -2996,7 +2996,7 @@ Thành phần tham dự:
                         className="shrink-0 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition cursor-pointer shadow-sm flex items-center gap-1.5"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        <span>Xóa dự án</span>
+                        <span>{L('Xóa dự án', 'プロジェクト削除', 'Delete project')}</span>
                       </button>
                     </div>
                   </div>
@@ -3006,7 +3006,7 @@ Thành phần tham dự:
               {settingsActiveTab === 'appearance' && (
                 <div className="space-y-4 animate-in fade-in duration-150">
                   <div className="space-y-1.5">
-                    <label className="font-bold text-slate-500 block mb-1">Tông màu chủ đạo (Brand Theme Color)</label>
+                    <label className="font-bold text-slate-500 block mb-1">{L('Tông màu chủ đạo (Brand Theme Color)', 'メインテーマカラー (Brand Theme Color)', 'Brand Theme Color')}</label>
                     <div className="grid grid-cols-5 gap-2.5">
                       {[
                         { name: 'teal', label: 'Teal', color: '#0abab5' },
@@ -3038,7 +3038,7 @@ Thành phần tham dự:
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-slate-500 block">Kích thước chữ (App Font Size)</label>
+                    <label className="font-bold text-slate-500 block">{L('Kích thước chữ (App Font Size)', '文字サイズ (App Font Size)', 'App Font Size')}</label>
                     <div className="flex gap-2">
                       {(['small', 'medium', 'large'] as const).map((sz) => (
                         <button
@@ -3051,7 +3051,7 @@ Thành phần tham dự:
                               : 'border-slate-200 hover:bg-slate-50 text-slate-655'
                           }`}
                         >
-                          {sz === 'small' ? 'Nhỏ (14px)' : sz === 'medium' ? 'Vừa (15px)' : 'Lớn (16px)'}
+                          {sz === 'small' ? L('Nhỏ (14px)', '小 (14px)', 'Small (14px)') : sz === 'medium' ? L('Vừa (15px)', '中 (15px)', 'Medium (15px)') : L('Lớn (16px)', '大 (16px)', 'Large (16px)')}
                         </button>
                       ))}
                     </div>
@@ -3059,8 +3059,8 @@ Thành phần tham dự:
 
                   <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
                     <div className="space-y-0.5">
-                      <p className="font-bold text-slate-700">Chế độ tối (Dark IDE Theme)</p>
-                      <p className="text-[10px] text-slate-450">Thay đổi hình nền tối chuẩn Lập trình viên</p>
+                      <p className="font-bold text-slate-700">{L('Chế độ tối (Dark IDE Theme)', 'ダークモード (Dark IDE Theme)', 'Dark IDE Theme')}</p>
+                      <p className="text-[10px] text-slate-450">{L('Thay đổi hình nền tối chuẩn Lập trình viên', '開発者向けのダーク背景に切り替えます', 'Switch to a developer-style dark background')}</p>
                     </div>
                     <div
                       onClick={() => setTempIsDarkMode(!tempIsDarkMode)}
@@ -3074,8 +3074,8 @@ Thành phần tham dự:
                 <div className="space-y-3.5 animate-in fade-in duration-150">
                   <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
                     <div className="space-y-0.5">
-                      <p className="font-bold text-slate-700">Thư viện dự án (Project Library)</p>
-                      <p className="text-[10px] text-slate-450">Hiển thị nút lưu trữ/comparative library ở header</p>
+                      <p className="font-bold text-slate-700">{L('Thư viện dự án (Project Library)', 'プロジェクトライブラリ (Project Library)', 'Project Library')}</p>
+                      <p className="text-[10px] text-slate-450">{L('Hiển thị nút lưu trữ/comparative library ở header', 'ヘッダーにライブラリボタンを表示', 'Show the library button in the header')}</p>
                     </div>
                     <div
                       onClick={() => setTempShowLibraryBtn(!tempShowLibraryBtn)}
@@ -3085,8 +3085,8 @@ Thành phần tham dự:
 
                   <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
                     <div className="space-y-0.5">
-                      <p className="font-bold text-slate-700">Trợ lý AI Copilot (AI Chatbot Pane)</p>
-                      <p className="text-[10px] text-slate-450">Hiển thị khung chat trợ lý bên tay phải</p>
+                      <p className="font-bold text-slate-700">{L('Trợ lý AI Copilot (AI Chatbot Pane)', 'AIコパイロット (AI Chatbot Pane)', 'AI Copilot (AI Chatbot Pane)')}</p>
+                      <p className="text-[10px] text-slate-450">{L('Hiển thị khung chat trợ lý bên tay phải', '右側にアシスタントチャットを表示', 'Show the assistant chat pane on the right')}</p>
                     </div>
                     <div
                       onClick={() => setTempShowChatbot(!tempShowChatbot)}
@@ -3096,8 +3096,8 @@ Thành phần tham dự:
 
                   <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
                     <div className="space-y-0.5">
-                      <p className="font-bold text-slate-700">Đồng bộ Thời gian thực (Realtime Sync)</p>
-                      <p className="text-[10px] text-slate-450">Hiện badge đồng bộ trực tiếp ở bảng vật tư</p>
+                      <p className="font-bold text-slate-700">{L('Đồng bộ Thời gian thực (Realtime Sync)', 'リアルタイム同期 (Realtime Sync)', 'Realtime Sync')}</p>
+                      <p className="text-[10px] text-slate-450">{L('Hiện badge đồng bộ trực tiếp ở bảng vật tư', '資材表にライブ同期バッジを表示', 'Show the live-sync badge on the materials table')}</p>
                     </div>
                     <div
                       onClick={() => setTempShowSyncBadge(!tempShowSyncBadge)}
@@ -3107,8 +3107,8 @@ Thành phần tham dự:
 
                   <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-150 bg-slate-50/50">
                     <div className="space-y-0.5">
-                      <p className="font-bold text-slate-700">Tab Sơ đồ Mạch CAD (CAD Viewer)</p>
-                      <p className="text-[10px] text-slate-450">Mở khóa tab xem bản vẽ DWG tại Bước 4</p>
+                      <p className="font-bold text-slate-700">{L('Tab Sơ đồ Mạch CAD (CAD Viewer)', 'CAD回路図タブ (CAD Viewer)', 'CAD Diagram Tab (CAD Viewer)')}</p>
+                      <p className="text-[10px] text-slate-450">{L('Mở khóa tab xem bản vẽ DWG tại Bước 4', 'ステップ4でDWG図面表示タブを有効化', 'Unlock the DWG drawing tab at Step 4')}</p>
                     </div>
                     <div
                       onClick={() => setTempShowCadTab(!tempShowCadTab)}
@@ -3137,7 +3137,7 @@ Thành phần tham dự:
                 }}
                 className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition cursor-pointer shadow-sm animate-pulse-slow"
               >
-                Lưu Setting
+                {L('Lưu Setting', '設定を保存', 'Save Settings')}
               </button>
             </div>
           </div>
@@ -3152,11 +3152,11 @@ Thành phần tham dự:
               <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
                 <Trash2 className="w-4.5 h-4.5" />
               </div>
-              <h3 className="text-sm font-bold text-slate-950">Xóa dự án này?</h3>
+              <h3 className="text-sm font-bold text-slate-950">{L('Xóa dự án này?', 'このプロジェクトを削除しますか？', 'Delete this project?')}</h3>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Bạn sắp xóa vĩnh viễn dự án <span className="font-mono font-bold text-slate-800">{id}</span>.
-              Toàn bộ nguồn, hội thoại và dữ liệu của dự án sẽ bị xóa và <span className="font-bold">không thể khôi phục</span>.
+              {L('Bạn sắp xóa vĩnh viễn dự án', 'プロジェクトを完全に削除しようとしています', 'You are about to permanently delete project')} <span className="font-mono font-bold text-slate-800">{id}</span>.
+              {' '}{L('Toàn bộ nguồn, hội thoại và dữ liệu của dự án sẽ bị xóa và', 'すべてのソース・会話・データが削除され、', 'All sources, conversations and data will be deleted and')} <span className="font-bold">{L('không thể khôi phục', '復元できません', 'cannot be recovered')}</span>.
             </p>
             <div className="flex justify-end gap-2 pt-1 text-xs">
               <button
@@ -3164,7 +3164,7 @@ Thành phần tham dự:
                 onClick={() => setConfirmDeleteProject(false)}
                 className="px-4 py-2 text-slate-600 hover:bg-slate-100 font-bold rounded-xl transition cursor-pointer"
               >
-                Hủy
+                {L('Hủy', 'キャンセル', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -3172,7 +3172,7 @@ Thành phần tham dự:
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition cursor-pointer shadow-sm flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Xóa vĩnh viễn</span>
+                <span>{L('Xóa vĩnh viễn', '完全に削除', 'Delete permanently')}</span>
               </button>
             </div>
           </div>
