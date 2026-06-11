@@ -309,6 +309,53 @@ const DEMO_SOURCES: SourceFile[] = [
   { id: 'manual', title: 'Mitsubishi_MRJ5_Servo_Manual.pdf', type: 'Device Manual', size: '4.8 MB', selected: false },
 ]
 
+// Dropdown tuỳ biến (thay native <select> để style được cả phần danh sách mở ra).
+function FancySelect({ value, onChange, options }: {
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string; badge?: string }[]
+}) {
+  const [open, setOpen] = useState(false)
+  const cur = options.find(o => o.value === value)
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2 pl-3 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold cursor-pointer hover:border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 outline-none transition text-left"
+      >
+        {cur?.badge && <span className="text-[9px] font-bold text-slate-500 bg-white border border-slate-200 rounded px-1 py-0.5 shrink-0">{cur.badge}</span>}
+        <span className="truncate flex-1">{cur?.label}</span>
+        <ChevronDown className={`w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-40 bg-white border border-slate-200 rounded-xl shadow-pop p-1 animate-in fade-in zoom-in-95 duration-150">
+            {options.map(o => {
+              const active = o.value === value
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => { onChange(o.value); setOpen(false) }}
+                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer text-left transition ${
+                    active ? 'bg-brand-500/10 text-brand-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  {o.badge && <span className={`text-[9px] font-bold rounded px-1 py-0.5 shrink-0 border ${active ? 'bg-brand-500 text-white border-brand-500' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>{o.badge}</span>}
+                  <span className="truncate flex-1">{o.label}</span>
+                  {active && <span className="text-brand-600 text-xs font-bold shrink-0">✓</span>}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function NotebookWorkspace() {
   const { id } = useParams<{ id: string }>()
   const { t, tf, locale, setLocale } = useI18n()
@@ -3016,28 +3063,28 @@ Thành phần tham dự:
 
                   <div className="space-y-1">
                     <label className="font-bold text-slate-500">{L('Ngôn ngữ Hệ thống (System Language)', 'システム言語 (System Language)', 'System Language')}</label>
-                    <select
+                    <FancySelect
                       value={tempLocale}
-                      onChange={(e) => setTempLocale(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-855 font-medium cursor-pointer"
-                    >
-                      <option value="vi">Tiếng Việt (Vietnamese)</option>
-                      <option value="en">English (US)</option>
-                      <option value="ja">日本語 (Japanese)</option>
-                    </select>
+                      onChange={(v) => setTempLocale(v as any)}
+                      options={[
+                        { value: 'vi', label: 'Tiếng Việt (Vietnamese)', badge: 'VN' },
+                        { value: 'en', label: 'English (US)', badge: 'US' },
+                        { value: 'ja', label: '日本語 (Japanese)', badge: 'JP' },
+                      ]}
+                    />
                   </div>
 
                   <div className="space-y-1">
                     <label className="font-bold text-slate-500">{L('Vai trò Đăng nhập (Active Role)', 'ログイン役割 (Active Role)', 'Active Role')}</label>
-                    <select
+                    <FancySelect
                       value={tempActiveUser}
-                      onChange={(e) => setTempActiveUser(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-brand-500 text-slate-855 font-medium cursor-pointer"
-                    >
-                      <option value="Linh">{L('Linh (Kỹ sư Việt Nam)', 'Linh（ベトナム人エンジニア）', 'Linh (Vietnamese engineer)')}</option>
-                      <option value="Kanai">{L('Kanai (Chuyên gia Nhật Bản)', 'Kanai（日本人スペシャリスト）', 'Kanai (Japanese specialist)')}</option>
-                      <option value="AI">{L('AI Agent (Trợ lý tự động)', 'AIエージェント（自動アシスタント）', 'AI Agent (automated assistant)')}</option>
-                    </select>
+                      onChange={(v) => setTempActiveUser(v as any)}
+                      options={[
+                        { value: 'Linh', label: L('Linh (Kỹ sư Việt Nam)', 'Linh（ベトナム人エンジニア）', 'Linh (Vietnamese engineer)'), badge: 'VN' },
+                        { value: 'Kanai', label: L('Kanai (Chuyên gia Nhật Bản)', 'Kanai（日本人スペシャリスト）', 'Kanai (Japanese specialist)'), badge: 'JP' },
+                        { value: 'AI', label: L('AI Agent (Trợ lý tự động)', 'AIエージェント（自動アシスタント）', 'AI Agent (automated assistant)'), badge: 'AI' },
+                      ]}
+                    />
                   </div>
 
                   {/* Danger zone — Xóa dự án */}
