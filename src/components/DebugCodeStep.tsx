@@ -387,9 +387,7 @@ export default function DebugCodeStep({
       if (stored) {
         setCode(stored)
       } else {
-        const localizedDefault = localizeCodeComments(DEFAULT_ST_CODE, locale)
-        setCode(localizedDefault)
-        localStorage.setItem(STORAGE_KEY, localizedDefault)
+        setCode('')
       }
 
       // Initialize revisions
@@ -398,14 +396,18 @@ export default function DebugCodeStep({
       if (storedRev) {
         setRevisions(JSON.parse(storedRev))
       } else {
-        const initialRevs = [
-          { id: 'rev-1', time: '16:05:12', desc: 'AI sinh mã gốc ban đầu', code: localizeCodeComments(DEFAULT_ST_CODE, locale) }
-        ]
-        setRevisions(initialRevs)
-        localStorage.setItem(revKey, JSON.stringify(initialRevs))
+        if (stored) {
+          const initialRevs = [
+            { id: 'rev-1', time: '16:05:12', desc: 'AI sinh mã gốc ban đầu', code: stored }
+          ]
+          setRevisions(initialRevs)
+          localStorage.setItem(revKey, JSON.stringify(initialRevs))
+        } else {
+          setRevisions([])
+        }
       }
     } catch {
-      setCode(localizeCodeComments(DEFAULT_ST_CODE, locale))
+      setCode('')
     }
   }, [projectId, locale])
 
@@ -681,229 +683,276 @@ export default function DebugCodeStep({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        
-        {/* The Interactive ST Editor (Takes full width, with optional bottom panel) */}
-        <div className="flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 lg:col-span-12 w-full">
-          
-          {/* Editor Header Bar (Light Theme) */}
-          <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs text-slate-650 font-mono select-none">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-450" />
-              <span className="w-3 h-3 rounded-full bg-yellow-450" />
-              <span className="w-3 h-3 rounded-full bg-green-450" />
-              <span className="ml-2 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                WW2_Welding_Cell.st
-              </span>
+        {code.trim() === '' ? (
+          <div className="flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 lg:col-span-12 w-full p-12 items-center justify-center min-h-[450px] space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-600 animate-pulse shrink-0">
+              <Cpu className="w-8 h-8" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-brand-500/10 border border-brand-500/20 text-[9px] font-bold uppercase text-brand-700">
-                IEC 61131-3 Active
-              </span>
+            <div className="max-w-md space-y-2">
+              <h5 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                {t('post.debug.emptyTitle')}
+              </h5>
+              <p className="text-[11px] text-slate-505 leading-relaxed">
+                {t('post.debug.emptyDesc')}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center gap-2 py-2.5 px-5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition cursor-pointer shadow-md shadow-violet-500/10 font-bold text-xs"
+              >
+                <Upload className="w-4 h-4" />
+                <span>{t('post.debug.importCode')}</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  const localizedDefault = localizeCodeComments(DEFAULT_ST_CODE, locale)
+                  handleCodeChange(localizedDefault)
+                  saveRevision(L('AI sinh mã gốc ban đầu', 'AIによる初期生成コード', 'AI-generated initial code'), localizedDefault)
+                  if (onAddLog) {
+                    onAddLog(
+                      L(
+                        'Nạp thành công mã nguồn PLC ST mặc định', 
+                        'デフォルトの PLC ST コードをロードしました', 
+                        'Successfully loaded default PLC ST code'
+                      ), 
+                      12
+                    )
+                  }
+                }}
+                className="flex items-center justify-center gap-2 py-2.5 px-5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition cursor-pointer font-bold text-xs"
+              >
+                <RefreshCw className="w-4 h-4 text-slate-500" />
+                <span>{t('post.debug.loadDefault')}</span>
+              </button>
             </div>
           </div>
-
-          {/* Editor TextArea Body */}
-          <div className="flex-1 flex overflow-hidden font-mono text-xs p-2.5 bg-[#fafbfc]">
+        ) : (
+          <div className="flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 lg:col-span-12 w-full">
             
-            {/* Line numbers gutter */}
-            <div 
-              ref={lineGutterRef} 
-              className="w-12 select-none text-right pr-4 text-slate-400/80 bg-slate-50/50 border-r border-slate-200/80 py-1.5 leading-6 overflow-hidden font-semibold font-mono text-[11px]"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', height: editorHeight }}
-            >
-              {lineNumbers.map(n => (
-                <div key={n} className="h-6 overflow-hidden">{n}</div>
-              ))}
+            {/* Editor Header Bar (Light Theme) */}
+            <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs text-slate-650 font-mono select-none">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-red-450" />
+                <span className="w-3 h-3 rounded-full bg-yellow-450" />
+                <span className="w-3 h-3 rounded-full bg-green-450" />
+                <span className="ml-2 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  WW2_Welding_Cell.st
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-brand-500/10 border border-brand-500/20 text-[9px] font-bold uppercase text-brand-700">
+                  IEC 61131-3 Active
+                </span>
+              </div>
             </div>
 
-            {/* Textarea Area */}
-            <div className="flex-1 relative py-1.5 pl-3.5 bg-white leading-6" style={{ height: editorHeight }}>
-              <textarea
-                ref={textareaRef}
-                value={code}
-                onChange={(e) => handleCodeChange(e.target.value)}
-                onScroll={handleScroll}
-                className="absolute inset-0 w-full h-full bg-transparent text-slate-850 border-none outline-none resize-none font-mono text-xs pl-3.5 py-1.5 focus:ring-0 leading-6 whitespace-pre overflow-y-auto select-text selection:bg-brand-500/15 caret-brand-600"
-                spellCheck={false}
-                placeholder={t('post.debug.placeholder')}
-              />
-            </div>
-          </div>
-
-          {/* Editor Status Bar */}
-          <div className="p-2.5 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-505 font-mono flex items-center justify-between select-none">
-            <div className="flex gap-4">
-              <span>Lines: <strong>{lineCount}</strong></span>
-              <span>Chars: <strong>{code.length}</strong></span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-600 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span>{t('post.debug.editEnabled')}</span>
-            </div>
-          </div>
-
-          {/* Bottom Panel (Console/Terminal Style) */}
-          {isRightSidebarExpanded && (
-            <div className="border-t border-slate-200 bg-slate-50 flex flex-col h-[220px] shrink-0 animate-in slide-in-from-bottom duration-300">
-              {/* Tabs Header */}
-              <div className="flex items-center justify-between px-4 py-1.5 bg-slate-100 border-b border-slate-200 shrink-0">
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('diagnostics')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                      activeTab === 'diagnostics'
-                        ? 'bg-white text-slate-800 shadow-3xs border border-slate-200'
-                        : 'text-slate-500 hover:text-slate-850 hover:bg-slate-200/50'
-                    }`}
-                  >
-                    <Terminal className="w-3.5 h-3.5" />
-                    <span>{t('post.debug.tabDiagnostics')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('revisions')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                      activeTab === 'revisions'
-                        ? 'bg-white text-slate-800 shadow-3xs border border-slate-200'
-                        : 'text-slate-500 hover:text-slate-850 hover:bg-slate-200/50'
-                    }`}
-                  >
-                    <History className="w-3.5 h-3.5" />
-                    <span>{t('post.debug.tabRevisions')}</span>
-                  </button>
-                </div>
-                {/* Console actions or indicators */}
-                <div className="text-[10px] font-mono text-slate-455 uppercase tracking-wider font-bold">
-                  {activeTab === 'diagnostics' ? 'AI Diagnostic Console' : 'Revision Registry'}
-                </div>
+            {/* Editor TextArea Body */}
+            <div className="flex-1 flex overflow-hidden font-mono text-xs p-2.5 bg-[#fafbfc]">
+              
+              {/* Line numbers gutter */}
+              <div 
+                ref={lineGutterRef} 
+                className="w-12 select-none text-right pr-4 text-slate-400/80 bg-slate-50/50 border-r border-slate-200/80 py-1.5 leading-6 overflow-hidden font-semibold font-mono text-[11px]"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', height: editorHeight }}
+              >
+                {lineNumbers.map(n => (
+                  <div key={n} className="h-6 overflow-hidden">{n}</div>
+                ))}
               </div>
 
-              {/* Tab Contents */}
-              <div className="flex-1 min-h-0 overflow-y-auto p-4">
-                {activeTab === 'diagnostics' && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full items-stretch animate-in fade-in duration-200">
-                    {/* Column 1 & 2: Status Details */}
-                    <div className="md:col-span-2 flex flex-col justify-center">
-                      {syntaxStatus === 'idle' && (
-                        <div className="bg-slate-100 border border-slate-200/80 rounded-xl p-3 flex items-center gap-3 animate-fade-in-up">
-                          <AlertCircle className="w-5 h-5 text-slate-505 shrink-0" />
-                          <div>
-                            <div className="text-xs font-bold text-slate-800">{t('post.debug.notChecked')}</div>
-                            <p className="text-[10px] text-slate-500 leading-normal">{t('post.debug.notCheckedDesc')}</p>
-                          </div>
-                        </div>
-                      )}
+              {/* Textarea Area */}
+              <div className="flex-1 relative py-1.5 pl-3.5 bg-white leading-6" style={{ height: editorHeight }}>
+                <textarea
+                  ref={textareaRef}
+                  value={code}
+                  onChange={(e) => handleCodeChange(e.target.value)}
+                  onScroll={handleScroll}
+                  className="absolute inset-0 w-full h-full bg-transparent text-slate-850 border-none outline-none resize-none font-mono text-xs pl-3.5 py-1.5 focus:ring-0 leading-6 whitespace-pre overflow-y-auto select-text selection:bg-brand-500/15 caret-brand-600"
+                  spellCheck={false}
+                  placeholder={t('post.debug.placeholder')}
+                />
+              </div>
+            </div>
 
-                      {syntaxStatus === 'checking' && (
-                        <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-3 flex items-center gap-3 animate-pulse">
-                          <RefreshCw className="w-5 h-5 text-amber-500 animate-spin shrink-0" />
-                          <div>
-                            <div className="text-xs font-bold text-amber-700">{t('post.debug.compiling')}</div>
-                            <p className="text-[10px] text-amber-550/85 leading-normal">{t('post.debug.compilingDesc')}</p>
-                          </div>
-                        </div>
-                      )}
+            {/* Editor Status Bar */}
+            <div className="p-2.5 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-505 font-mono flex items-center justify-between select-none">
+              <div className="flex gap-4">
+                <span>Lines: <strong>{lineCount}</strong></span>
+                <span>Chars: <strong>{code.length}</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-600 font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span>{t('post.debug.editEnabled')}</span>
+              </div>
+            </div>
 
-                      {syntaxStatus === 'valid' && (
-                        <div className="bg-emerald-50 border border-emerald-250 rounded-xl p-3 flex items-center gap-3 animate-in zoom-in duration-200">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                          <div className="flex-1">
-                            <div className="text-xs font-bold text-emerald-800">{t('post.debug.valid')}</div>
-                            <p className="text-[10px] text-emerald-700 leading-normal mb-1.5">{t('post.debug.validDesc')}</p>
-                            <div className="inline-flex gap-4 text-[9px] font-mono bg-emerald-100/60 border border-emerald-200/50 rounded-md px-2 py-0.5 text-emerald-600 select-none">
-                              <span>Errors: 0</span>
-                              <span>Warnings: 0</span>
-                              <span>Size: {code.split('\n').length} lines</span>
+            {/* Bottom Panel (Console/Terminal Style) */}
+            {isRightSidebarExpanded && (
+              <div className="border-t border-slate-200 bg-slate-50 flex flex-col h-[220px] shrink-0 animate-in slide-in-from-bottom duration-300">
+                {/* Tabs Header */}
+                <div className="flex items-center justify-between px-4 py-1.5 bg-slate-100 border-b border-slate-200 shrink-0">
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('diagnostics')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                        activeTab === 'diagnostics'
+                          ? 'bg-white text-slate-800 shadow-3xs border border-slate-200'
+                          : 'text-slate-500 hover:text-slate-850 hover:bg-slate-200/50'
+                      }`}
+                    >
+                      <Terminal className="w-3.5 h-3.5" />
+                      <span>{t('post.debug.tabDiagnostics')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('revisions')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                        activeTab === 'revisions'
+                          ? 'bg-white text-slate-800 shadow-3xs border border-slate-200'
+                          : 'text-slate-500 hover:text-slate-850 hover:bg-slate-200/50'
+                      }`}
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      <span>{t('post.debug.tabRevisions')}</span>
+                    </button>
+                  </div>
+                  {/* Console actions or indicators */}
+                  <div className="text-[10px] font-mono text-slate-455 uppercase tracking-wider font-bold">
+                    {activeTab === 'diagnostics' ? 'AI Diagnostic Console' : 'Revision Registry'}
+                  </div>
+                </div>
+
+                {/* Tab Contents */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-4">
+                  {activeTab === 'diagnostics' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full items-stretch animate-in fade-in duration-200">
+                      {/* Column 1 & 2: Status Details */}
+                      <div className="md:col-span-2 flex flex-col justify-center">
+                        {syntaxStatus === 'idle' && (
+                          <div className="bg-slate-100 border border-slate-200/80 rounded-xl p-3 flex items-center gap-3 animate-fade-in-up">
+                            <AlertCircle className="w-5 h-5 text-slate-505 shrink-0" />
+                            <div>
+                              <div className="text-xs font-bold text-slate-800">{t('post.debug.notChecked')}</div>
+                              <p className="text-[10px] text-slate-500 leading-normal">{t('post.debug.notCheckedDesc')}</p>
                             </div>
                           </div>
-                        </div>
-                      )}
-
-                      {syntaxStatus === 'invalid' && (
-                        <div className="bg-rose-50 border border-rose-250 rounded-xl p-3 flex flex-col md:flex-row items-stretch md:items-center gap-3 animate-in shake duration-300">
-                          <div className="flex items-center gap-2 md:w-1/3 shrink-0">
-                            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
-                            <span className="text-xs font-bold text-rose-800">{t('post.debug.errorFound')}</span>
-                          </div>
-                          <div className="flex-1 flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-                            <div className="flex-1 text-[10px] font-mono bg-white border border-rose-150 rounded p-2 text-rose-700 whitespace-pre-wrap leading-relaxed">
-                              {errorMessage}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={handleQuickFix}
-                              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[10px] font-bold transition cursor-pointer shrink-0 shadow-sm shadow-rose-600/10"
-                            >
-                              <Wand2 className="w-3.5 h-3.5" />
-                              <span>{t('post.debug.quickFix')}</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Column 3: Run compiler action */}
-                    <div className="flex items-center justify-center md:border-l md:border-slate-200 md:pl-4">
-                      <button
-                        type="button"
-                        onClick={() => runSyntaxCheck()}
-                        disabled={syntaxStatus === 'checking'}
-                        className="w-full max-w-[200px] flex items-center justify-center gap-2 py-2.5 px-4 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-xl text-xs font-bold transition shadow-md shadow-violet-500/10 cursor-pointer"
-                      >
-                        {syntaxStatus === 'checking' ? (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            <span>{t('post.debug.checking')}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Play className="w-3.5 h-3.5" />
-                            <span>{t('post.debug.runCheck')}</span>
-                          </>
                         )}
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                {activeTab === 'revisions' && (
-                  <div className="space-y-3 animate-in fade-in duration-200 h-full flex flex-col min-h-0">
-                    {/* Horizontal scrollable cards for revisions */}
-                    <div className="flex gap-3 overflow-x-auto pb-2 flex-1 min-h-0 scrollbar-thin scrollbar-thumb-slate-200">
-                      {revisions.map((rev) => (
-                        <div key={rev.id} className="min-w-[240px] max-w-[280px] flex-shrink-0 bg-white border border-slate-200 rounded-xl p-3 flex flex-col justify-between hover:border-slate-300 transition shadow-2xs">
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono font-semibold">
-                              <span>Revision ID</span>
-                              <span>{rev.time}</span>
+                        {syntaxStatus === 'checking' && (
+                          <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-3 flex items-center gap-3 animate-pulse">
+                            <RefreshCw className="w-5 h-5 text-amber-500 animate-spin shrink-0" />
+                            <div>
+                              <div className="text-xs font-bold text-amber-700">{t('post.debug.compiling')}</div>
+                              <p className="text-[10px] text-amber-550/85 leading-normal">{t('post.debug.compilingDesc')}</p>
                             </div>
-                            <span className="font-bold text-slate-700 text-[10.5px] leading-snug block line-clamp-2">{translateRevDesc(rev.desc, t)}</span>
                           </div>
-                          <div className="pt-2 border-t border-slate-100 flex justify-end">
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                setCode(rev.code)
-                                localStorage.setItem(STORAGE_KEY, rev.code)
-                                window.dispatchEvent(new Event('storage'))
-                                setSyntaxStatus('idle')
-                                alert(`${t('post.debug.alertUndoSuccess')}: ${translateRevDesc(rev.desc, t)}`)
-                              }}
-                              className="text-brand-600 hover:text-brand-700 font-extrabold hover:underline cursor-pointer transition shrink-0 ml-2"
-                            >
-                              {t('post.debug.undo')}
-                            </button>
+                        )}
+
+                        {syntaxStatus === 'valid' && (
+                          <div className="bg-emerald-50 border border-emerald-250 rounded-xl p-3 flex items-center gap-3 animate-in zoom-in duration-200">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-xs font-bold text-emerald-800">{t('post.debug.valid')}</div>
+                              <p className="text-[10px] text-emerald-700 leading-normal mb-1.5">{t('post.debug.validDesc')}</p>
+                              <div className="inline-flex gap-4 text-[9px] font-mono bg-emerald-100/60 border border-emerald-200/50 rounded-md px-2 py-0.5 text-emerald-600 select-none">
+                                <span>Errors: 0</span>
+                                <span>Warnings: 0</span>
+                                <span>Size: {code.split('\n').length} lines</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )}
+
+                        {syntaxStatus === 'invalid' && (
+                          <div className="bg-rose-50 border border-rose-250 rounded-xl p-3 flex flex-col md:flex-row items-stretch md:items-center gap-3 animate-in shake duration-300">
+                            <div className="flex items-center gap-2 md:w-1/3 shrink-0">
+                              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+                              <span className="text-xs font-bold text-rose-800">{t('post.debug.errorFound')}</span>
+                            </div>
+                            <div className="flex-1 flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+                              <div className="flex-1 text-[10px] font-mono bg-white border border-rose-150 rounded p-2 text-rose-700 whitespace-pre-wrap leading-relaxed">
+                                {errorMessage}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleQuickFix}
+                                className="flex items-center justify-center gap-1.5 py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[10px] font-bold transition cursor-pointer shrink-0 shadow-sm shadow-rose-600/10"
+                              >
+                                <Wand2 className="w-3.5 h-3.5" />
+                                <span>{t('post.debug.quickFix')}</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Column 3: Run compiler action */}
+                      <div className="flex items-center justify-center md:border-l md:border-slate-200 md:pl-4">
+                        <button
+                          type="button"
+                          onClick={() => runSyntaxCheck()}
+                          disabled={syntaxStatus === 'checking'}
+                          className="w-full max-w-[200px] flex items-center justify-center gap-2 py-2.5 px-4 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-xl text-xs font-bold transition shadow-md shadow-violet-500/10 cursor-pointer"
+                        >
+                          {syntaxStatus === 'checking' ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>{t('post.debug.checking')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3.5 h-3.5" />
+                              <span>{t('post.debug.runCheck')}</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {activeTab === 'revisions' && (
+                    <div className="space-y-3 animate-in fade-in duration-200 h-full flex flex-col min-h-0">
+                      {/* Horizontal scrollable cards for revisions */}
+                      <div className="flex gap-3 overflow-x-auto pb-2 flex-1 min-h-0 scrollbar-thin scrollbar-thumb-slate-200">
+                        {revisions.map((rev) => (
+                          <div key={rev.id} className="min-w-[240px] max-w-[280px] flex-shrink-0 bg-white border border-slate-200 rounded-xl p-3 flex flex-col justify-between hover:border-slate-300 transition shadow-2xs">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono font-semibold">
+                                <span>Revision ID</span>
+                                <span>{rev.time}</span>
+                              </div>
+                              <span className="font-bold text-slate-700 text-[10.5px] leading-snug block line-clamp-2">{translateRevDesc(rev.desc, t)}</span>
+                            </div>
+                            <div className="pt-2 border-t border-slate-100 flex justify-end">
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  setCode(rev.code)
+                                  localStorage.setItem(STORAGE_KEY, rev.code)
+                                  window.dispatchEvent(new Event('storage'))
+                                  setSyntaxStatus('idle')
+                                  alert(`${t('post.debug.alertUndoSuccess')}: ${translateRevDesc(rev.desc, t)}`)
+                                }}
+                                className="text-brand-600 hover:text-brand-700 font-extrabold hover:underline cursor-pointer transition shrink-0 ml-2"
+                              >
+                                {t('post.debug.undo')}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
