@@ -725,7 +725,7 @@ export default function NotebookWorkspace() {
     }
   }, [showCadTab, designSubTab]);
 
-  const KICKOFF_STORAGE_KEY = `aiplf.kickoff_notes_text.${id || 'default'}.${locale}`
+  const KICKOFF_STORAGE_KEY = `aiplf.kickoff_notes_text.${id || 'default'}`
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -1309,7 +1309,17 @@ export default function NotebookWorkspace() {
   // Initial Load for Kickoff Text
   useEffect(() => {
     const stored = localStorage.getItem(KICKOFF_STORAGE_KEY)
-    if (stored) {
+    
+    // Hàm kiểm tra xem văn bản có phải là bản mặc định chưa chỉnh sửa của bất kỳ ngôn ngữ nào không
+    const isUneditedDefault = (text: string | null) => {
+      if (!text) return true
+      if (text.includes('[Cập nhật từ AI Chat') || text.includes('[AIチャットからの更新') || text.includes('[Update from AI Chat')) {
+        return false
+      }
+      return true
+    }
+
+    if (stored && !isUneditedDefault(stored)) {
       setKickoffText(stored)
     } else {
       const defaultText = getDefaultKickoffText(locale)
