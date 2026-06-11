@@ -11,7 +11,8 @@ import {
   History, 
   Terminal, 
   AlertCircle,
-  ChevronDown
+  ChevronDown,
+  Upload
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { localizeCodeComments } from '@/i18n/chat'
@@ -29,6 +30,11 @@ interface DebugCodeStepProps {
 const translateRevDesc = (desc: string, t: (key: string) => string): string => {
   if (!desc) return ''
   const descLower = desc.toLowerCase()
+  if (descLower.includes('imported from external file') || descLower.includes('nhập mã nguồn từ tệp ngoài') || descLower.includes('外部ファイルからのインポート')) {
+    const match = desc.match(/\(([^)]+)\)/)
+    const filename = match ? match[1] : 'file'
+    return t('post.debug.revImport').replace('{filename}', filename)
+  }
   if (descLower.includes('ai sinh mã gốc') || descLower.includes('rev-1') || descLower.includes('original') || descLower.includes('initial')) {
     return t('post.debug.revInitial')
   }
@@ -356,6 +362,7 @@ export default function DebugCodeStep({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [revisions, setRevisions] = useState<{ id: string; time: string; desc: string; code: string }[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<'diagnostics' | 'revisions'>('diagnostics')
   const [isRightSidebarExpanded, setIsRightSidebarExpanded] = useState<boolean>(true)
   const editorHeight = isRightSidebarExpanded ? '350px' : '520px'
@@ -415,7 +422,8 @@ export default function DebugCodeStep({
   }
 
   // 2. Syntax validation
-  const runSyntaxCheck = () => {
+  const runSyntaxCheck = (codeToCheck?: string) => {
+    const codeVal = codeToCheck !== undefined ? codeToCheck : code
     setActiveTab('diagnostics')
     setSyntaxStatus('checking')
     setErrorMessage(null)
@@ -424,7 +432,7 @@ export default function DebugCodeStep({
       // Basic syntax check simulator
       // We look for classic ST syntax mistakes like assignment with "=" instead of ":="
       // or missing semicolons at line ends.
-      const lines = code.split('\n')
+      const lines = codeVal.split('\n')
       let foundError = false
       
       for (let i = 0; i < lines.length; i++) {
@@ -528,6 +536,34 @@ export default function DebugCodeStep({
     localStorage.setItem(`aiplf.code_revisions.${projectId}`, JSON.stringify(updated))
   }
 
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      if (text !== undefined) {
+        handleCodeChange(text)
+        e.target.value = ''
+        saveRevision(`Imported from external file (${file.name})`, text)
+        alert(tf('post.debug.importSuccess', { filename: file.name }))
+        if (onAddLog) {
+          onAddLog(
+            L(
+              `Đã nhập tệp code mới thành công: ${file.name}`, 
+              `コードファイル「${file.name}」のインポートに成功しました`, 
+              `Successfully imported code file: ${file.name}`
+            ), 
+            12
+          )
+        }
+        runSyntaxCheck(text)
+      }
+    }
+    reader.readAsText(file)
+  }
+
   // 4a. React to external paraphrase command (from chat suggestions in NotebookWorkspace)
   useEffect(() => {
     if (paraphraseCommand) {
@@ -586,6 +622,13 @@ export default function DebugCodeStep({
 
   return (
     <div className={`${isZenMode ? 'max-w-none w-full' : 'max-w-6xl mx-auto'} space-y-5 animate-in fade-in duration-300`}>
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleImportFile} 
+        accept=".st,.txt" 
+        className="hidden" 
+      />
       
       {/* Step Header */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -616,6 +659,17 @@ export default function DebugCodeStep({
               <Wand2 className="w-4 h-4 text-violet-600 animate-pulse" />
             )}
           </button>
+          
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 py-2.5 px-3 bg-violet-50 hover:bg-violet-100 text-violet-750 border border-violet-200 rounded-xl transition cursor-pointer shadow-3xs font-bold text-xs"
+            title={t('post.debug.importCode')}
+          >
+            <Upload className="w-4 h-4 text-violet-600" />
+            <span>{t('post.debug.importCode')}</span>
+          </button>
+
           <button
             onClick={handleCopy}
             className="flex items-center justify-center p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition cursor-pointer shadow-3xs"
@@ -793,7 +847,7 @@ export default function DebugCodeStep({
                     <div className="flex items-center justify-center md:border-l md:border-slate-200 md:pl-4">
                       <button
                         type="button"
-                        onClick={runSyntaxCheck}
+                        onClick={() => runSyntaxCheck()}
                         disabled={syntaxStatus === 'checking'}
                         className="w-full max-w-[200px] flex items-center justify-center gap-2 py-2.5 px-4 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-xl text-xs font-bold transition shadow-md shadow-violet-500/10 cursor-pointer"
                       >
