@@ -25,6 +25,7 @@ export const chatdyn: Dictionary = {
     'chat.add.textRemembered': 'テキストを読み込み記憶しました: {names}。「案件を要約」と入力すると全体を表示します。',
     'chat.add.textAdded': 'テキストをソースとして追加しました。',
     'chat.ps.finalCreated': '「顧客提案書（詳細）」を作成しました — 情報・見積・スケジュールをまとめた提案書です ✓。\n\nライブラリ → 納品物に保存しました。下のボタンで今すぐ確認できます:',
+    'chat.ps.deckCreated': '記録情報から「顧客提案書（スライド）」を作成しました ✓。\n\nライブラリ → 納品物に保存しました。下のボタンで今すぐ確認できます:',
   },
   en: {
     'chat.ps.recorded': '✓ Recorded {label}: {value}',
@@ -45,6 +46,7 @@ export const chatdyn: Dictionary = {
     'chat.add.textRemembered': 'Read the text and noted: {names}. Type "summarize project" to see everything.',
     'chat.add.textAdded': 'Added the text as a source.',
     'chat.ps.finalCreated': 'Created "Customer proposal (detailed)" — a consolidated doc of info + estimate + schedule ✓.\n\nSaved to Library → Deliverables. Tap below to view now:',
+    'chat.ps.deckCreated': 'Created "Customer proposal (slides)" from the recorded info ✓.\n\nSaved to Library → Deliverables. Tap below to view now:',
   },
   vi: {
     'chat.ps.recorded': '✓ Đã ghi nhớ {label}: {value}',
@@ -65,5 +67,6 @@ export const chatdyn: Dictionary = {
     'chat.add.textRemembered': 'Đã đọc văn bản và ghi nhớ: {names}. Gõ "tóm tắt dự án" để xem toàn bộ.',
     'chat.add.textAdded': 'Đã thêm văn bản làm nguồn.',
     'chat.ps.finalCreated': 'Đã tạo "Hồ sơ trình khách (chi tiết)" — bản tổng hợp thông tin + dự toán + lịch trình để trình khách ✓.\n\nFile đã lưu vào "Sản phẩm bàn giao" trong Thư viện. Bấm để xem ngay:',
+    'chat.ps.deckCreated': 'Đã tạo "Đề án trình khách" dạng slide từ thông tin đã ghi nhận ✓.\n\nFile đã lưu vào "Sản phẩm bàn giao" trong Thư viện. Bấm để xem ngay:',
   },
 }

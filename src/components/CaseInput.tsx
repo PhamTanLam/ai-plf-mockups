@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Pencil, Trash2, MoreVertical, Download, Share2, FilePlus2, Sparkles, ArrowRight, Maximize2, X } from 'lucide-react'
 import type { PresalesApi, SavedOutput } from '@/hooks/usePresalesState'
 import MarkdownLite from '@/components/MarkdownLite'
+import DeckView from '@/components/DeckView'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tcText } from '@/i18n/chat'
 
@@ -52,8 +53,8 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openSignal?.n])
 
-  // "Hồ sơ trình khách" (final) không hiển thị ở "Đã tạo" — nó là sản phẩm bàn giao (ở Thư viện)
-  const visibleOutputs = pre.savedOutputs.filter(e => !(e.kind === 'gen' && e.toolId === 'final'))
+  // "Hồ sơ trình khách" (final) và "Đề án" (deck) không hiển thị ở danh sách nháp — chúng là sản phẩm bàn giao (ở Thư viện)
+  const visibleOutputs = pre.savedOutputs.filter(e => !(e.kind === 'gen' && (e.toolId === 'final' || e.toolId === 'deck')))
 
   const toast = (m: string) => onToast?.(m)
   const fmtAgo = (ts: number) => {
@@ -63,6 +64,7 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
   }
 
   if (detail) {
+    const isDeck = detail.toolId === 'deck'
     return (
       <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 shadow-panel space-y-4 animate-in fade-in duration-300">
         <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -84,9 +86,13 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
             </button>
           </div>
         </div>
-        <div className="prose prose-slate max-w-none text-slate-800 select-text">
-          <MarkdownLite text={detail.content} />
-        </div>
+        {isDeck ? (
+          <DeckView content={detail.content} />
+        ) : (
+          <div className="prose prose-slate max-w-none text-slate-800 select-text">
+            <MarkdownLite text={detail.content} />
+          </div>
+        )}
 
         {/* Modal phóng to — đọc docs toàn màn hình (portal ra body để không bị containing-block của canvas giới hạn) */}
         {zoomed && createPortal(
@@ -108,8 +114,14 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
                   </button>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto px-10 py-8 prose prose-lg prose-slate max-w-3xl mx-auto w-full text-slate-800 select-text">
-                <MarkdownLite text={detail.content} />
+              <div className="flex-1 overflow-y-auto px-10 py-8 max-w-4xl mx-auto w-full text-slate-800 select-text">
+                {isDeck ? (
+                  <DeckView content={detail.content} />
+                ) : (
+                  <div className="prose prose-lg prose-slate max-w-none">
+                    <MarkdownLite text={detail.content} />
+                  </div>
+                )}
               </div>
             </div>
           </div>,

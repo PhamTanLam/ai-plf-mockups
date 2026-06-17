@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { tcText, tField, tFieldValue } from '@/i18n/chat'
+import { SLIDE_DELIM } from '@/components/DeckView'
 import type { Locale } from '@/i18n/types'
 
 /**
@@ -40,6 +41,7 @@ export const OUTPUTS: OutputDef[] = [
   { id: 'estimate', icon: '💴', name: 'Dự toán khái quát' },
   { id: 'schedule', icon: '🗓️', name: 'Lịch trình khái quát' },
   { id: 'proposal', icon: '📝', name: 'Tài liệu nền đề xuất' },
+  { id: 'deck', icon: '📊', name: 'Đề án trình khách (slide)' },
   { id: 'final', icon: '📑', name: 'Hồ sơ trình khách (chi tiết)' },
 ]
 
@@ -67,6 +69,25 @@ function buildOutputMarkdown(id: string, fields: ProjectField[], locale: Locale 
     case 'estimate': return head + `\n## ${L('Dự toán khái quát (ước tính)', '概算見積（試算）', 'Rough estimate')}\n\n| ${L('Hạng mục', '項目', 'Item')} | ${L('Ước tính', '概算', 'Estimate')} |\n| :--- | ---: |\n| ${L('Thiết kế điện & phần mềm', '電気・ソフト設計', 'Electrical & software design')} | ¥3.2M |\n| ${L('Vật tư điều khiển', '制御資材', 'Control materials')} | ¥4.1M |\n| ${L('Lắp đặt & debug', '据付・デバッグ', 'Install & debug')} | ¥2.0M |\n| ${L('Tổng', '合計', 'Total')} | ¥9.3M |\n\n- ${L('Thời gian ~16 tuần · Độ tin cậy 75%.', '期間 約16週 · 信頼度 75%。', 'Duration ~16 weeks · Confidence 75%.')}\n`
     case 'schedule': return head + `\n## ${L('Lịch trình khái quát', '概略スケジュール', 'Rough schedule')}\n\n| ${L('Pha', 'フェーズ', 'Phase')} | ${L('Nội dung', '内容', 'Content')} | ${L('Thời lượng', '期間', 'Duration')} |\n| :--- | :--- | :---: |\n| 1. ${L('Thiết kế', '設計', 'Design')} | ${L('Bản vẽ điện, kiến trúc PM', '電気図面・PM設計', 'Electrical drawings, PM architecture')} | ${L('8 tuần', '8週', '8 weeks')} |\n| 2. ${L('Chế tạo', '製作', 'Build')} | ${L('Tủ điện, lập trình PLC/HMI', '制御盤・PLC/HMIプログラム', 'Panel, PLC/HMI programming')} | ${L('6 tuần', '6週', '6 weeks')} |\n| 3. ${L('Lắp đặt & Debug', '据付・デバッグ', 'Install & debug')} | takt ${get(/takt/i)} | ${L('4 tuần', '4週', '4 weeks')} |\n| 4. ${L('Bàn giao', '引き渡し', 'Handover')} | ${L('Nghiệm thu', '検収', 'Acceptance')} | ${L('2 tuần', '2週', '2 weeks')} |\n`
     case 'proposal': return head + `\n## ${L('Tài liệu nền đề xuất', '提案ベース資料', 'Proposal base document')}\n${L('Bối cảnh', '背景', 'Context')}: ${get(/bối cảnh/i)}.\n\n${L('Mục tiêu: tự động hoá', '目的: 自動化', 'Goal: automate')} ${get(/hoạt động/i)}, takt ${get(/takt/i)}.\n\n${L('Phạm vi', '範囲', 'Scope')}: ${get(/phạm vi/i)}.\n\n${L('An toàn', '安全', 'Safety')}: ${get(/an toàn/i)}.\n`
+    case 'deck': {
+      const slides = [
+        // S1 — Bìa
+        `# ${L('ĐỀ ÁN TRÌNH KHÁCH', '顧客提案書', 'CUSTOMER PROPOSAL')}\n\n## WW2 Welding Cell\n\n**${L('Khách hàng', '顧客', 'Customer')}:** ${get(/bối cảnh/i)}\n\n**${L('Đơn vị đề xuất', '提案者', 'Proposed by')}:** Cowatech`,
+        // S2 — Bối cảnh & mục tiêu
+        `# 1. ${L('Bối cảnh & Mục tiêu', '背景・目的', 'Background & Goals')}\n\n- ${L('Bối cảnh', '背景', 'Context')}: ${get(/bối cảnh/i)}\n- ${L('Hiện trạng', '現状', 'Current')}: ${get(/hoạt động/i)}\n- ${L('Mục tiêu', '目的', 'Goal')}: ${L('Tự động hoá dây chuyền, ổn định chất lượng, đạt nhịp sản xuất', 'ライン自動化・品質安定・タクト達成', 'Automate the line, stabilize quality, meet takt')} ${get(/takt/i)}`,
+        // S3 — Phương án đề xuất
+        `# 2. ${L('Phương án đề xuất', '提案方針', 'Proposed Approach')}\n\n- ${L('Điều khiển tập trung bằng PLC + giám sát qua HMI', 'PLC集中制御 + HMI監視', 'Centralized PLC control + HMI monitoring')}\n- ${L('Tích hợp servo đa trục cho định vị chính xác', '多軸サーボ統合による高精度位置決め', 'Multi-axis servo for precise positioning')}\n- ${L('Thiết kế an toàn theo tiêu chuẩn', '規格準拠の安全設計', 'Standards-compliant safety design')}: ${get(/an toàn/i)}`,
+        // S4 — Cấu thành hệ thống
+        `# 3. ${L('Cấu thành hệ thống', 'システム構成', 'System Architecture')}\n\n- ${L('Điều khiển', '制御', 'Control')}: ${get(/điều khiển/i)}\n- ${L('Mạng', 'ネットワーク', 'Network')}: ${get(/mạng/i)}\n- ${L('Liên động ngoài', '外部連動', 'External interlock')}: ${get(/liên động/i)}\n- ${L('An toàn', '安全', 'Safety')}: ${get(/an toàn/i)}\n- ${L('Chủng loại sản phẩm', '製品種類', 'Product variants')}: ${get(/chủng loại/i)}`,
+        // S5 — Phạm vi & hạng mục phụ trách
+        `# 4. ${L('Phạm vi & Hạng mục phụ trách', '範囲・担当項目', 'Scope & Responsibilities')}\n\n- ${L('Phạm vi Cowatech', 'Cowatech範囲', 'Cowatech scope')}: ${get(/phạm vi/i)}\n- ${L('Thiết kế điện · lập trình PLC/HMI · lắp đặt & debug', '電気設計・PLC/HMIプログラム・据付デバッグ', 'Electrical design · PLC/HMI programming · install & debug')}\n- ${L('Người phụ trách', '担当', 'Owner')}: ${get(/phụ trách/i)}`,
+        // S6 — Lộ trình triển khai
+        `# 5. ${L('Lộ trình triển khai', '実施ロードマップ', 'Implementation Roadmap')}\n\n| ${L('Pha', 'フェーズ', 'Phase')} | ${L('Nội dung', '内容', 'Content')} | ${L('Thời lượng', '期間', 'Duration')} |\n| :--- | :--- | :---: |\n| 1 | ${L('Thiết kế', '設計', 'Design')} | ${L('8 tuần', '8週', '8w')} |\n| 2 | ${L('Chế tạo & lập trình', '製作・プログラム', 'Build & program')} | ${L('6 tuần', '6週', '6w')} |\n| 3 | ${L('Lắp đặt & debug', '据付・デバッグ', 'Install & debug')} | ${L('4 tuần', '4週', '4w')} |\n| 4 | ${L('Nghiệm thu & bàn giao', '検収・引き渡し', 'Acceptance & handover')} | ${L('2 tuần', '2週', '2w')} |`,
+        // S7 — Cam kết & bước tiếp theo
+        `# 6. ${L('Cam kết & Bước tiếp theo', 'コミットメント・次のステップ', 'Commitment & Next Steps')}\n\n- ${L('Bảo hành', '保証', 'Warranty')}: ${get(/bảo hành/i)}\n- ${L('Tiêu chuẩn', '規格', 'Standard')}: ${get(/an toàn/i)}\n- ${L('Bước tiếp theo: xác nhận đề án → trình dự toán khái quát', '次: 提案確認 → 概算見積提示', 'Next: confirm proposal → present rough estimate')}\n\n*${L('Bản nháp do AI tổng hợp — cần rà soát trước khi gửi khách.', 'AIが作成した下書き — 送付前に確認要。', 'AI draft — review before sending.')}*`,
+      ]
+      return slides.join(`\n\n${SLIDE_DELIM}\n\n`)
+    }
     case 'final': return head + `\n> **${L('Hồ sơ trình khách — bản tổng hợp chi tiết', '顧客提案書 — 詳細総合版', 'Customer proposal — detailed consolidated')}** (${L('gom toàn bộ thông tin đã làm rõ để trình khách chốt đơn', '確定した全情報をまとめ受注へ', 'all clarified info to close the order')}).\n\n## 1. ${L('Thông tin dự án', '案件情報', 'Project info')}\n${list}\n\n## 2. ${L('Cấu thành hệ thống', 'システム構成', 'System configuration')}\n- ${L('Điều khiển', '制御', 'Control')}: ${get(/điều khiển/i)}\n- ${L('Mạng', 'ネットワーク', 'Network')}: ${get(/mạng/i)}\n- ${L('Liên động', '連動', 'Interlock')}: ${get(/liên động/i)}\n- ${L('An toàn', '安全', 'Safety')}: ${get(/an toàn/i)}\n\n## 3. ${L('Dự toán chi tiết', '詳細見積', 'Detailed estimate')}\n\n| ${L('Hạng mục', '項目', 'Item')} | ${L('Ước tính', '概算', 'Estimate')} |\n| :--- | ---: |\n| ${L('Thiết kế điện & phần mềm', '電気・ソフト設計', 'Electrical & software design')} | ¥3.2M |\n| ${L('Vật tư điều khiển', '制御資材', 'Control materials')} | ¥4.1M |\n| ${L('Lắp đặt & debug', '据付・デバッグ', 'Install & debug')} | ¥2.0M |\n| **${L('Tổng', '合計', 'Total')}** | **¥9.3M** |\n\n## 4. ${L('Lịch trình khái quát', '概略スケジュール', 'Rough schedule')}\n- ${L('Thiết kế 8 tuần · Chế tạo 6 tuần · Lắp đặt & debug 4 tuần · Nghiệm thu 2 tuần.', '設計8週 · 製作6週 · 据付デバッグ4週 · 検収2週。', 'Design 8w · Build 6w · Install & debug 4w · Acceptance 2w.')}\n\n## 5. ${L('Phạm vi & Cam kết', '範囲・保証', 'Scope & commitment')}\n${L('Phạm vi', '範囲', 'Scope')}: ${get(/phạm vi/i)}. ${L('Bảo hành', '保証', 'Warranty')}: ${get(/bảo hành/i)}.\n\n*${L('Bản nháp do AI tổng hợp — cần kỹ sư rà soát trước khi gửi khách.', 'AIが作成した下書き — 送付前に技術者の確認が必要。', 'AI-drafted — needs engineer review before sending.')}*\n`
     default: return head + '\n' + list
   }

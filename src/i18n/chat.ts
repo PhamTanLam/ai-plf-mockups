@@ -48,15 +48,18 @@ const CHAT: Record<string, { ja: string; en: string }> = {
   'Lập lịch trình khái quát': { ja: '概略スケジュールを作成', en: 'Create a rough schedule' },
   'Soạn tài liệu nền đề xuất': { ja: '提案ベース資料を作成', en: 'Draft the proposal base document' },
   'Tạo hồ sơ trình khách chi tiết': { ja: '顧客提案書（詳細）を作成', en: 'Create the detailed customer proposal' },
+  'Tạo đề án trình khách': { ja: '顧客提案書（スライド）を作成', en: 'Create the customer proposal deck' },
   // ── Tiêu đề đầu ra (OUTPUTS) — dịch khi render card ──
   'Nội dung tài liệu dự toán': { ja: '見積資料の内容', en: 'Estimate document content' },
   'Cấu thành đơn giản': { ja: 'システム構成（簡易）', en: 'System configuration (simple)' },
   'Dự toán khái quát': { ja: '概算見積', en: 'Rough estimate' },
   'Lịch trình khái quát': { ja: '概略スケジュール', en: 'Rough schedule' },
   'Tài liệu nền đề xuất': { ja: '提案ベース資料', en: 'Proposal base document' },
+  'Đề án trình khách (slide)': { ja: '顧客提案書（スライド）', en: 'Customer proposal (slides)' },
   'Hồ sơ trình khách (chi tiết)': { ja: '顧客提案書（詳細）', en: 'Customer proposal (detailed)' },
   // ── Nhãn nút hành động dưới chat (pre-sales) ──
   'Xem hồ sơ trình khách': { ja: '顧客提案書を見る', en: 'View customer proposal' },
+  'Xem đề án': { ja: '提案書を見る', en: 'View proposal deck' },
   'Xem trong Thư viện': { ja: 'ライブラリで見る', en: 'View in Library' },
   // ── Câu trả lời AI (explanationText) ──
   'Đã chuyển sang Bước 1: Khảo sát & Phát sinh. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.': { ja: 'ステップ1「調査・追加費用」に移動しました。ログ画面 khao_sat_thay_doi_specs.txt を左側に表示しています。', en: 'Moved to Step 1: Survey & Change Orders. The log view khao_sat_thay_doi_specs.txt is shown on the left.' },

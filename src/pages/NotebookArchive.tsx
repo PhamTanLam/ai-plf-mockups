@@ -7,6 +7,7 @@ import {
   RotateCcw, Trash2, ExternalLink, Sparkles, GitCompare
 } from 'lucide-react'
 import MarkdownLite from '@/components/MarkdownLite'
+import DeckView, { SLIDE_DELIM } from '@/components/DeckView'
 import { DEMO_CASE_IDS } from '@/hooks/usePresalesState'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tField, tFieldValue, tcText } from '@/i18n/chat'
@@ -492,21 +493,26 @@ END_IF;`
       const st = JSON.parse(raw)
       const pad = (n: number) => String(n).padStart(2, '0')
       return ((st.savedOutputs || []) as { oid: string; kind: string; toolId?: string; title: string; ts: number; content: string; version?: number }[])
-        .filter(o => o.kind === 'gen' && o.toolId === 'final')
+        .filter(o => o.kind === 'gen' && (o.toolId === 'final' || o.toolId === 'deck'))
         .map(o => {
           const d = new Date(o.ts)
+          const isDeck = o.toolId === 'deck'
           return {
             id: 'gen-' + o.oid,
             name: (o.title ? tcText(o.title, locale) : L('Tài liệu', '資料', 'Document')).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 48) + '.md',
             category: 'output' as const,
-            type: L('Hồ sơ đề xuất (AI · Pre-Sales)', '提案資料 (AI · プリセールス)', 'Proposal (AI · Pre-Sales)'),
+            type: isDeck
+              ? L('Đề án trình khách (slide · AI)', '顧客提案書 (スライド · AI)', 'Proposal deck (slides · AI)')
+              : L('Hồ sơ đề xuất (AI · Pre-Sales)', '提案資料 (AI · プリセールス)', 'Proposal (AI · Pre-Sales)'),
             size: Math.max(1, Math.round((o.content || '').length / 102.4) / 10) + ' KB',
             version: 'V' + (o.version || 1),
             createdAt: `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
             author: 'AI (Pre-Sales)',
             approvalStatus: 'reviewing' as const,
             tags: locale === 'ja' ? ['#提案', '#顧客向け'] : locale === 'en' ? ['#Proposal', '#Customer'] : ['#ĐềXuất', '#TrìnhKhách'],
-            summary: L('Hồ sơ AI tổng hợp ở giai đoạn pre-sales để trình khách.', 'プリセールス段階でAIがまとめた顧客提案資料。', 'A proposal AI compiled at the pre-sales stage for the customer.'),
+            summary: isDeck
+              ? L('Đề án dạng slide do AI sinh từ thông tin pre-sales để trình khách.', 'プリセールス情報からAIが生成した顧客提案スライド。', 'A slide proposal AI generated from pre-sales info for the customer.')
+              : L('Hồ sơ AI tổng hợp ở giai đoạn pre-sales để trình khách.', 'プリセールス段階でAIがまとめた顧客提案資料。', 'A proposal AI compiled at the pre-sales stage for the customer.'),
             previewContent: o.content || '',
           }
         })
@@ -1327,6 +1333,7 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                   if (text) {
                     // Code (.l5k/.st/.json) → giao diện terminal tối; văn bản (.md/.txt, bộ nhớ) → tài liệu nền sáng dễ đọc
                     const isCodeFile = /\.(l5k|st|json)$/i.test(activeSelectedFile.name)
+                    const isDeck = text.includes(SLIDE_DELIM)
                     return (
                       <div className="space-y-1.5">
                         {isLive && (
@@ -1359,7 +1366,11 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
                             )}
                           </div>
                         )}
-                        {isCodeFile ? (
+                        {isDeck ? (
+                          <div className="max-h-[420px] overflow-auto pr-1">
+                            <DeckView content={text} />
+                          </div>
+                        ) : isCodeFile ? (
                           renderCodeBlock(text, activeSelectedFile.name)
                         ) : (
                           <div className="bg-white border border-slate-200 rounded-xl p-5 overflow-auto max-h-[360px] shadow-3xs prose prose-sm prose-slate max-w-none text-slate-800 select-text">

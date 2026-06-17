@@ -259,6 +259,17 @@ const phasesInfo: PhaseDetail[] = [
     users: 'Nhân viên kinh doanh hoặc SE',
   },
   {
+    num: 2.5,
+    title: 'Tạo đề án',
+    desc: 'AI sinh đề án trình khách (dạng slide) từ thông tin đã ghi nhận — xem trước rồi lưu vào Thư viện.',
+    prompts: ['Tạo đề án trình khách.'],
+    tab: 'caseinput',
+    sourcesToSelect: [],
+    inputs: ['Câu hỏi'],
+    outputs: ['Đề án trình khách (slide)'],
+    users: 'Nhân viên kinh doanh',
+  },
+  {
     num: 3,
     title: 'Trình dự toán',
     desc: 'Xuất hồ sơ dự toán cuối để trình khách. Cập nhật và dự toán lại đến khi chốt đơn.',
@@ -1437,7 +1448,7 @@ export default function NotebookWorkspace() {
     'Lập dự toán khái quát',
     'Mô tả cấu thành hệ thống (đơn giản)',
     'Lập lịch trình khái quát',
-    'Soạn tài liệu nền đề xuất',
+    'Tạo đề án trình khách',
     'Tạo hồ sơ trình khách chi tiết'
   ]
 
@@ -1459,8 +1470,10 @@ export default function NotebookWorkspace() {
     }
     // ý định sinh đầu ra → Step 3
     let gen = ''
+    // Đề án trình khách (bước 2.5 — dạng slide): nhận diện TRƯỚC final
+    if (/tạo đề án|đề án|đề xuất dạng slide|slide đề xuất|提案書|顧客提案|提案資料|提案を作成|proposal deck|proposal slide|create proposal|customer proposal/i.test(text)) gen = 'deck'
     // Hồ sơ trình khách (bước 6 — chi tiết/final): ưu tiên nhận diện trước
-    if (/hồ sơ trình khách|trình khách|tài liệu final|bản final|file final|tổng hợp.*trình|hồ sơ.*khách|đề xuất cuối|chốt đơn|dự toán chi tiết|tài liệu chi tiết|hồ sơ chi tiết|提案書|顧客提案|最終資料|詳細見積|customer proposal|final proposal|detailed proposal|detailed estimate/i.test(text)) gen = 'final'
+    else if (/hồ sơ trình khách|trình khách|tài liệu final|bản final|file final|tổng hợp.*trình|hồ sơ.*khách|đề xuất cuối|chốt đơn|dự toán chi tiết|tài liệu chi tiết|hồ sơ chi tiết|最終資料|詳細見積|final proposal|detailed proposal|detailed estimate/i.test(text)) gen = 'final'
     else if (text === 'Soạn nội dung tài liệu dự toán') gen = 'doc'
     else if (text === 'Mô tả cấu thành hệ thống (đơn giản)') gen = 'config'
     else if (text === 'Lập dự toán khái quát') gen = 'estimate'
@@ -1472,8 +1485,18 @@ export default function NotebookWorkspace() {
     else if (/tài liệu nền|hồ sơ nền|proposal/i.test(text)) gen = 'proposal'
     if (gen) {
       const out = pre.generate(gen, locale)
-      handlePhaseChange(3)
-      if (gen === 'final') {
+      if (gen === 'deck') {
+        handlePhaseChange(2.5)
+        pushChat(
+          text,
+          'Đã tạo "Đề án trình khách" dạng slide từ thông tin đã ghi nhận ✓.\n\nFile đã lưu vào "Sản phẩm bàn giao" trong Thư viện. Bấm để xem ngay:',
+          PRE_SUGG,
+          'chat.ps.deckCreated',
+          {},
+          out ? { label: 'Xem đề án', openOid: out.oid, version: out.version, phase: 2.5 } : undefined,
+        )
+      } else if (gen === 'final') {
+        handlePhaseChange(3)
         pushChat(
           text,
           'Đã tạo "Hồ sơ trình khách (chi tiết)" — bản tổng hợp thông tin + dự toán + lịch trình để trình khách ✓.\n\nFile đã lưu vào "Sản phẩm bàn giao" trong Thư viện. Bấm để xem ngay:',
@@ -1483,6 +1506,7 @@ export default function NotebookWorkspace() {
           out ? { label: 'Xem hồ sơ trình khách', openOid: out.oid, version: out.version, phase: 3 } : undefined,
         )
       } else {
+        handlePhaseChange(3)
         pushChat(text, 'Đã sinh tài liệu ✓ (xem ở mục "Đã tạo").', PRE_SUGG, 'chat.ps.generated')
       }
       return
