@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import MarkdownLite from '@/components/MarkdownLite'
 import DeckView, { SLIDE_DELIM } from '@/components/DeckView'
-import { DEMO_CASE_IDS } from '@/hooks/usePresalesState'
+import { DEMO_CASE_IDS, buildOutputMarkdown } from '@/hooks/usePresalesState'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tField, tFieldValue, tcText } from '@/i18n/chat'
 
@@ -491,6 +491,7 @@ END_IF;`
       const raw = localStorage.getItem(`aiplf.presales.${id || 'default'}`)
       if (!raw) return []
       const st = JSON.parse(raw)
+      const memFields = (st.fields || []) as { id: string; name: string; value: string }[]
       const pad = (n: number) => String(n).padStart(2, '0')
       return ((st.savedOutputs || []) as { oid: string; kind: string; toolId?: string; title: string; ts: number; content: string; version?: number }[])
         .filter(o => o.kind === 'gen' && (o.toolId === 'final' || o.toolId === 'deck'))
@@ -513,7 +514,8 @@ END_IF;`
             summary: isDeck
               ? L('Đề án dạng slide do AI sinh từ thông tin pre-sales để trình khách.', 'プリセールス情報からAIが生成した顧客提案スライド。', 'A slide proposal AI generated from pre-sales info for the customer.')
               : L('Hồ sơ AI tổng hợp ở giai đoạn pre-sales để trình khách.', 'プリセールス段階でAIがまとめた顧客提案資料。', 'A proposal AI compiled at the pre-sales stage for the customer.'),
-            previewContent: o.content || '',
+            // Dựng lại theo NGÔN NGỮ hiện tại (nội dung lưu bị đóng băng theo locale lúc tạo)
+            previewContent: o.toolId ? buildOutputMarkdown(o.toolId, memFields, locale) : (o.content || ''),
           }
         })
     } catch { return [] }

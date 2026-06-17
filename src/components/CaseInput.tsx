@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Pencil, Trash2, MoreVertical, Download, Share2, FilePlus2, Sparkles, ArrowRight, Maximize2, X } from 'lucide-react'
 import type { PresalesApi, SavedOutput } from '@/hooks/usePresalesState'
+import { buildOutputMarkdown } from '@/hooks/usePresalesState'
 import MarkdownLite from '@/components/MarkdownLite'
 import DeckView from '@/components/DeckView'
 import { useI18n } from '@/i18n/I18nProvider'
@@ -65,6 +66,10 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
 
   if (detail) {
     const isDeck = detail.toolId === 'deck'
+    // Output do AI sinh → dựng lại nội dung theo NGÔN NGỮ hiện tại (nội dung lưu bị đóng băng theo locale lúc tạo)
+    const detailContent = detail.kind === 'gen' && detail.toolId
+      ? buildOutputMarkdown(detail.toolId, pre.fields, locale)
+      : detail.content
     return (
       <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 shadow-panel space-y-4 animate-in fade-in duration-300">
         <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -87,10 +92,10 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
           </div>
         </div>
         {isDeck ? (
-          <DeckView content={detail.content} />
+          <DeckView content={detailContent} />
         ) : (
           <div className="prose prose-slate max-w-none text-slate-800 select-text">
-            <MarkdownLite text={detail.content} />
+            <MarkdownLite text={detailContent} />
           </div>
         )}
 
@@ -116,10 +121,10 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
               </div>
               <div className="flex-1 overflow-y-auto px-10 py-8 max-w-4xl mx-auto w-full text-slate-800 select-text">
                 {isDeck ? (
-                  <DeckView content={detail.content} />
+                  <DeckView content={detailContent} />
                 ) : (
                   <div className="prose prose-lg prose-slate max-w-none">
-                    <MarkdownLite text={detail.content} />
+                    <MarkdownLite text={detailContent} />
                   </div>
                 )}
               </div>

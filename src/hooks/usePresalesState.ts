@@ -58,7 +58,7 @@ const DEMO_FIELDS: { name: string; value: string }[] = [
   { name: 'Nhịp sản xuất (takt)', value: '35 giây/cái' },
 ]
 
-function buildOutputMarkdown(id: string, fields: ProjectField[], locale: Locale = 'vi'): string {
+export function buildOutputMarkdown(id: string, fields: ProjectField[], locale: Locale = 'vi'): string {
   const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
   const get = (kw: RegExp) => { const f = fields.find(x => kw.test(x.name)); return f ? tFieldValue(f.value, locale) : L('(chưa có)', '(なし)', '(none)') }
   const list = fields.length ? fields.map(f => `- ${tField(f.name, locale)}: ${tFieldValue(f.value, locale)}`).join('\n') : `- ${L('(chưa có dữ liệu)', '(データなし)', '(no data)')}`
