@@ -1665,8 +1665,11 @@ export default function NotebookWorkspace() {
   }
 
   const sendMessagePrompt = (text: string) => {
+    // Chip điều hướng "Chuyển sang Bước…" luôn đi nhánh navigation (kể cả khi đang ở pre-sales),
+    // tránh bị regex "nhãn: giá trị" của pre-sales ghi nhầm thành field.
+    const isStepNav = /^Chuyển sang Bước\s/.test(text) && !!suggestionResponses[text]
     // Trong luồng pre-sales (bước 1→6): xử lý riêng (mô phỏng), không dùng router post-order
-    if (activePhase !== null && activePhase <= 3) { handlePresalesChat(text); return }
+    if (activePhase !== null && activePhase <= 3 && !isStepNav) { handlePresalesChat(text); return }
 
     const preset = suggestionResponses[text]
     if (preset) {
