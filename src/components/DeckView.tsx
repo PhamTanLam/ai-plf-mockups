@@ -1,10 +1,7 @@
 import MarkdownLite from '@/components/MarkdownLite'
-import logo from '@/assets/cowatech_logo.png'
 
 // Phân tách slide trong nội dung đề án (deck). buildOutputMarkdown('deck') nối các slide bằng delimiter này.
 export const SLIDE_DELIM = '%%SLIDE%%'
-
-const CYAN = '#1AAEDF' // màu thanh tiêu đề chuẩn Cowatech
 
 /** Tách dòng "# Title" làm tiêu đề + phần thân còn lại của một slide. */
 function splitSlide(raw: string) {
@@ -15,7 +12,7 @@ function splitSlide(raw: string) {
   return { title, body }
 }
 
-/** Render đề án dạng slide theo style Cowatech: thanh tiêu đề cyan + logo, nền trắng. Slide đầu = bìa. */
+/** Render đề án dạng slide — style cơ bản, trung tính (đề án là sản phẩm của khách, không gắn brand). */
 export default function DeckView({ content }: { content: string }) {
   const slides = content.split(SLIDE_DELIM).map(s => s.trim()).filter(Boolean)
   if (!slides.length) return null
@@ -28,31 +25,26 @@ export default function DeckView({ content }: { content: string }) {
           <div key={i} className="rounded-lg border border-slate-300 bg-slate-100 p-1.5 shadow-sm">
             <div className="deck-slide aspect-[16/9] bg-white flex flex-col overflow-hidden">
               {cover ? (
-                <>
-                  {/* Bìa: thanh cyan mảnh trên cùng + logo & tiêu đề căn giữa */}
-                  <div className="h-[16%] shrink-0" style={{ backgroundColor: CYAN }} />
-                  <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
-                    <img src={logo} alt="Cowatech" className="h-12 sm:h-14 object-contain mb-1" />
-                    <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-tight">{title}</h2>
-                    {body && (
-                      <div className="prose prose-sm prose-slate max-w-none text-center [&_*]:text-center">
-                        <MarkdownLite text={body} />
-                      </div>
-                    )}
-                  </div>
-                </>
+                // Bìa: tiêu đề + phụ đề căn giữa, tối giản
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 px-10 text-center">
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">{title}</h2>
+                  <div className="w-12 h-0.5 bg-slate-300 rounded-full" />
+                  {body && (
+                    <div className="prose prose-sm prose-slate max-w-none text-center [&_*]:text-center">
+                      <MarkdownLite text={body} />
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
-                  {/* Nội dung: thanh tiêu đề cyan (chữ trắng, căn giữa) */}
-                  <div className="shrink-0 px-6 py-3 flex items-center justify-center" style={{ backgroundColor: CYAN }}>
-                    <h3 className="text-base sm:text-lg font-bold text-white text-center leading-snug">{title}</h3>
+                  {/* Nội dung: tiêu đề trên cùng, gạch chân nhạt */}
+                  <div className="shrink-0 px-8 pt-5 pb-3 border-b border-slate-200">
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">{title}</h3>
                   </div>
-                  {/* Thân slide + logo nhỏ góc dưới phải */}
-                  <div className="deck-scroll relative flex-1 overflow-auto px-8 py-5">
+                  <div className="deck-scroll flex-1 overflow-auto px-8 py-5">
                     <div className="prose prose-sm prose-slate max-w-none text-slate-800">
                       <MarkdownLite text={body} />
                     </div>
-                    <img src={logo} alt="Cowatech" className="absolute bottom-3 right-4 h-4 sm:h-5 object-contain opacity-90 pointer-events-none" />
                   </div>
                 </>
               )}
