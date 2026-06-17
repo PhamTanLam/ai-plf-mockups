@@ -1506,7 +1506,8 @@ export default function NotebookWorkspace() {
           out ? { label: 'Xem hồ sơ trình khách', openOid: out.oid, version: out.version, phase: 3 } : undefined,
         )
       } else {
-        handlePhaseChange(3)
+        // Bản nháp khái quát (dự toán/cấu thành/lịch trình/nền) → vẫn ở bước Kiểm tra, KHÔNG nhảy sang Trình dự toán
+        handlePhaseChange(2)
         pushChat(text, 'Đã sinh tài liệu ✓ (xem ở mục "Đã tạo").', PRE_SUGG, 'chat.ps.generated')
       }
       return
