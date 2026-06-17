@@ -548,3 +548,13 @@ body {
 .ml-table th, .ml-table td { border: 1px solid #e2e8f0; padding: 6px 9px; vertical-align: top; text-align: left; }
 .ml-table th { background: #f8fafc; font-weight: 600; color: #334155; }
 .ml-table td { color: #475569; }
+
+/* In đề án (deck) ra PDF — chỉ hiện phần slide khi in */
+@media print {
+  @page { size: A4 landscape; margin: 8mm; }
+  body.printing-deck * { visibility: hidden !important; }
+  body.printing-deck .deck-print-area, body.printing-deck .deck-print-area * { visibility: visible !important; }
+  body.printing-deck .deck-print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+  body.printing-deck .deck-print-area .deck-slide { aspect-ratio: auto !important; height: auto !important; min-height: 90vh; overflow: visible !important; page-break-after: always; break-after: page; }
+  body.printing-deck .deck-print-area .deck-scroll { overflow: visible !important; }
+}

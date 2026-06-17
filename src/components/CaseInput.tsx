@@ -70,6 +70,14 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
     const detailContent = detail.kind === 'gen' && detail.toolId
       ? buildOutputMarkdown(detail.toolId, pre.fields, locale)
       : detail.content
+    const pdfLabel = locale === 'ja' ? 'PDFを保存' : locale === 'en' ? 'Download PDF' : 'Tải PDF'
+    // Deck = slide → xuất PDF qua print (chỉ hiện phần slide khi in); output khác → tải .md
+    const printDeck = () => {
+      document.body.classList.add('printing-deck')
+      const cleanup = () => { document.body.classList.remove('printing-deck'); window.removeEventListener('afterprint', cleanup) }
+      window.addEventListener('afterprint', cleanup)
+      setTimeout(() => window.print(), 60)
+    }
     return (
       <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 shadow-panel space-y-4 animate-in fade-in duration-300">
         <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -86,13 +94,21 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
             <button onClick={() => setZoomed(true)} title={zoomLabel} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
               <Maximize2 className="w-3 h-3" /> {zoomLabel}
             </button>
-            <button onClick={() => pre.downloadOutput(detail.oid)} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
-              <Download className="w-3 h-3" /> {t('ps.common.downloadMd')}
-            </button>
+            {isDeck ? (
+              <button onClick={printDeck} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
+                <Download className="w-3 h-3" /> {pdfLabel}
+              </button>
+            ) : (
+              <button onClick={() => pre.downloadOutput(detail.oid)} className="text-[11px] inline-flex items-center gap-1 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-600 hover:bg-slate-50 cursor-pointer">
+                <Download className="w-3 h-3" /> {t('ps.common.downloadMd')}
+              </button>
+            )}
           </div>
         </div>
         {isDeck ? (
-          <DeckView content={detailContent} />
+          <div className="deck-print-area">
+            <DeckView content={detailContent} />
+          </div>
         ) : (
           <div className="prose prose-slate max-w-none text-slate-800 select-text">
             <MarkdownLite text={detailContent} />
@@ -111,9 +127,15 @@ export default function CaseInput({ pre, onConvertToSource, onToast, onAdvance, 
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <button onClick={() => pre.downloadOutput(detail.oid)} className="text-xs inline-flex items-center gap-1 border border-slate-200 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-slate-50 cursor-pointer">
-                    <Download className="w-3.5 h-3.5" /> {t('ps.common.downloadMd')}
-                  </button>
+                  {isDeck ? (
+                    <button onClick={printDeck} className="text-xs inline-flex items-center gap-1 border border-slate-200 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-slate-50 cursor-pointer">
+                      <Download className="w-3.5 h-3.5" /> {pdfLabel}
+                    </button>
+                  ) : (
+                    <button onClick={() => pre.downloadOutput(detail.oid)} className="text-xs inline-flex items-center gap-1 border border-slate-200 rounded-lg px-3 py-1.5 text-slate-600 hover:bg-slate-50 cursor-pointer">
+                      <Download className="w-3.5 h-3.5" /> {t('ps.common.downloadMd')}
+                    </button>
+                  )}
                   <button onClick={() => setZoomed(false)} className="p-1.5 text-slate-450 hover:text-slate-850 hover:bg-slate-100 rounded-full transition cursor-pointer">
                     <X className="w-5 h-5" />
                   </button>

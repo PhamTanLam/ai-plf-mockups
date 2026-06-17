@@ -500,7 +500,7 @@ END_IF;`
           const isDeck = o.toolId === 'deck'
           return {
             id: 'gen-' + o.oid,
-            name: (o.title ? tcText(o.title, locale) : L('Tài liệu', '資料', 'Document')).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 48) + '.md',
+            name: (o.title ? tcText(o.title, locale) : L('Tài liệu', '資料', 'Document')).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 48) + (isDeck ? '.pdf' : '.md'),
             category: 'output' as const,
             type: isDeck
               ? L('Đề án trình khách (slide · AI)', '顧客提案書 (スライド · AI)', 'Proposal deck (slides · AI)')

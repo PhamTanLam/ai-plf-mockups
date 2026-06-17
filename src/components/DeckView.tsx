@@ -26,7 +26,7 @@ export default function DeckView({ content }: { content: string }) {
         const cover = i === 0
         return (
           <div key={i} className="rounded-lg border border-slate-300 bg-slate-100 p-1.5 shadow-sm">
-            <div className="aspect-[16/9] bg-white flex flex-col overflow-hidden">
+            <div className="deck-slide aspect-[16/9] bg-white flex flex-col overflow-hidden">
               {cover ? (
                 <>
                   {/* Bìa: thanh cyan mảnh trên cùng + logo & tiêu đề căn giữa */}
@@ -48,7 +48,7 @@ export default function DeckView({ content }: { content: string }) {
                     <h3 className="text-base sm:text-lg font-bold text-white text-center leading-snug">{title}</h3>
                   </div>
                   {/* Thân slide + logo nhỏ góc dưới phải */}
-                  <div className="relative flex-1 overflow-auto px-8 py-5">
+                  <div className="deck-scroll relative flex-1 overflow-auto px-8 py-5">
                     <div className="prose prose-sm prose-slate max-w-none text-slate-800">
                       <MarkdownLite text={body} />
                     </div>
