@@ -607,11 +607,30 @@ Nguồn: Tổng hợp từ chat Bước 7 (Khảo sát & Phát sinh)
     return outs.filter(f => getFileCategory(f.name) === catId).length
   }
 
-  // Handle mock download
+  // Handle download (real download if live text exists, otherwise mock)
   const handleDownload = (file: ProjectFile) => {
     setDownloadingFileId(file.id)
     setTimeout(() => {
       setDownloadingFileId(null)
+      
+      const { text } = getLivePreview(file)
+      if (text && (file.id === 'in-1' || file.id === 'in-2' || file.id === 'f-8' || file.id === 'f-7' || file.id === 'f-6' || file.id.startsWith('gen-'))) {
+        try {
+          const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = file.name
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+          return
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      
       // Trigger a raw browser download simulation
       alert(`[MOCK DOWNLOAD] Đã tải thành công file: ${file.name}\nPhiên bản: ${file.version}\nDung lượng: ${file.size}`)
     }, 1200)

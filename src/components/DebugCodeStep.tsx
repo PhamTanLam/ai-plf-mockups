@@ -366,7 +366,7 @@ export default function DebugCodeStep({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<'diagnostics' | 'revisions'>('diagnostics')
   const [isRightSidebarExpanded, setIsRightSidebarExpanded] = useState<boolean>(true)
-  const editorHeight = isRightSidebarExpanded ? '350px' : '520px'
+  const editorHeight = (code.trim() === '' || !isRightSidebarExpanded) ? '520px' : '350px'
   const lineGutterRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -700,54 +700,6 @@ export default function DebugCodeStep({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {code.trim() === '' ? (
-          <div className="flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 lg:col-span-12 w-full p-12 items-center justify-center min-h-[450px] space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
-            <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-600 animate-pulse shrink-0">
-              <Cpu className="w-8 h-8" />
-            </div>
-            <div className="max-w-md space-y-2">
-              <h5 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                {t('post.debug.emptyTitle')}
-              </h5>
-              <p className="text-[11px] text-slate-505 leading-relaxed">
-                {t('post.debug.emptyDesc')}
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center gap-2 py-2.5 px-5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition cursor-pointer shadow-md shadow-violet-500/10 font-bold text-xs"
-              >
-                <Upload className="w-4 h-4" />
-                <span>{t('post.debug.importCode')}</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  const localizedDefault = localizeCodeComments(DEFAULT_ST_CODE, locale)
-                  handleCodeChange(localizedDefault)
-                  saveRevision(L('AI sinh mã gốc ban đầu', 'AIによる初期生成コード', 'AI-generated initial code'), localizedDefault)
-                  if (onAddLog) {
-                    onAddLog(
-                      L(
-                        'Nạp thành công mã nguồn PLC ST mặc định', 
-                        'デフォルトの PLC ST コードをロードしました', 
-                        'Successfully loaded default PLC ST code'
-                      ), 
-                      12
-                    )
-                  }
-                }}
-                className="flex items-center justify-center gap-2 py-2.5 px-5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl transition cursor-pointer font-bold text-xs"
-              >
-                <RefreshCw className="w-4 h-4 text-slate-500" />
-                <span>{t('post.debug.loadDefault')}</span>
-              </button>
-            </div>
-          </div>
-        ) : (
           <div className="flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 lg:col-span-12 w-full">
             
             {/* Editor Header Bar (Light Theme) */}
@@ -792,6 +744,56 @@ export default function DebugCodeStep({
                   spellCheck={false}
                   placeholder={t('post.debug.placeholder')}
                 />
+
+                {/* Overlay for Empty State */}
+                {code.trim() === '' && (
+                  <div className="absolute inset-0 bg-white/95 backdrop-blur-3xs flex flex-col items-center justify-center p-6 text-center space-y-4 animate-in fade-in duration-300 z-10">
+                    <div className="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-600 shrink-0">
+                      <Cpu className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <div className="max-w-md space-y-1">
+                      <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        {t('post.debug.emptyTitle')}
+                      </h5>
+                      <p className="text-[10px] text-slate-500 leading-relaxed max-w-xs mx-auto">
+                        {t('post.debug.emptyDesc')}
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 pt-1.5">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center justify-center gap-1.5 py-2 px-4 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition cursor-pointer shadow-sm shadow-violet-500/10 font-bold text-[10px]"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{t('post.debug.importCode')}</span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const localizedDefault = localizeCodeComments(DEFAULT_ST_CODE, locale)
+                          handleCodeChange(localizedDefault)
+                          saveRevision(L('AI sinh mã gốc ban đầu', 'AIによる初期生成コード', 'AI-generated initial code'), localizedDefault)
+                          if (onAddLog) {
+                            onAddLog(
+                              L(
+                                'Nạp thành công mã nguồn PLC ST mặc định', 
+                                'デフォルトの PLC ST コードをロードしました', 
+                                'Successfully loaded default PLC ST code'
+                              ), 
+                              12
+                            )
+                          }
+                        }}
+                        className="flex items-center justify-center gap-1.5 py-2 px-4 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition cursor-pointer font-bold text-[10px]"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                        <span>{t('post.debug.loadDefault')}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -969,7 +971,6 @@ export default function DebugCodeStep({
               </div>
             )}
           </div>
-        )}
       </div>
     </div>
   )

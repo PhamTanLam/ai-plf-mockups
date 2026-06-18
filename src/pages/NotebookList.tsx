@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, BookOpen, FileText, Search, Globe2, X } from 'lucide-react'
+import { Plus, BookOpen, FileText, Search, Globe2, X, Star, Zap, Sparkles } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import type { Locale } from '@/i18n/types'
 
@@ -45,10 +45,14 @@ export default function NotebookList() {
   const { t, locale, setLocale } = useI18n()
   const L = (vi: string, ja: string, en: string) => locale === 'ja' ? ja : locale === 'en' ? en : vi
   const [siteTitle, setSiteTitle] = useState(() => localStorage.getItem('aiplf.settings.siteTitle') || 'Cowatech AI Platform')
+  const [membership, setMembership] = useState<'free' | 'premium'>(() => {
+    return (localStorage.getItem('aiplf.membership') as 'free' | 'premium') || 'free'
+  })
   
   useEffect(() => {
     const applyConfig = () => {
       setSiteTitle(localStorage.getItem('aiplf.settings.siteTitle') || 'Cowatech AI Platform')
+      setMembership((localStorage.getItem('aiplf.membership') as 'free' | 'premium') || 'free')
       
       const themeColor = localStorage.getItem('aiplf.settings.themeColor') || 'teal';
       const root = document.documentElement;
@@ -157,9 +161,14 @@ export default function NotebookList() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-mesh flex flex-col text-slate-850 page-enter-fade">
+    <div className="h-screen overflow-hidden bg-gradient-mesh flex flex-col text-slate-855 page-enter-fade relative">
+      {/* Dynamic Ombre Background Glows */}
+      <div className="fixed top-[-15%] left-[-10%] w-[550px] h-[550px] bg-brand-500/10 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse-slow" />
+      <div className="fixed top-[20%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/8 rounded-full blur-[130px] pointer-events-none -z-10 animate-pulse-slow" style={{ animationDelay: '2s' }} />
+      <div className="fixed bottom-[-10%] left-[20%] w-[500px] h-[500px] bg-emerald-500/6 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse-slow" style={{ animationDelay: '4s' }} />
+
       {/* Premium Header */}
-      <header className="shrink-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 flex items-center justify-between shadow-sm">
+      <header className="shrink-0 z-10 bg-white/70 backdrop-blur-lg border-b border-slate-200/50 px-6 py-4 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center text-white shadow-md shadow-brand-500/20">
             <BookOpen className="w-5.5 h-5.5 stroke-[2]" />
@@ -197,8 +206,27 @@ export default function NotebookList() {
             <span>{locale === 'ja' ? '日本語' : locale === 'vi' ? 'Tiếng Việt' : 'English'}</span>
           </button>
 
+          {/* Membership Badge */}
+          {membership === 'premium' ? (
+            <Link
+              to="/membership"
+              className="text-[10px] font-extrabold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 px-3 py-1.5 rounded-xl shadow-sm shadow-amber-500/10 flex items-center gap-1 transition-all duration-200 active:scale-95 cursor-pointer"
+            >
+              <Star className="w-3.5 h-3.5 fill-white animate-pulse" />
+              <span className="hidden sm:inline">PREMIUM MEMBER</span>
+            </Link>
+          ) : (
+            <Link
+              to="/membership"
+              className="text-[10px] font-extrabold text-brand-700 hover:text-brand-800 bg-brand-50/60 hover:bg-brand-100/70 border border-brand-200/85 px-3 py-1.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer flex items-center gap-1 shadow-3xs shadow-brand-500/5"
+            >
+              <Zap className="w-3.5 h-3.5 text-brand-500 fill-brand-500/20 animate-pulse" />
+              <span className="hidden sm:inline">FREE MEMBER</span>
+            </Link>
+          )}
+
           {/* User profile */}
-          <div className="w-9 h-9 rounded-full bg-slate-100 text-brand-700 font-mono font-bold text-sm flex items-center justify-center border border-slate-200">
+          <div className="w-9 h-9 rounded-full bg-slate-100 text-brand-700 font-mono font-bold text-sm flex items-center justify-center border border-slate-200 shrink-0">
             A
           </div>
         </div>
@@ -207,19 +235,36 @@ export default function NotebookList() {
       {/* Main Container */}
       <main className="flex-1 min-h-0 max-w-7xl w-full mx-auto px-6 pt-8 flex flex-col gap-6 overflow-hidden">
         {/* Banner with Greeting */}
-        <section className="shrink-0 glass-panel border border-slate-200/80 rounded-2xl p-6 shadow-panel flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl -z-10 animate-pulse-slow" />
+        <section className="shrink-0 border border-brand-500/15 rounded-2xl p-7 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden bg-white/40 backdrop-blur-md shadow-sm">
+          {/* Subtle colored accent shapes inside the banner */}
+          <div className="absolute top-[-50%] right-[-10%] w-80 h-80 bg-gradient-to-br from-brand-400/20 to-indigo-500/20 rounded-full blur-2xl -z-10" />
+          <div className="absolute bottom-[-50%] left-[20%] w-64 h-64 bg-gradient-to-tr from-emerald-400/10 to-brand-500/10 rounded-full blur-2xl -z-10" />
+          
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-brand-700 via-brand-500 to-indigo-600 bg-clip-text text-transparent">
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-700 via-brand-500 to-indigo-600 bg-clip-text text-transparent">
               {locale === 'ja' ? `ようこそ、${siteTitle} へ` : locale === 'vi' ? `Chào mừng đến với ${siteTitle}` : `Welcome to ${siteTitle}`}
             </h2>
-            <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
+            <p className="text-xs md:text-sm text-slate-600 max-w-2xl leading-relaxed font-medium">
               {locale === 'ja'
                 ? '仕様書、電気図面、ラダー回路をアップロードし、NotebookLMインターフェースを通じて直接質問やコードの自動生成が行えます。'
                 : locale === 'vi'
                 ? 'Nạp bảng thông số specs, bản vẽ điện CAD và mã nguồn PLC để chạy mô phỏng, audit lỗi và dịch thuật tự động qua AI Chatbot.'
                 : 'Upload specifications, electrical drawings, and PLC code to interact with AI chatbot and design automation scripts.'}
             </p>
+          </div>
+          
+          {/* Status Indicator Card on the right */}
+          <div className="shrink-0 flex items-center gap-3 bg-white/80 border border-slate-200/80 rounded-2xl p-4 shadow-3xs backdrop-blur-xs select-none">
+            <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-600">
+              <Sparkles className="w-5 h-5 text-brand-500 fill-brand-500/15 animate-pulse" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">System Status</div>
+              <div className="text-xs font-bold text-brand-700 flex items-center gap-1.5 mt-0.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{L('Hoạt động', '稼働中', 'All Systems Active')}</span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -239,16 +284,16 @@ export default function NotebookList() {
             {/* New Notebook card */}
             <div
               onClick={() => setShowNewModal(true)}
-              className="bg-slate-50/40 border-2 border-dashed border-slate-200 hover:border-brand-500 rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-3 cursor-pointer group hover:bg-brand-500/5 transition-all duration-300 min-h-[190px] shadow-sm"
+              className="bg-white/40 backdrop-blur-md border-2 border-dashed border-slate-200/80 hover:border-brand-500/60 rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-3 cursor-pointer group hover:bg-brand-500/5 hover:shadow-md transition-all duration-300 min-h-[190px] shadow-3xs"
             >
-              <div className="w-12 h-12 rounded-full bg-slate-100 group-hover:bg-brand-500/10 flex items-center justify-center text-slate-400 group-hover:text-brand-500 transition">
+              <div className="w-12 h-12 rounded-full bg-slate-100/80 group-hover:bg-brand-500/10 flex items-center justify-center text-slate-400 group-hover:text-brand-500 transition">
                 <Plus className="w-6 h-6 stroke-[2]" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-slate-700 group-hover:text-brand-500 transition">
                   {locale === 'ja' ? '新しいケースを追加' : locale === 'vi' ? 'Thêm dự án mới' : 'Add new case'}
                 </h4>
-                <p className="text-xs text-slate-400 mt-1 font-mono">
+                <p className="text-xs text-slate-450 mt-1 font-mono">
                   {locale === 'ja' ? '仕様書やコードを読み込みます' : locale === 'vi' ? 'Nạp specs & source code để chạy' : 'Ground the AI with engineering sources'}
                 </p>
               </div>
@@ -260,15 +305,18 @@ export default function NotebookList() {
                 key={c.id}
                 to={`/workspace/${c.id}`}
                 state={{ status: c.status }}
-                className="bg-white border border-slate-200/85 hover:border-brand-500/50 rounded-2xl p-6 flex flex-col justify-between gap-4 cursor-pointer hover-lift min-h-[190px] shadow-xs relative overflow-hidden group"
+                className="bg-white/85 backdrop-blur-md border border-slate-200/85 hover:border-brand-500/40 rounded-2xl p-6 flex flex-col justify-between gap-4 cursor-pointer hover:shadow-[0_12px_24px_rgba(10,186,181,0.06)] hover:scale-[1.01] transition-all duration-300 min-h-[190px] relative overflow-hidden group"
               >
-                {/* Visual side marker */}
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-brand-500 transition-colors" />
+                {/* Visual side marker with brand to indigo gradient */}
+                <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-transparent group-hover:bg-gradient-to-b group-hover:from-brand-500 group-hover:to-indigo-500 transition-all duration-300" />
+                
+                {/* Visual glow accent behind the card */}
+                <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-gradient-to-br from-brand-500/5 to-indigo-500/5 rounded-full blur-xl group-hover:scale-125 transition-transform duration-500" />
 
-                <div className="space-y-3">
+                <div className="space-y-3 relative z-10">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="text-[10px] font-mono font-bold text-slate-400">{c.code}</span>
-                    <span className={`pill ${c.pillClass}`}>{t(c.status)}</span>
+                    <span className={`pill ${c.pillClass} rounded-full px-2.5 py-0.5 text-[9px] uppercase tracking-wider font-extrabold shadow-3xs`}>{t(c.status)}</span>
                   </div>
 
                   <h4 className="text-base font-bold text-slate-900 leading-snug tracking-tight group-hover:text-brand-500 transition-colors">
@@ -276,15 +324,15 @@ export default function NotebookList() {
                   </h4>
                 </div>
 
-                <div className="space-y-3 pt-3 border-t border-slate-100">
-                  {/* Progress bar */}
+                <div className="space-y-3 pt-3 border-t border-slate-100 relative z-10">
+                  {/* Progress bar with Ombre Gradient */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-mono font-medium text-slate-500">
+                    <div className="flex items-center justify-between text-xs font-mono font-medium text-slate-550">
                       <span>{locale === 'ja' ? '進捗' : locale === 'vi' ? 'Tiến độ đồng bộ' : 'Sync Progress'}</span>
-                      <span className="tabular-nums font-semibold text-brand-600">{c.progress}%</span>
+                      <span className="tabular-nums font-semibold text-brand-650">{c.progress}%</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-brand-500 rounded-full" style={{ width: `${c.progress}%` }} />
+                      <div className="h-full bg-gradient-to-r from-brand-500 to-indigo-500 rounded-full" style={{ width: `${c.progress}%` }} />
                     </div>
                   </div>
 
@@ -295,9 +343,16 @@ export default function NotebookList() {
                       <span>{sourceCount(c)} files</span>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>{c.updatedAt}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>{c.updatedAt}</span>
+                      </div>
+                      
+                      {/* Owner Initials Avatar with Gradient */}
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-brand-500 to-indigo-500 text-white font-sans font-bold text-[9px] flex items-center justify-center border border-white shadow-2xs shrink-0 select-none cursor-help" title={`Owner: ${c.owner}`}>
+                        {c.ownerInitials}
+                      </div>
                     </div>
                   </div>
                 </div>

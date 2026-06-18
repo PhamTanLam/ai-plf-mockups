@@ -29,7 +29,10 @@ import {
   PanelRightClose,
   Pencil,
   Search,
-  MoreVertical
+  MoreVertical,
+  Star,
+  Zap,
+  CreditCard
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tcText, tField, tFieldValue, tFieldList, tSourceMeta, tSummary } from '@/i18n/chat'
@@ -485,6 +488,10 @@ export default function NotebookWorkspace() {
   // Đề xuất ghi nhận Bước 7 đang chờ user xác nhận (gõ "update"/"đồng ý" mới ghi vào bộ nhớ)
   const pendingReentryRef = useRef<{ name: string; value: string; mat: string } | null>(null)
 
+  const [membership, setMembership] = useState<'free' | 'premium'>(() => {
+    return (localStorage.getItem('aiplf.membership') as 'free' | 'premium') || 'free'
+  })
+
 
   // Bước mở mặc định = theo TRẠNG THÁI dự án (router state khi click từ dashboard; fallback map demo; mới → pre-sales bước 1)
   const location = useLocation()
@@ -740,6 +747,7 @@ export default function NotebookWorkspace() {
 
   useEffect(() => {
     const handleStorageChange = () => {
+      setMembership((localStorage.getItem('aiplf.membership') as 'free' | 'premium') || 'free')
       setMaterialsVersion(prev => prev + 1)
       const storedKickoff = localStorage.getItem(KICKOFF_STORAGE_KEY)
       if (storedKickoff) setKickoffText(storedKickoff)
@@ -1677,11 +1685,52 @@ export default function NotebookWorkspace() {
   }
 
   const sendMessagePrompt = (text: string) => {
+    if (text === 'Nâng cấp lên Premium' || text === 'Xem bảng giá dịch vụ') {
+      navigate('/membership')
+      return
+    }
+
     // Chip điều hướng "Chuyển sang Bước…" luôn đi nhánh navigation (kể cả khi đang ở pre-sales),
     // tránh bị regex "nhãn: giá trị" của pre-sales ghi nhầm thành field.
     const isStepNav = /^Chuyển sang Bước\s/.test(text) && !!suggestionResponses[text]
+
     // Trong luồng pre-sales (bước 1→6): xử lý riêng (mô phỏng), không dùng router post-order
     if (activePhase !== null && activePhase <= 3 && !isStepNav) { handlePresalesChat(text); return }
+
+    const queryLower = text.toLowerCase()
+    
+    // AI Copilot restrictions for Free Tier
+    if (membership === 'free') {
+      const isCodeOrCadGeneration = 
+        (queryLower.includes('sinh code') || queryLower.includes('tạo code') || queryLower.includes('tạo bản vẽ') || queryLower.includes('sinh bản vẽ') || queryLower.includes('cad') || queryLower.includes('dwg') || queryLower.includes('xuất code') || queryLower.includes('lập code')) &&
+        !queryLower.includes('debug') && !queryLower.includes('lỗi') && !queryLower.includes('cú pháp');
+        
+      const isDocOrAcceptanceGeneration =
+        queryLower.includes('nghiệm thu') || queryLower.includes('hướng dẫn vận hành') || queryLower.includes('hdsd') || queryLower.includes('tài liệu') || queryLower.includes('biên bản') || queryLower.includes('báo cáo');
+
+      if (isCodeOrCadGeneration || isDocOrAcceptanceGeneration) {
+        const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const declineMsg = L(
+          `Rất tiếc, tính năng tự động sinh mã nguồn PLC/bản vẽ CAD và lập tài liệu nghiệm thu/HDSD chi tiết bằng AI chỉ hỗ trợ trên gói Enterprise Premium. Vui lòng nâng cấp gói thành viên của bạn để mở khóa toàn bộ quy trình thiết kế và tài liệu.`,
+          `申し訳ありませんが、AIによるPLCコード・CAD図面の自動生成および検収書・GOT2000取扱説明書の自動作成機能は、Enterprise Premiumプランでのみご利用いただけます。プランをアップグレードして、設計プロセス全体をアンロックしてください。`,
+          `We apologize, but automated PLC/CAD code generation and smart acceptance/GOT2000 document compilation are exclusive to the Enterprise Premium tier. Please upgrade your plan to unlock the entire engineering pipeline.`
+        )
+        
+        setAskedQuestions((prev) => [...prev, text])
+        setMessages((prev) => [
+          ...prev, 
+          { id: `u-${Date.now()}`, sender: 'user', text, timestamp: ts },
+          { id: `a-${Date.now() + 1}`, sender: 'ai', text: declineMsg, timestamp: ts }
+        ])
+        setActiveSuggestions([
+          'Nâng cấp lên Premium',
+          'Xem bảng giá dịch vụ',
+          'Quay lại hướng dẫn debug free'
+        ])
+        setInputVal('')
+        return
+      }
+    }
 
     const preset = suggestionResponses[text]
     if (preset) {
@@ -2185,6 +2234,25 @@ export default function NotebookWorkspace() {
           </div>
 
 
+          {/* Membership Badge */}
+          {membership === 'premium' ? (
+            <Link
+              to="/membership"
+              className="text-[10px] font-extrabold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 px-3 py-1.5 rounded-xl shadow-sm shadow-amber-500/10 flex items-center gap-1 transition-all duration-200 active:scale-95 cursor-pointer shrink-0"
+            >
+              <Star className="w-3.5 h-3.5 fill-white animate-pulse" />
+              <span className="hidden lg:inline">PREMIUM MEMBER</span>
+            </Link>
+          ) : (
+            <Link
+              to="/membership"
+              className="text-[10px] font-extrabold text-brand-700 hover:text-brand-800 bg-brand-50/60 hover:bg-brand-100/70 border border-brand-200/85 px-3 py-1.5 rounded-xl transition-all duration-200 active:scale-95 cursor-pointer flex items-center gap-1 shrink-0 shadow-3xs shadow-brand-500/5"
+            >
+              <Zap className="w-3.5 h-3.5 text-brand-500 fill-brand-500/20 animate-pulse" />
+              <span className="hidden lg:inline">FREE MEMBER</span>
+            </Link>
+          )}
+
           <button
             onClick={() => {
               setIsConfigOpen(true);
@@ -2551,7 +2619,52 @@ export default function NotebookWorkspace() {
           {/* Dynamic Component Canvas Rendering */}
           <div className={`flex-1 overflow-y-auto min-h-0 ${isZenMode && activeRightTab === 'debug_code' ? 'p-2 lg:p-4' : 'p-5'}`}>
             <div key={activeRightTab ?? 'empty'} className="animate-fade-in-up">
-              {activePhase === null ? (
+              {membership === 'free' && (activeRightTab === 'design_code' || activeRightTab === 'doc') ? (
+                <div className="max-w-xl mx-auto my-12 bg-white/40 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-panel text-center flex flex-col items-center justify-center gap-5 animate-in zoom-in-95 duration-300 relative overflow-hidden select-none">
+                  {/* Subtle decorative glow */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl -z-10" />
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl -z-10" />
+                  
+                  {/* Lock icon container */}
+                  <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 animate-bounce shadow-sm shadow-amber-500/5">
+                    <Zap className="w-8 h-8 text-amber-500 fill-amber-500/20" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-extrabold tracking-tight text-slate-800 uppercase font-mono flex items-center justify-center gap-1.5">
+                      <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                      <span>{L('Tính năng Premium', 'プレミアム機能', 'Premium Feature')}</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
+                      {activeRightTab === 'design_code'
+                        ? L(
+                            'Bước 10: Tự động sinh bản vẽ CAD và xuất mã nguồn PLC Structured Text (.l5k) tương thích hoàn toàn chỉ có ở gói Enterprise Premium.',
+                            'ステップ10: CAD図面自動生成およびRockwell互換PLCコード(.l5k)出力機能は、Enterprise Premiumプランでのみご利用いただけます。',
+                            'Step 10: Auto CAD drawing generation and full PLC Structured Text (.l5k) source export are exclusive to Enterprise Premium.'
+                          )
+                        : L(
+                            'Bước 11: Tự động lập biên bản nghiệm thu (.docx) và hướng dẫn vận hành GOT2000 HMI (.pdf) chỉ có ở gói Enterprise Premium.',
+                            'ステップ11: 検収書(.docx)およびGOT2000 HMI取扱説明マニュアル(.pdf)自動作成機能は、Enterprise Premiumプランでのみご利用いただけます。',
+                            'Step 11: Auto Acceptance report (.docx) and GOT2000 HMI manual (.pdf) generation are exclusive to Enterprise Premium.'
+                          )}
+                    </p>
+                  </div>
+                  
+                  <div className="pt-2 flex flex-col items-center gap-3 w-full">
+                    <Link
+                      to="/membership"
+                      className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-brand-500/15 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      <span>{L('Nâng cấp ngay', '今すぐアップグレード', 'Upgrade Now')}</span>
+                    </Link>
+                    
+                    <p className="text-[10px] text-slate-400 font-mono italic">
+                      {L('* Sử dụng miễn phí các bước pre-sales, khảo sát, và soạn thảo debug code thủ công.', '* プリセールス、現地調査、手動デバッグ機能は無料でご利用いただけます。', '* Free tiers cover pre-sales, field survey, and manual debug editors.')}
+                    </p>
+                  </div>
+                </div>
+              ) : activePhase === null ? (
                 <div className="max-w-5xl mx-auto h-full flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-xs">
                   <div>
                     <h2 className="text-lg font-bold text-slate-800 font-mono">{t('ws.canvas.noOutput')}</h2>
@@ -2603,7 +2716,7 @@ export default function NotebookWorkspace() {
                 </div>
               )}
 
-              {activeRightTab === 'design_code' && (
+              {activeRightTab === 'design_code' && membership === 'premium' && (
                 <div className="max-w-6xl mx-auto space-y-5 animate-in fade-in duration-300">
                   {/* Premium Segmented Tab Switcher */}
                   <div className="flex items-center justify-between border-b border-slate-200 pb-2">
@@ -2726,7 +2839,7 @@ export default function NotebookWorkspace() {
                 </div>
               )}
 
-              {activeRightTab === 'doc' && (
+              {activeRightTab === 'doc' && membership === 'premium' && (
                 <div className="max-w-4xl mx-auto animate-in fade-in duration-300">
                   <DocumentGenerator 
                     projectId={id || 'default'}
