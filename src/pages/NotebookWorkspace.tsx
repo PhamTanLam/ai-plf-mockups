@@ -12,19 +12,10 @@ import {
   FolderOpen,
   Download,
   RefreshCw,
-  CheckSquare,
-  TrendingUp,
   ClipboardList,
-  Users,
-  ShoppingCart,
-  Bug,
-  FileCheck,
   ArrowRight,
-  RotateCcw,
-  Activity,
   MessageSquare,
   ChevronDown,
-  History,
   Trash2,
   PanelRightClose,
   Pencil,
@@ -373,31 +364,6 @@ const phasesInfo: PhaseDetail[] = [
     users: 'Khách hàng / SE',
   }
 ]
-
-const getPhaseIcon = (phaseNum: number, className: string = "w-2.5 h-2.5") => {
-  switch (phaseNum) {
-    case 1:
-      return <FileText className={className} />
-    case 2:
-      return <CheckSquare className={className} />
-    case 3:
-      return <TrendingUp className={className} />
-    case 7:
-      return <ClipboardList className={className} />
-    case 8:
-      return <Users className={className} />
-    case 9:
-      return <ShoppingCart className={className} />
-    case 10:
-      return <Cpu className={className} />
-    case 12:
-      return <Bug className={className} />
-    case 11:
-      return <FileCheck className={className} />
-    default:
-      return <FileText className={className} />
-  }
-}
 
 // Pre-sales (trước nhận đơn) = CHU TRÌNH LẶP 3 hoạt động: Nhập/Sửa → Kiểm tra → Dự toán.
 // Thực tế lặp lại nhiều vòng (sửa thông tin → dự toán lại) đến khi chốt đơn → mô hình "Vòng N".
@@ -1171,19 +1137,9 @@ export default function NotebookWorkspace() {
   const [conversations, setConversations] = useState<ConvMeta[]>(chatInitRef.current.convs)
   const [activeConvId, setActiveConvId] = useState<string>(chatInitRef.current.activeId)
   const [messages, setMessages] = useState<Message[]>(chatInitRef.current.messages)
-  const [showConvMenu, setShowConvMenu] = useState(false)
   const [convSearch, setConvSearch] = useState('')
-  const [convTab, setConvTab] = useState<'mine' | 'project'>('mine')
   const [renameConvId, setRenameConvId] = useState<string | null>(null)
   const [renameConvVal, setRenameConvVal] = useState('')
-  const fmtConvTime = (ts: number) => {
-    const m = Math.floor((Date.now() - ts) / 60000)
-    if (m < 1) return 'vừa xong'
-    if (m < 60) return m + 'm'
-    const h = Math.floor(m / 60)
-    if (h < 24) return h + 'h'
-    return Math.floor(h / 24) + 'd'
-  }
   // Cuộc mới chưa chat = "draft": chưa thêm vào danh sách, chỉ commit khi có tin nhắn đầu tiên
   const draftConvRef = useRef<{ id: string; createdBy: 'Linh' | 'Kanai' | 'AI'; createdAt: number } | null>(null)
 
@@ -1225,7 +1181,8 @@ export default function NotebookWorkspace() {
     setActiveConvId(cid)
     setMessages([makeGreeting()])
     setAskedQuestions([])
-    setShowConvMenu(false)
+    setInputVal('')
+    setIsCopilotExpanded(true)
   }
 
   const renameConversation = (cid: string, title: string) => {
@@ -1236,7 +1193,6 @@ export default function NotebookWorkspace() {
   }
 
   const switchConversation = (cid: string) => {
-    setShowConvMenu(false)
     if (cid === activeConvId) return
     let msgs: Message[] = []
     try { msgs = JSON.parse(localStorage.getItem(chatMsgsKey(id, cid)) || 'null') || [] } catch { /* ignore */ }
@@ -1288,10 +1244,12 @@ export default function NotebookWorkspace() {
   })
 
   // Edit History & Logs States
-  const [leftActiveTab, setLeftActiveTab] = useState<'sources' | 'history'>(() => {
+  const [leftActiveTab, setLeftActiveTab] = useState<'sources' | 'conversations' | 'process'>(() => {
     try {
       const stored = localStorage.getItem(`aiplf.workspace.${id}.leftActiveTab`)
-      if (stored !== null) return JSON.parse(stored) as 'sources' | 'history'
+      if (stored !== null && (stored === '"sources"' || stored === '"conversations"' || stored === '"process"')) {
+        return JSON.parse(stored) as 'sources' | 'conversations' | 'process'
+      }
     } catch { /* ignore */ }
     return 'sources'
   })
@@ -1306,7 +1264,6 @@ export default function NotebookWorkspace() {
       { id: 'h3', user: 'Linh', action: 'Đồng bộ chênh lệch thông số sang biên bản kick-off', timestamp: '10:15 AM', phaseNum: 8 },
     ]
   })
-  const [historyUserFilter, setHistoryUserFilter] = useState<'All' | 'Linh' | 'Kanai' | 'AI'>('All')
 
   const addLog = useCallback((actionText: string, phaseNum: number) => {
     const newLog = {
@@ -2278,312 +2235,313 @@ export default function NotebookWorkspace() {
       {/* Main Container */}
       <div className="flex-1 flex min-h-0 relative">
         
-        {/* COLUMN 1: LEFT SIDEBAR - Source Documents & Output History (Collapsible: 220px / 48px) */}
-        <aside className={`shrink-0 bg-slate-50/80 border-r border-slate-200 flex flex-col h-full z-10 transition-all duration-300 relative ${
-          isLeftSidebarExpanded ? 'w-[220px]' : 'w-12'
-        }`}>
-          {isLeftSidebarExpanded ? (
-            <>
-              {/* Sources List & History Panel (Top, flex-1) */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="border-b border-slate-200 bg-slate-100/50 shrink-0 p-1 flex gap-1 items-center">
-                  <button
-                    onClick={() => setLeftActiveTab('sources')}
-                    className={`flex-1 py-1 text-[10px] font-extrabold uppercase tracking-wider transition cursor-pointer text-center rounded-lg ${
-                      leftActiveTab === 'sources'
-                        ? 'bg-white text-brand-700 shadow-3xs font-black'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    {t('ws.panel.sources')}
+        {/* COLUMN 1: LEFT SIDEBAR - Minimal vertical activity dock */}
+        <aside className="shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col items-center py-3 gap-2.5 z-15 w-14 select-none">
+          {/* New conversation button */}
+          <button
+            onClick={() => {
+              newConversation()
+              setLeftActiveTab('conversations')
+              setIsLeftSidebarExpanded(true)
+            }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all duration-200 active:scale-95 cursor-pointer"
+            title={L('Cuộc trò chuyện mới', '新しい会話', 'New conversation')}
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+
+          <div className="w-6 h-px bg-slate-200 my-1" />
+
+          {/* Sources button */}
+          <button
+            onClick={() => {
+              if (isLeftSidebarExpanded && leftActiveTab === 'sources') {
+                setIsLeftSidebarExpanded(false)
+              } else {
+                setLeftActiveTab('sources')
+                setIsLeftSidebarExpanded(true)
+              }
+            }}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
+              isLeftSidebarExpanded && leftActiveTab === 'sources'
+                ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
+                : 'text-slate-550 hover:bg-slate-200/50 hover:text-slate-800'
+            }`}
+            title={t('ws.panel.sources')}
+          >
+            <FileText className="w-4 h-4" />
+          </button>
+
+          {/* Conversations History button */}
+          <button
+            onClick={() => {
+              if (isLeftSidebarExpanded && leftActiveTab === 'conversations') {
+                setIsLeftSidebarExpanded(false)
+              } else {
+                setLeftActiveTab('conversations')
+                setIsLeftSidebarExpanded(true)
+              }
+            }}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
+              isLeftSidebarExpanded && leftActiveTab === 'conversations'
+                ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
+                : 'text-slate-550 hover:bg-slate-200/50 hover:text-slate-800'
+            }`}
+            title={L('Lịch sử cuộc trò chuyện', '会話履歴', 'Conversation history')}
+          >
+            <MessageSquare className="w-4 h-4" />
+          </button>
+
+          {/* Process (Quy trình) button */}
+          <button
+            onClick={() => {
+              if (isLeftSidebarExpanded && leftActiveTab === 'process') {
+                setIsLeftSidebarExpanded(false)
+              } else {
+                setLeftActiveTab('process')
+                setIsLeftSidebarExpanded(true)
+              }
+            }}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
+              isLeftSidebarExpanded && leftActiveTab === 'process'
+                ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
+                : 'text-slate-555 hover:bg-slate-200/50 hover:text-slate-805'
+            }`}
+            title={L('Quy trình thực hiện', '業務フロー', 'Process')}
+          >
+            <ClipboardList className="w-4 h-4" />
+          </button>
+        </aside>
+
+        {/* COLUMN 1.5: SIDEBAR DRAWER PANEL */}
+        {isLeftSidebarExpanded && (
+          <aside className="shrink-0 w-60 bg-white border-r border-slate-200 flex flex-col h-full z-10 relative shadow-3xs animate-fade-in-right animate-duration-150">
+            {/* Header with Title and close button */}
+            <div className="p-3 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between shrink-0 select-none">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-550">
+                {leftActiveTab === 'sources'
+                  ? t('ws.panel.sources')
+                  : leftActiveTab === 'conversations'
+                  ? L('Lịch sử trò chuyện', '会話履歴', 'Chat History')
+                  : L('Quy trình', '業務フロー', 'Process')}
+              </span>
+              <button
+                onClick={() => setIsLeftSidebarExpanded(false)}
+                className="p-1 hover:bg-slate-200 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
+                title={L('Đóng', '閉じる', 'Close')}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Panel Body */}
+            <div className="flex-1 overflow-y-auto p-2 min-h-0">
+              {leftActiveTab === 'sources' && (
+                <div className="space-y-1.5 h-full overflow-y-auto pr-0.5 scrollbar-thin">
+                  <button onClick={() => setAddSourceOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 mb-1.5 text-[11px] font-bold border border-slate-200 bg-slate-50/50 rounded-xl text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition duration-150 cursor-pointer">
+                    <Plus className="w-3 h-3" />{t('ws.panel.addSource')}
                   </button>
-                  <button
-                    onClick={() => setLeftActiveTab('history')}
-                    className={`flex-1 py-1 text-[10px] font-extrabold uppercase tracking-wider transition cursor-pointer text-center rounded-lg ${
-                      leftActiveTab === 'history'
-                        ? 'bg-white text-brand-700 shadow-3xs font-black'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    {t('ws.panel.history')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsLeftSidebarExpanded(false)}
-                    className="p-1 hover:bg-slate-200/80 text-slate-450 hover:text-slate-700 rounded transition cursor-pointer shrink-0 ml-0.5"
-                    title={L('Thu gọn sidebar', 'サイドバーを折りたたむ', 'Collapse sidebar')}
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                {leftActiveTab === 'history' && (
-                  <div className="px-2 py-1.5 border-b border-slate-200 bg-slate-50 flex items-center gap-1 justify-between select-none">
-                    <div className="flex gap-1">
-                      {(['All', 'Linh', 'Kanai', 'AI'] as const).map((filter) => (
-                        <button
-                          key={filter}
-                          type="button"
-                          onClick={() => setHistoryUserFilter(filter)}
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition cursor-pointer ${
-                            historyUserFilter === filter
-                              ? 'bg-brand-500 text-white shadow-3xs'
-                              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                          }`}
-                        >
-                          {filter === 'All' ? 'Tất cả' : filter}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setHistoryLogs([
-                        { id: 'h1', user: 'Kanai', action: 'Đã thiết lập dự án và nạp tài liệu thiết kế gốc', timestamp: '09:30 AM', phaseNum: 7 },
-                        { id: 'h2', user: 'Linh', action: 'Xác nhận thông số Mạng truyền thông CC-Link IE', timestamp: '10:05 AM', phaseNum: 7 },
-                        { id: 'h3', user: 'Linh', action: 'Đồng bộ chênh lệch thông số sang biên bản kick-off', timestamp: '10:15 AM', phaseNum: 8 },
-                      ])}
-                      className="text-[9px] text-slate-400 hover:text-red-500 font-bold flex items-center gap-0.5 cursor-pointer ml-auto transition-colors"
-                      title={L('Reset lịch sử', '履歴をリセット', 'Reset history')}
+                  {sources.map((src) => (
+                    <div
+                      key={src.id}
+                      onClick={() => {
+                        setActiveViewerSource(src.id)
+                        setHighlightedPhrase(undefined)
+                      }}
+                      className={`p-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col gap-1 hover-lift ${
+                        activeViewerSource === src.id
+                          ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
+                          : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                      }`}
                     >
-                      <RotateCcw className="w-2.5 h-2.5" />
-                      <span>Reset</span>
-                    </button>
-                  </div>
-                )}
-
-                <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-                  {leftActiveTab === 'sources' ? (
-                    <>
-                      <button onClick={() => setAddSourceOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 mb-1 text-[11px] font-bold border border-slate-200 bg-white rounded-xl text-slate-700 hover:bg-slate-50 cursor-pointer">
-                        <Plus className="w-3 h-3" />{t('ws.panel.addSource')}
-                      </button>
-                      {sources.map((src) => (
-                        <div
-                          key={src.id}
-                          onClick={() => {
-                            setActiveViewerSource(src.id)
-                            setHighlightedPhrase(undefined)
-                          }}
-                          className={`p-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col gap-1 hover-lift ${
-                            activeViewerSource === src.id
-                              ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
-                              : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-1.5">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <FileText className={`w-3 h-3 shrink-0 ${src.selected ? 'text-brand-500' : 'text-slate-400'}`} />
-                              {renamingSrcId === src.id ? (
-                                <input
-                                  autoFocus
-                                  value={renameSrcText}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onChange={(e) => setRenameSrcText(e.target.value)}
-                                  onBlur={commitRenameSource}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') commitRenameSource()
-                                    else if (e.key === 'Escape') setRenamingSrcId(null)
-                                  }}
-                                  className="text-[10px] font-bold w-full min-w-0 px-1 py-0.5 border border-brand-400 rounded bg-white text-slate-800 outline-none"
-                                />
-                              ) : (
-                                <span className={`text-[10px] font-bold truncate ${
-                                  activeViewerSource === src.id ? 'text-brand-700 font-extrabold' : 'text-slate-800'
-                                }`} title={src.title}>
-                                  {src.title}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="relative shrink-0">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSrcMenuOpen(srcMenuOpen === src.id ? null : src.id)
-                                }}
-                                className="p-0.5 -mr-0.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition cursor-pointer"
-                                title={L('Tùy chọn', 'オプション', 'Options')}
-                              >
-                                <MoreVertical className="w-3 h-3" />
-                              </button>
-                              {srcMenuOpen === src.id && (
-                                <>
-                                  <div className="fixed inset-0 z-20" onClick={(e) => { e.stopPropagation(); setSrcMenuOpen(null) }} />
-                                  <div className="absolute right-0 top-5 z-30 bg-white border border-slate-200 rounded-lg shadow-pop py-1 min-w-[120px] text-[10px] animate-in fade-in zoom-in-95 duration-150">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); startRenameSource(src.id, src.title) }}
-                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-50 cursor-pointer text-slate-700 font-semibold"
-                                    >
-                                      <Pencil className="w-3 h-3 text-slate-500" /> {L('Đổi tên', '名前を変更', 'Rename')}
-                                    </button>
-                                    <div className="border-t border-slate-100 my-1 mx-1" />
-                                    <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); handleSourceDelete(src.id) }}
-                                      className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-rose-50 cursor-pointer text-rose-600 font-semibold"
-                                    >
-                                      <Trash2 className="w-3 h-3" /> {L('Xóa nguồn', 'ソースを削除', 'Delete source')}
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[8px] text-slate-500 font-semibold font-mono">
-                            <span>{tSourceMeta(src.type, locale)}</span>
-                            <span>{tSourceMeta(src.size, locale)}</span>
-                          </div>
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <FileText className={`w-3 h-3 shrink-0 ${src.selected ? 'text-brand-500' : 'text-slate-400'}`} />
+                          {renamingSrcId === src.id ? (
+                            <input
+                              autoFocus
+                              value={renameSrcText}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => setRenameSrcText(e.target.value)}
+                              onBlur={commitRenameSource}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitRenameSource()
+                                else if (e.key === 'Escape') setRenamingSrcId(null)
+                              }}
+                              className="text-[10px] font-bold w-full min-w-0 px-1 py-0.5 border border-brand-400 rounded bg-white text-slate-800 outline-none"
+                            />
+                          ) : (
+                            <span className={`text-[10px] font-bold truncate ${
+                              activeViewerSource === src.id ? 'text-brand-700 font-extrabold' : 'text-slate-800'
+                            }`} title={src.title}>
+                              {src.title}
+                            </span>
+                          )}
                         </div>
-                      ))}
-                    </>
-                  ) : (() => {
-                    const filteredLogs = historyLogs.filter(log => historyUserFilter === 'All' || log.user === historyUserFilter)
-                    return filteredLogs.length === 0 ? (
-                      <div className="text-[10px] text-slate-400 text-center py-6 px-3">
-                        {t('ws.panel.noHistory')}
+
+                        <div className="relative shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSrcMenuOpen(srcMenuOpen === src.id ? null : src.id)
+                            }}
+                            className="p-0.5 -mr-0.5 text-slate-400 hover:text-slate-750 hover:bg-slate-100 rounded transition cursor-pointer"
+                            title={L('Tùy chọn', 'オプション', 'Options')}
+                          >
+                            <MoreVertical className="w-3 h-3" />
+                          </button>
+                          {srcMenuOpen === src.id && (
+                            <>
+                              <div className="fixed inset-0 z-20" onClick={(e) => { e.stopPropagation(); setSrcMenuOpen(null) }} />
+                              <div className="absolute right-0 top-5 z-30 bg-white border border-slate-200 rounded-lg shadow-pop py-1 min-w-[120px] text-[10px] animate-in fade-in zoom-in-95 duration-150">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); startRenameSource(src.id, src.title) }}
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-slate-50 cursor-pointer text-slate-700 font-semibold"
+                                >
+                                  <Pencil className="w-3 h-3 text-slate-500" /> {L('Đổi tên', '名前を変更', 'Rename')}
+                                </button>
+                                <div className="border-t border-slate-100 my-1 mx-1" />
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleSourceDelete(src.id) }}
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-rose-50 cursor-pointer text-rose-600 font-semibold"
+                                >
+                                  <Trash2 className="w-3 h-3" /> {L('Xóa nguồn', 'ソースを削除', 'Delete source')}
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
 
-                    ) : (
-                      filteredLogs.map((log) => {
-                        let IconComponent = Activity
-                        const actLower = log.action.toLowerCase()
-                        if (actLower.includes('tải xuống') || actLower.includes('download')) {
-                          IconComponent = Download
-                        } else if (actLower.includes('cú pháp') || actLower.includes('lỗi') || actLower.includes('debug') || actLower.includes('sửa')) {
-                          IconComponent = Bug
-                        } else if (actLower.includes('lưu') || actLower.includes('setting') || actLower.includes('cấu hình')) {
-                          IconComponent = Settings
-                        } else if (actLower.includes('đồng bộ') || actLower.includes('xác nhận')) {
-                          IconComponent = RefreshCw
-                        } else if (actLower.includes('yêu cầu') || actLower.includes('hỏi') || actLower.includes('chat') || actLower.includes('nhận đơn')) {
-                          IconComponent = MessageSquare
-                        }
+                      <div className="flex items-center justify-between text-[8px] text-slate-500 font-semibold font-mono">
+                        <span>{tSourceMeta(src.type, locale)}</span>
+                        <span>{tSourceMeta(src.size, locale)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
+              {leftActiveTab === 'conversations' && (
+                <div className="space-y-1.5 h-full flex flex-col min-h-0">
+                  {/* Search input */}
+                  <div className="relative mb-1.5 shrink-0">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      value={convSearch}
+                      onChange={e => setConvSearch(e.target.value)}
+                      placeholder={L('Tìm cuộc trò chuyện…', '会話を検索…', 'Search…')}
+                      className="w-full pl-8 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-500 text-[11px] text-slate-700"
+                    />
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 scrollbar-thin">
+                    {conversations
+                      .filter(c => c.title.toLowerCase().includes(convSearch.toLowerCase()))
+                      .sort((a, b) => b.createdAt - a.createdAt)
+                      .map(c => {
+                        const active = c.id === activeConvId
+                        const editing = renameConvId === c.id
+                        const isAI = c.createdBy === 'AI'
                         return (
                           <div
-                            key={log.id}
-                            onClick={() => handlePhaseChange(log.phaseNum)}
-                            className="p-2.5 bg-white border border-slate-200 hover:border-brand-350 hover:bg-slate-50/50 hover:shadow-2xs rounded-xl flex flex-col gap-1 transition-all duration-200 cursor-pointer group relative"
-                            title={`Click để chuyển nhanh tới Bước ${log.phaseNum}`}
+                            key={c.id}
+                            onClick={() => { if (!editing) switchConversation(c.id) }}
+                            className={`group flex items-center gap-2 px-2.5 py-2 rounded-xl transition duration-150 border ${editing ? '' : 'cursor-pointer'} ${active ? 'bg-brand-500/10 border-brand-500/15 shadow-3xs animate-pulse-subtle' : 'hover:bg-slate-50 border-transparent'}`}
                           >
-                            <ArrowRight className="w-3 h-3 text-brand-500 opacity-0 group-hover:opacity-100 transition absolute top-2.5 right-2.5" />
-
-                            <div className="flex items-center justify-between gap-1 pr-4">
-                              <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500">
-                                <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-white shrink-0 ${
-                                  log.user === 'Linh'
-                                    ? 'bg-emerald-500'
-                                    : log.user === 'Kanai'
-                                    ? 'bg-amber-500'
-                                    : 'bg-indigo-500'
-                                }`}>
-                                  {log.user[0]}
-                                </span>
-                                <span className="truncate max-w-[60px]">{log.user}</span>
-                              </span>
-                              <span className="text-[8px] text-slate-400 font-mono font-bold shrink-0">
-                                {log.timestamp}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-slate-700 leading-normal font-semibold break-words">
-                              {log.action}
-                            </p>
-                            <div className="flex items-center justify-between mt-0.5 border-t border-slate-100/50 pt-1">
-                              <span className="text-[7.5px] px-1.5 py-0.2 bg-brand-500/10 text-brand-700 border border-brand-500/20 rounded font-bold font-mono">
-                                {phaseTitle(log.phaseNum)}
-                              </span>
-                              <IconComponent className="w-3 h-3 text-slate-400 shrink-0 group-hover:text-brand-500 transition-colors" />
-                            </div>
+                            <span className={`w-6 h-6 rounded-full text-[8.5px] font-extrabold flex items-center justify-center shrink-0 ${
+                              isAI ? 'bg-brand-500/15 text-brand-700 border border-brand-500/20' : 'bg-emerald-500/15 text-emerald-700 border border-emerald-500/20'
+                            }`}>
+                              {isAI ? 'AI' : c.createdBy[0]}
+                            </span>
+                            {editing ? (
+                              <input
+                                autoFocus
+                                value={renameConvVal}
+                                onClick={e => e.stopPropagation()}
+                                onChange={e => setRenameConvVal(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') renameConversation(c.id, renameConvVal); if (e.key === 'Escape') setRenameConvId(null) }}
+                                onBlur={() => renameConversation(c.id, renameConvVal)}
+                                className="flex-1 min-w-0 text-[11px] border border-brand-500 rounded-md px-1.5 py-0.5 outline-none bg-white text-slate-805"
+                              />
+                            ) : (
+                              <div className="min-w-0 flex-1 leading-tight">
+                                <div className={`text-[11px] truncate ${active ? 'font-bold text-brand-700' : 'font-semibold text-slate-750'}`}>{c.title}</div>
+                                <div className="text-[9px] text-slate-400 font-medium">Tác giả: {c.createdBy}</div>
+                              </div>
+                            )}
+                            {!editing && (
+                              <div className="hidden group-hover:flex items-center shrink-0 gap-0.5 ml-auto">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setRenameConvId(c.id); setRenameConvVal(c.title) }}
+                                  className="p-1 text-slate-400 hover:text-brand-600 hover:bg-white rounded transition cursor-pointer"
+                                  title={L('Đổi tên', '名前を変更', 'Rename')}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); deleteConversation(c.id) }}
+                                  className="p-1 text-slate-400 hover:text-rose-600 hover:bg-white rounded transition cursor-pointer"
+                                  title={L('Xóa cuộc trò chuyện', '会話を削除', 'Delete conversation')}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )
-                      })
-                    )
-                  })()}
-
+                      })}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Quy trình Nghiệp vụ (Bottom, border-t) */}
-              <div className="h-[280px] flex flex-col min-h-0 bg-slate-50/50 border-t border-slate-200">
-                <div className="p-3 border-b border-slate-200 bg-slate-100/50 shrink-0 space-y-2">
-                  <h3 className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider font-mono">
-                    {t('ws.panel.process')}
-                  </h3>
-                  {progressBarActivated && (
-                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className="bg-brand-500 h-full rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${maxPostSalesIndex >= 0 ? ((maxPostSalesIndex + 1) / 6) * 100 : 0}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-                  {phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).length === 0 ? (
-                    <div className="text-[10px] text-slate-400 text-center py-6 px-3 leading-relaxed">
-                      {t('ws.panel.noPhase')}
-                    </div>
-                  ) : (
-                    phases.filter(p => p.isVisible !== false && activatedPhases.includes(p.num)).map((p) => {
-                      const phaseNum = p.num
-                      const isActive = activePhase === phaseNum
-                      const isPreSales = phaseNum <= 3
-
-                      return (
-                        <div
-                          key={phaseNum}
-                          onClick={isPreSales ? undefined : () => handlePhaseChange(phaseNum)}
-                          className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center gap-2 select-none hover-lift hover:border-slate-300 ${
-                            isPreSales ? 'cursor-default' : 'cursor-pointer'
-                          } ${
-                            isActive
-                              ? 'bg-brand-500/10 border-brand-500 shadow-xs text-brand-700 font-bold'
-                              : 'bg-white border-slate-200 text-slate-700'
-                          }`}
-                          title={isPreSales ? `${p.title} — ${p.desc}` : `Giai đoạn: ${p.title}\nNhân sự: ${p.users}\n${p.desc}`}
-                        >
-                          <div
-                            className={`w-5 h-5 rounded-full flex items-center justify-center border transition shrink-0 ${
-                              isActive
-                                ? 'gradient-primary border-brand-500 text-white shadow-xs'
-                                : 'bg-slate-100 border-slate-200 text-slate-400'
-                            }`}
-                          >
-                            {getPhaseIcon(phaseNum, "w-2.5 h-2.5")}
-                          </div>
-
-                          <div className="text-left min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <h4 className={`text-[10px] font-bold leading-tight truncate flex-1 ${
-                                isActive ? 'text-brand-700 font-extrabold' : 'text-slate-800'
-                              }`} title={phaseTitle(p.num)}>
-                                {phaseTitle(p.num)}
-                              </h4>
-                            </div>
-                          </div>
+              {leftActiveTab === 'process' && (
+                <div className="space-y-1.5 h-full overflow-y-auto pr-0.5 scrollbar-thin">
+                  {phases.filter(p => p.isVisible !== false).map((p) => {
+                    const phaseNum = p.num
+                    const isActive = activePhase === phaseNum
+                    const isPreSales = phaseNum <= 3
+                    const isUnlocked = activatedPhases.includes(phaseNum)
+                    return (
+                      <button
+                        key={phaseNum}
+                        onClick={isPreSales || !isUnlocked ? undefined : () => handlePhaseChange(phaseNum)}
+                        disabled={!isUnlocked}
+                        className={`w-full flex items-start gap-2.5 p-2 rounded-xl text-left border transition duration-155 relative ${
+                          isActive
+                            ? 'bg-brand-500/10 border-brand-500/20 text-brand-700 font-extrabold shadow-3xs'
+                            : !isUnlocked
+                            ? 'opacity-40 cursor-not-allowed border-transparent'
+                            : 'hover:bg-slate-50 border-transparent hover:border-slate-100 cursor-pointer'
+                        }`}
+                      >
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center border shrink-0 text-[10px] ${
+                          isActive
+                            ? 'gradient-primary border-brand-500 text-white shadow-3xs shadow-brand-500/15'
+                            : 'bg-slate-100 border-slate-200 text-slate-400'
+                        }`}>
+                          {phaseNum}
                         </div>
-                      )
-                    })
-                  )}
+                        <div className="min-w-0 flex-1 leading-tight py-0.5">
+                          <div className={`text-[10px] font-extrabold truncate ${isActive ? 'text-brand-700' : 'text-slate-700'}`}>
+                            {phaseTitle(p.num)}
+                          </div>
+                          <div className="text-[8px] text-slate-400 font-medium font-mono truncate">{p.users}</div>
+                        </div>
+                        {isActive && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand-500 absolute top-2 right-2 animate-pulse" />
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
-              </div>
-            </>
-          ) : (
-            <button
-              onClick={() => setIsLeftSidebarExpanded(true)}
-              className="absolute inset-0 w-full h-full flex flex-col items-center justify-start pt-6 gap-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 transition cursor-pointer select-none"
-              title={L('Mở rộng sidebar', 'サイドバーを展開', 'Expand sidebar')}
-            >
-              <FileText className="w-4 h-4 text-brand-500" />
-              <span className="[writing-mode:vertical-rl] whitespace-nowrap font-extrabold text-[10px] uppercase tracking-wider mt-2 font-mono">
-                {t('ws.panel.sources')}
-              </span>
-            </button>
-          )}
-        </aside>
+              )}
+            </div>
+          </aside>
+        )}
 
         {/* COLUMN 2: CENTER WORKSPACE CANVAS (Width: flex-1) */}
         <main className="flex-1 bg-slate-50/50 flex flex-col h-full min-w-0 relative">
@@ -2964,120 +2922,13 @@ export default function NotebookWorkspace() {
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0">
                     <button
-                      onClick={newConversation}
-                      className="p-1 text-slate-500 hover:text-brand-600 hover:bg-slate-200 rounded-lg transition cursor-pointer"
-                      title={L('Cuộc trò chuyện mới', '新しい会話', 'New conversation')}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setShowConvMenu(v => !v)}
-                      className={`p-1 rounded-lg transition cursor-pointer ${showConvMenu ? 'bg-slate-200 text-brand-600' : 'text-slate-500 hover:text-brand-600 hover:bg-slate-200'}`}
-                      title={L('Lịch sử hội thoại', '会話履歴', 'Conversation history')}
-                    >
-                      <History className="w-4 h-4" />
-                    </button>
-                    <span className="w-px h-4 bg-slate-300 mx-1" />
-                    <button
                       onClick={() => setIsCopilotExpanded(false)}
-                      className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+                      className="p-1 text-slate-550 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition cursor-pointer"
                       title={t('ws.copilot.collapse')}
                     >
                       <PanelRightClose className="w-4 h-4" />
                     </button>
                   </div>
-
-                  {showConvMenu && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowConvMenu(false)} />
-                      <div className="absolute right-2 top-12 z-50 w-80 bg-white border border-slate-200 rounded-xl shadow-pop p-1.5 max-h-[440px] overflow-hidden flex flex-col">
-                        {/* Tab: Của tôi | Cả dự án */}
-                        <div className="flex gap-1 p-0.5 bg-slate-100 rounded-lg shrink-0">
-                          {([['mine', 'Chat của tôi'], ['project', 'Cả dự án']] as const).map(([key, label]) => (
-                            <button
-                              key={key}
-                              onClick={() => setConvTab(key)}
-                              className={`flex-1 py-1.5 text-[11px] font-bold rounded-md transition cursor-pointer ${convTab === key ? 'bg-white text-brand-700 shadow-3xs' : 'text-slate-500 hover:text-slate-700'}`}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                        {/* Tìm kiếm */}
-                        <div className="relative my-1 shrink-0">
-                          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                          <input
-                            value={convSearch}
-                            onChange={e => setConvSearch(e.target.value)}
-                            placeholder={L('Tìm cuộc trò chuyện…', '会話を検索…', 'Search conversations…')}
-                            className="w-full pl-8 pr-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-brand-500 text-[11px] text-slate-700"
-                          />
-                        </div>
-                        <div className="overflow-y-auto min-h-0 space-y-0.5 pr-0.5">
-                          {(() => {
-                            const list = conversations
-                              .filter(c => convTab === 'mine' ? c.createdBy === activeUser : true)
-                              .filter(c => c.title.toLowerCase().includes(convSearch.toLowerCase()))
-                              .sort((a, b) => b.createdAt - a.createdAt)
-                            if (!list.length) return <div className="px-2.5 py-6 text-center text-[10px] text-slate-400">{convTab === 'mine' ? 'Bạn chưa có cuộc trò chuyện nào' : 'Chưa có cuộc trò chuyện trong dự án'}</div>
-                            return list.map(c => {
-                              const active = c.id === activeConvId
-                              const isAI = c.createdBy === 'AI'
-                              const editing = renameConvId === c.id
-                              return (
-                                <div
-                                  key={c.id}
-                                  onClick={() => { if (!editing) switchConversation(c.id) }}
-                                  className={`group flex items-center gap-2 px-2 py-1.5 rounded-lg ${editing ? '' : 'cursor-pointer'} ${active ? 'bg-brand-500/10' : 'hover:bg-slate-50'}`}
-                                >
-                                  <span className={`w-6 h-6 rounded-full text-[8px] font-bold flex items-center justify-center shrink-0 ${isAI ? 'bg-brand-500/15 text-brand-700' : 'bg-emerald-500/15 text-emerald-700'}`}>
-                                    {isAI ? 'AI' : c.createdBy[0]}
-                                  </span>
-                                  {editing ? (
-                                    <input
-                                      autoFocus
-                                      value={renameConvVal}
-                                      onClick={e => e.stopPropagation()}
-                                      onChange={e => setRenameConvVal(e.target.value)}
-                                      onKeyDown={e => { if (e.key === 'Enter') renameConversation(c.id, renameConvVal); if (e.key === 'Escape') setRenameConvId(null) }}
-                                      onBlur={() => renameConversation(c.id, renameConvVal)}
-                                      className="flex-1 min-w-0 text-xs border border-brand-500 rounded-md px-1.5 py-0.5 outline-none"
-                                    />
-                                  ) : (
-                                    <div className="min-w-0 flex-1">
-                                      <div className={`text-xs truncate ${active ? 'font-bold text-brand-700' : 'font-semibold text-slate-700'}`}>{c.title}</div>
-                                      {convTab === 'project' && <div className="text-[9px] text-slate-400">Tạo bởi {c.createdBy}</div>}
-                                    </div>
-                                  )}
-                                  {!editing && (
-                                    <>
-                                      <span className="text-[10px] text-slate-400 shrink-0 group-hover:hidden">{fmtConvTime(c.createdAt)}</span>
-                                      <div className="hidden group-hover:flex items-center shrink-0">
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); setRenameConvId(c.id); setRenameConvVal(c.title) }}
-                                          className="p-1 text-slate-350 hover:text-brand-600 hover:bg-brand-50 rounded-md cursor-pointer"
-                                          title={L('Đổi tên', '名前を変更', 'Rename')}
-                                        >
-                                          <Pencil className="w-3.5 h-3.5" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); deleteConversation(c.id) }}
-                                          className="p-1 text-slate-350 hover:text-rose-500 hover:bg-rose-50 rounded-md cursor-pointer"
-                                          title={L('Xóa cuộc trò chuyện', '会話を削除', 'Delete conversation')}
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              )
-                            })
-                          })()}
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </div>
 
                 {/* Chat thread */}
@@ -3187,9 +3038,7 @@ export default function NotebookWorkspace() {
                         onClick={() => handleSuggestionClick(prompt)}
                         className="w-full px-2.5 py-1 text-left text-[10px] font-medium text-slate-700 bg-white hover:bg-brand-500/5 hover:text-brand-700 border border-slate-200 hover:border-brand-500/15 rounded-lg transition duration-150 shadow-3xs flex items-center gap-1.5 cursor-pointer group"
                       >
-                        <span className="text-[9px] select-none group-hover:scale-110 transition-transform">💬</span>
                         <span className="flex-1 truncate leading-normal">{tc(prompt)}</span>
-                        <span className="text-slate-300 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all text-[9px] shrink-0">→</span>
                       </button>
                     ))}
                 </div>
