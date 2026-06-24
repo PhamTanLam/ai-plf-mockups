@@ -2991,7 +2991,7 @@ export default function NotebookWorkspace() {
                             {msg.sender === 'ai' ? 'AI' : activeUser}
                           </span>
                           <span className="w-1 h-1 rounded-full bg-slate-350" />
-                          <span className="text-[9px] font-mono text-slate-400">${msg.timestamp}</span>
+                          <span className="text-[9px] font-mono text-slate-400">{msg.timestamp}</span>
                         </div>
                         {/* 3D Glassmorphic Bubble content */}
                         <div
