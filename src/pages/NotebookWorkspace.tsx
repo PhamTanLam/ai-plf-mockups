@@ -2275,25 +2275,12 @@ export default function NotebookWorkspace() {
 
           {showLibraryBtn && <div className="h-5 w-px bg-slate-250" />}
 
-          {/* Active User Switcher */}
-          <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-xl p-1 text-xs">
-            <span className="text-[10px] font-bold text-slate-550 uppercase tracking-wider px-1.5 select-none">
+          {/* Active User Display */}
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 font-semibold select-none">
+            <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">
               {t('ws.header.engineer')}
             </span>
-            {(['Linh', 'Kanai', 'AI'] as const).map((user) => (
-              <button
-                key={user}
-                type="button"
-                onClick={() => setActiveUser(user)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
-                  activeUser === user
-                    ? 'bg-brand-500 text-white font-extrabold shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                }`}
-              >
-                {user}
-              </button>
-            ))}
+            <span className="font-extrabold text-slate-800">{activeUser}</span>
           </div>
 
 
