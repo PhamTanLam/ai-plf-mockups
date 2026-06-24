@@ -23,7 +23,8 @@ import {
   MoreVertical,
   Star,
   Zap,
-  CreditCard
+  CreditCard,
+  Globe
 } from 'lucide-react'
 import { useI18n } from '@/i18n/I18nProvider'
 import { tcText, tField, tFieldValue, tFieldList, tSourceMeta, tSummary } from '@/i18n/chat'
@@ -2940,28 +2941,34 @@ export default function NotebookWorkspace() {
                         msg.sender === 'user' ? 'flex-row-reverse' : ''
                       }`}
                     >
-                      {/* Avatar */}
-                      <div
-                        className={`w-7.5 h-7.5 rounded-xl flex items-center justify-center font-bold text-[9px] shrink-0 shadow-md select-none transition hover:scale-105 duration-200 ${
-                          msg.sender === 'ai'
-                            ? 'gradient-primary text-white glow-brand font-black'
-                            : activeUser === 'Linh'
-                            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border border-emerald-400'
+                      {/* 3D Glossy Avatar Sphere */}
+                      {msg.sender === 'ai' ? (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(99,102,241,0.3)] relative overflow-hidden border border-white/20 shrink-0 select-none group">
+                          {/* Glossy top reflection overlay */}
+                          <div className="absolute top-0.5 left-0.5 right-0.5 h-[45%] bg-white/25 rounded-full blur-[0.5px]" />
+                          <Sparkles className="w-3.5 h-3.5 text-white drop-shadow-sm relative z-10" />
+                        </div>
+                      ) : (
+                        <div className={`w-8 h-8 rounded-full text-white font-sans font-extrabold text-[10px] flex items-center justify-center shadow-md relative overflow-hidden border border-white/20 shrink-0 select-none ${
+                          activeUser === 'Linh'
+                            ? 'bg-gradient-to-tr from-emerald-500 to-teal-600 shadow-emerald-500/20'
                             : activeUser === 'Kanai'
-                            ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white border border-amber-400'
-                            : 'bg-gradient-to-br from-indigo-500 to-sky-500 text-white border border-indigo-400'
-                        }`}
-                      >
-                        {msg.sender === 'ai' ? 'AI' : activeUser}
-                      </div>
+                            ? 'bg-gradient-to-tr from-amber-500 to-orange-600 shadow-amber-500/20'
+                            : 'bg-gradient-to-tr from-indigo-500 to-sky-600 shadow-indigo-500/20'
+                        }`}>
+                          {/* Glossy top reflection overlay */}
+                          <div className="absolute top-0.5 left-0.5 right-0.5 h-[45%] bg-white/20 rounded-full blur-[0.5px]" />
+                          <span className="relative z-10">{activeUser[0]}</span>
+                        </div>
+                      )}
 
                       <div className="space-y-0.5 max-w-[85%]">
-                        {/* Bubble content */}
+                        {/* 3D Glassmorphic Bubble content */}
                         <div
-                          className={`p-3 rounded-2xl border leading-relaxed text-xs whitespace-pre-line relative shadow-3xs bubble-ai ${
+                          className={`leading-relaxed text-xs whitespace-pre-line relative ${
                             msg.sender === 'ai'
-                              ? 'bg-white border-slate-200 text-slate-800'
-                              : 'bg-brand-500 border-brand-600 text-white font-medium bubble-user'
+                              ? 'p-4 rounded-[22px] rounded-tl-none border border-slate-200/70 shadow-[0_12px_30px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.01)] bg-white text-slate-800'
+                              : 'p-3.5 px-4 rounded-[22px] rounded-tr-none border border-indigo-650/10 shadow-[0_10px_25px_rgba(99,102,241,0.18)] bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white font-medium'
                           }`}
                         >
                           {msg.sender === 'ai' ? (
@@ -2998,21 +3005,43 @@ export default function NotebookWorkspace() {
                           )}
                         </div>
 
-                        {/* Nút hành động — đặt DƯỚI bong bóng chat */}
+                        {/* Actions rendered as premium 3D file attachment cards */}
                         {(msg.action?.openOid || msg.action?.openDoc) && (
-                          <button
+                          <div
                             onClick={() => { handlePhaseChange(msg.action!.phase ?? 7); setCaseOpen({ oid: msg.action!.openOid, version: msg.action!.version, doc: msg.action!.openDoc, n: Date.now() }) }}
-                            className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                            className="mt-2 bg-white border border-slate-200/80 hover:border-brand-500/40 rounded-xl p-2.5 flex items-center justify-between gap-3 shadow-3xs cursor-pointer group hover:bg-brand-500/5 transition duration-200"
                           >
-                            <FileText className="w-3.5 h-3.5" /> {tc(msg.action.label)}
-                          </button>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-650 shrink-0">
+                                <FileText className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-bold text-slate-800 group-hover:text-brand-700 transition-colors truncate">
+                                  {tc(msg.action.label)}
+                                </div>
+                                <div className="text-[9px] text-slate-400 font-mono">Grounding Document • Workspace Source</div>
+                              </div>
+                            </div>
+                            <span className="text-slate-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all text-[11px] shrink-0 mr-1">→</span>
+                          </div>
                         )}
                         {msg.action?.to && !msg.action.openOid && !msg.action.openDoc && (
                           <Link
                             to={msg.action.to}
-                            className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-brand-700 bg-brand-500/10 hover:bg-brand-500 hover:text-white border border-brand-500/25 px-2.5 py-1.5 rounded-lg transition cursor-pointer no-underline"
+                            className="mt-2 bg-white border border-slate-200/80 hover:border-brand-500/40 rounded-xl p-2.5 flex items-center justify-between gap-3 shadow-3xs cursor-pointer group hover:bg-brand-500/5 transition duration-205 no-underline"
                           >
-                            <FolderOpen className="w-3.5 h-3.5" /> {tc(msg.action.label)}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-650 shrink-0">
+                                <FolderOpen className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-bold text-slate-800 group-hover:text-brand-700 transition-colors truncate">
+                                  {tc(msg.action.label)}
+                                </div>
+                                <div className="text-[9px] text-slate-400 font-mono">Navigate Route • Workspace Section</div>
+                              </div>
+                            </div>
+                            <span className="text-slate-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all text-[11px] shrink-0 mr-1">→</span>
                           </Link>
                         )}
                     </div>
@@ -3021,52 +3050,64 @@ export default function NotebookWorkspace() {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Suggestions */}
-
-
-              {/* Suggestions */}
-              <div className="p-2 bg-slate-100/60 border-t border-slate-200 flex-none space-y-1">
-                <div className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 select-none px-1">
+              {/* Suggestions (Horizontal capsule flow) */}
+              <div className="p-3 bg-transparent flex-none space-y-2">
+                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 select-none px-1">
                   <span>{t('ws.copilot.suggest')}</span>
                 </div>
-                <div className="max-h-[140px] overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+                <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none snap-x shrink-0">
                   {activeSuggestions
                     .filter((prompt) => !askedQuestions.includes(prompt))
-                    .map((prompt, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleSuggestionClick(prompt)}
-                        className="w-full px-2.5 py-1 text-left text-[10px] font-medium text-slate-700 bg-white hover:bg-brand-500/5 hover:text-brand-700 border border-slate-200 hover:border-brand-500/15 rounded-lg transition duration-150 shadow-3xs flex items-center gap-1.5 cursor-pointer group"
-                      >
-                        <span className="flex-1 truncate leading-normal">{tc(prompt)}</span>
-                      </button>
-                    ))}
+                    .map((prompt, idx) => {
+                      const isHighlighted = idx === 0;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleSuggestionClick(prompt)}
+                          className={`snap-start px-3 py-1.5 text-[10px] font-bold rounded-full transition-all duration-250 flex items-center gap-1.5 cursor-pointer shrink-0 shadow-3xs hover:shadow-xs active:scale-95 whitespace-nowrap ${
+                            isHighlighted
+                              ? 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white border border-blue-500/20 hover:opacity-95'
+                              : 'bg-white text-slate-600 hover:text-brand-600 border border-slate-200 hover:border-brand-500/20 hover:bg-brand-50/20'
+                          }`}
+                        >
+                          <span>{tc(prompt)}</span>
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
 
               {/* Chat Composer */}
-              <div className="p-3 border-t border-slate-200 bg-slate-50/80 flex-none">
-                <form onSubmit={handleSend} className="flex items-center gap-1.5 bg-white border border-slate-250 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 rounded-xl p-1 transition">
-                  <textarea
-                    rows={1}
-                    value={inputVal}
-                    onChange={(e) => setInputVal(e.target.value)}
-                    placeholder={t('ws.copilot.placeholder')}
-                    className="flex-1 bg-transparent text-xs focus:outline-none resize-none py-1 px-1.5 text-slate-800"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleSend(e)
-                      }
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!inputVal.trim()}
-                    className="p-1.5 rounded-lg gradient-primary hover:opacity-90 active:scale-95 text-white shadow-sm transition cursor-pointer disabled:opacity-50"
-                  >
-                    <Send className="w-3.5 h-3.5 text-white" />
-                  </button>
+              <div className="p-3.5 bg-transparent flex-none">
+                <form 
+                  onSubmit={handleSend} 
+                  className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.06)] p-2.5 transition focus-within:border-brand-500/50 focus-within:shadow-[0_12px_36px_rgba(10,186,181,0.08)] flex flex-col gap-2"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Globe className="w-4 h-4 text-slate-400 shrink-0 ml-1.5" />
+                    <textarea
+                      rows={2}
+                      value={inputVal}
+                      onChange={(e) => setInputVal(e.target.value)}
+                      placeholder={t('ws.copilot.placeholder')}
+                      className="flex-1 bg-transparent text-xs focus:outline-none resize-none py-1.5 px-1 text-slate-800 placeholder-slate-400 min-h-[40px] leading-relaxed"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handleSend(e)
+                        }
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!inputVal.trim()}
+                      className="w-8 h-8 rounded-full bg-slate-900 hover:bg-slate-950 active:scale-90 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.18)] relative overflow-hidden transition-all duration-200 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {/* Glossy sphere top overlay */}
+                      <div className="absolute top-0.5 left-0.5 right-0.5 h-[45%] bg-white/20 rounded-full blur-[0.5px]" />
+                      <Send className="w-3.5 h-3.5 text-white drop-shadow-sm relative z-10" />
+                    </button>
+                  </div>
                 </form>
               </div>
             </>

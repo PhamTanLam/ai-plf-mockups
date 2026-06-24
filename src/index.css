@@ -549,6 +549,45 @@ body {
 .ml-table th { background: #f8fafc; font-weight: 600; color: #334155; }
 .ml-table td { color: #475569; }
 
+/* Custom Pulse Animations */
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(0.985); }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 4px rgba(10, 186, 181, 0.2)); }
+  50% { opacity: 0.9; filter: drop-shadow(0 0 12px rgba(10, 186, 181, 0.5)); }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Slide in from Left/Right and Fade animations */
+.animate-fade-in-right {
+  animation: fadeInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-duration-150 {
+  animation-duration: 150ms !important;
+}
+
 /* In đề án (deck) ra PDF — chỉ hiện phần slide khi in */
 @media print {
   @page { size: A4 landscape; margin: 8mm; }
