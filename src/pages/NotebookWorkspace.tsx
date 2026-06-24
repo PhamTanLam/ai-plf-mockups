@@ -3117,19 +3117,19 @@ export default function NotebookWorkspace() {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Suggestions (Horizontal capsule flow) */}
+              {/* Suggestions (Wrapping capsule flow - showing multiple questions at once) */}
               <div className="p-3 bg-transparent flex-none space-y-2">
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 select-none px-1">
                   <span>{t('ws.copilot.suggest')}</span>
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none snap-x shrink-0">
+                <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto pr-0.5 scrollbar-thin">
                   {activeSuggestions
                     .filter((prompt) => !askedQuestions.includes(prompt))
                     .map((prompt, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleSuggestionClick(prompt)}
-                        className="snap-start px-3 py-1.5 text-[10px] font-bold rounded-full transition-all duration-250 flex items-center gap-1.5 cursor-pointer shrink-0 shadow-3xs hover:shadow-xs active:scale-95 whitespace-nowrap bg-white text-slate-600 hover:text-brand-600 border border-slate-200 hover:border-brand-500/20 hover:bg-brand-50/20"
+                        className="px-3 py-1.5 text-[10px] font-bold rounded-full transition-all duration-150 flex items-center cursor-pointer shadow-3xs hover:shadow-2xs active:scale-95 whitespace-nowrap bg-white text-slate-600 hover:text-brand-650 border border-slate-200 hover:border-brand-500/20 hover:bg-brand-50/20"
                       >
                         <span>{tc(prompt)}</span>
                       </button>
