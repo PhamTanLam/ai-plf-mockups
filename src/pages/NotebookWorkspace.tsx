@@ -733,14 +733,19 @@ export default function NotebookWorkspace() {
   const [showStatusMenu, setShowStatusMenu] = useState(false)
 
 
-  const [activeSuggestions, setActiveSuggestions] = useState<string[]>([
+  const DEFAULT_SUGGESTIONS = [
     'Chuyển sang Bước 1: Khảo sát & Phát sinh',
     'Chuyển sang Bước 2: Họp Kick-off',
     'Chuyển sang Bước 3: Thiết kế',
     'Chuyển sang Bước 4: Sản xuất',
     'Chuyển sang Bước 5: Debug',
-    'Chuyển sang Bước 6: Nghiệm thu & HDSD'
-  ])
+    'Chuyển sang Bước 6: Nghiệm thu & HDSD',
+    'Tóm tắt tài liệu specs.txt của dự án',
+    'Hướng dẫn lập trình mã PLC Structured Text',
+    'Xem bảng giá nâng cấp thành viên Premium'
+  ]
+
+  const [activeSuggestions, setActiveSuggestions] = useState<string[]>(DEFAULT_SUGGESTIONS)
 
   const suggestionResponses: Record<string, {
     phaseNum: number
@@ -748,6 +753,37 @@ export default function NotebookWorkspace() {
     suggestions: string[]
     citations?: { id: number; sourceId: string; phrase?: string; tab?: string }[]
   }> = {
+    'Tóm tắt tài liệu specs.txt của dự án': {
+      phaseNum: 7,
+      explanationText: 'Tài liệu khao_sat_thay_doi_specs.txt ghi nhận các thông số kỹ thuật cốt lõi:\n- Hệ thống: Trạm hàn Robot WW2 Welding Cell.\n- Thiết bị cũ: CPU Mitsubishi FX5U compact, HMI 7-inch.\n- Yêu cầu nâng cấp: CPU Mitsubishi Q03UDE Module, bổ sung 2 cảm biến quang Omron, nâng cấp HMI lên GOT2000 10-inch, bổ sung 1 trục Servo Motor MR-J4 cho gá quay.',
+      suggestions: [
+        'Có thay đổi gì về số lượng động cơ hay PLC?',
+        'Xem chi tiết thông số chênh lệch Melsec Q?',
+        'Chuyển sang Bước 2: Họp Kick-off',
+        'Chuyển sang Bước 3: Thiết kế',
+        'Chuyển sang Bước 4: Sản xuất'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'reentry' }],
+    },
+    'Hướng dẫn lập trình mã PLC Structured Text': {
+      phaseNum: 12,
+      explanationText: 'Mã PLC Structured Text (ST) trong dự án tuân thủ tiêu chuẩn IEC 61131-3. Cấu trúc chương trình sử dụng khối hàm điều khiển trình tự (CASE..OF) để điều khiển bước cho gá quay, các ngõ ra kích hoạt van khí nén và Robot hàn. Để tối ưu hóa hoặc kiểm tra lỗi cú pháp, bạn có thể chuyển sang Bước 5: Debug để chạy trình biên dịch mô phỏng.',
+      suggestions: [
+        'Kiểm tra lỗi cú pháp mã PLC.',
+        'Tối ưu hóa mã PLC ST (Paraphrase).',
+        'Chuyển sang Bước 5: Debug'
+      ],
+      citations: [{ id: 1, sourceId: 'spec', tab: 'debug_code' }],
+    },
+    'Xem bảng giá nâng cấp thành viên Premium': {
+      phaseNum: 10,
+      explanationText: 'Hệ thống hỗ trợ 3 gói dịch vụ:\n1. Gói Free: Hỗ trợ Q&A cơ bản, đọc tài liệu.\n2. Gói Pro ($29/tháng): Hỗ trợ lập trình PLC ST nâng cao, mở khóa 8 bước.\n3. Gói Enterprise Premium ($99/tháng): Mở khóa toàn bộ 13 bước, tự động sinh bản vẽ CAD và code PLC từ specs, hỗ trợ xuất tài liệu nghiệm thu & HDSD vận hành.',
+      suggestions: [
+        'Xem bảng giá dịch vụ',
+        'Nâng cấp lên Premium',
+        'Chuyển sang Bước 1: Khảo sát & Phát sinh'
+      ]
+    },
     'Chuyển sang Bước 1: Khảo sát & Phát sinh': {
       phaseNum: 7,
       explanationText: 'Đã chuyển sang Bước 1: Khảo sát & Phát sinh. Giao diện nhật ký khao_sat_thay_doi_specs.txt đã được hiển thị ở bên trái.',
@@ -1184,6 +1220,7 @@ export default function NotebookWorkspace() {
     setAskedQuestions([])
     setInputVal('')
     setIsCopilotExpanded(true)
+    setActiveSuggestions(DEFAULT_SUGGESTIONS)
   }
 
   const renameConversation = (cid: string, title: string) => {
