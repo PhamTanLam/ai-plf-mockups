@@ -2236,87 +2236,108 @@ export default function NotebookWorkspace() {
       {/* Main Container */}
       <div className="flex-1 flex min-h-0 relative">
         
-        {/* COLUMN 1: LEFT SIDEBAR - Minimal vertical activity dock */}
-        <aside className="shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col items-center py-3 gap-2.5 z-15 w-14 select-none">
-          {/* New conversation button */}
-          <button
-            onClick={() => {
-              newConversation()
-              setLeftActiveTab('conversations')
-              setIsLeftSidebarExpanded(true)
-            }}
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all duration-200 active:scale-95 cursor-pointer"
-            title={L('Cuộc trò chuyện mới', '新しい会話', 'New conversation')}
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-
-          <div className="w-6 h-px bg-slate-200 my-1" />
-
-          {/* Sources button */}
-          <button
-            onClick={() => {
-              if (isLeftSidebarExpanded && leftActiveTab === 'sources') {
-                setIsLeftSidebarExpanded(false)
-              } else {
-                setLeftActiveTab('sources')
-                setIsLeftSidebarExpanded(true)
-              }
-            }}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
-              isLeftSidebarExpanded && leftActiveTab === 'sources'
-                ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
-                : 'text-slate-550 hover:bg-slate-200/50 hover:text-slate-800'
-            }`}
-            title={t('ws.panel.sources')}
-          >
-            <FileText className="w-4 h-4" />
-          </button>
-
-          {/* Conversations History button */}
-          <button
-            onClick={() => {
-              if (isLeftSidebarExpanded && leftActiveTab === 'conversations') {
-                setIsLeftSidebarExpanded(false)
-              } else {
+        {/* LEFT COLUMN SYSTEM WRAPPER - Expands on hover, collapses on mouse leave */}
+        <div
+          onMouseLeave={() => setIsLeftSidebarExpanded(false)}
+          className="flex h-full shrink-0 relative z-15"
+        >
+          {/* COLUMN 1: LEFT SIDEBAR - Minimal vertical activity dock */}
+          <aside className="shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col items-center py-3 gap-2.5 w-14 select-none h-full z-15">
+            {/* New conversation button */}
+            <button
+              onClick={() => {
+                newConversation()
                 setLeftActiveTab('conversations')
                 setIsLeftSidebarExpanded(true)
-              }
-            }}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
-              isLeftSidebarExpanded && leftActiveTab === 'conversations'
-                ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
-                : 'text-slate-550 hover:bg-slate-200/50 hover:text-slate-800'
-            }`}
-            title={L('Lịch sử cuộc trò chuyện', '会話履歴', 'Conversation history')}
-          >
-            <MessageSquare className="w-4 h-4" />
-          </button>
+              }}
+              onMouseEnter={() => {
+                setLeftActiveTab('conversations')
+                setIsLeftSidebarExpanded(true)
+              }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all duration-200 active:scale-95 cursor-pointer"
+              title={L('Cuộc trò chuyện mới', '新しい会話', 'New conversation')}
+            >
+              <Plus className="w-5 h-5" />
+            </button>
 
-          {/* Process (Quy trình) button */}
-          <button
-            onClick={() => {
-              if (isLeftSidebarExpanded && leftActiveTab === 'process') {
-                setIsLeftSidebarExpanded(false)
-              } else {
+            <div className="w-6 h-px bg-slate-200 my-1" />
+
+            {/* Sources button */}
+            <button
+              onClick={() => {
+                if (isLeftSidebarExpanded && leftActiveTab === 'sources') {
+                  setIsLeftSidebarExpanded(false)
+                } else {
+                  setLeftActiveTab('sources')
+                  setIsLeftSidebarExpanded(true)
+                }
+              }}
+              onMouseEnter={() => {
+                setLeftActiveTab('sources')
+                setIsLeftSidebarExpanded(true)
+              }}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                isLeftSidebarExpanded && leftActiveTab === 'sources'
+                  ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
+                  : 'text-slate-550 hover:bg-slate-200/50 hover:text-slate-800'
+              }`}
+              title={t('ws.panel.sources')}
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+
+            {/* Conversations History button */}
+            <button
+              onClick={() => {
+                if (isLeftSidebarExpanded && leftActiveTab === 'conversations') {
+                  setIsLeftSidebarExpanded(false)
+                } else {
+                  setLeftActiveTab('conversations')
+                  setIsLeftSidebarExpanded(true)
+                }
+              }}
+              onMouseEnter={() => {
+                setLeftActiveTab('conversations')
+                setIsLeftSidebarExpanded(true)
+              }}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                isLeftSidebarExpanded && leftActiveTab === 'conversations'
+                  ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
+                  : 'text-slate-550 hover:bg-slate-200/50 hover:text-slate-800'
+              }`}
+              title={L('Lịch sử cuộc trò chuyện', '会話履歴', 'Conversation history')}
+            >
+              <MessageSquare className="w-4 h-4" />
+            </button>
+
+            {/* Process (Quy trình) button */}
+            <button
+              onClick={() => {
+                if (isLeftSidebarExpanded && leftActiveTab === 'process') {
+                  setIsLeftSidebarExpanded(false)
+                } else {
+                  setLeftActiveTab('process')
+                  setIsLeftSidebarExpanded(true)
+                }
+              }}
+              onMouseEnter={() => {
                 setLeftActiveTab('process')
                 setIsLeftSidebarExpanded(true)
-              }
-            }}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
-              isLeftSidebarExpanded && leftActiveTab === 'process'
-                ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
-                : 'text-slate-555 hover:bg-slate-200/50 hover:text-slate-805'
-            }`}
-            title={L('Quy trình thực hiện', '業務フロー', 'Process')}
-          >
-            <ClipboardList className="w-4 h-4" />
-          </button>
-        </aside>
+              }}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                isLeftSidebarExpanded && leftActiveTab === 'process'
+                  ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
+                  : 'text-slate-555 hover:bg-slate-200/50 hover:text-slate-805'
+              }`}
+              title={L('Quy trình thực hiện', '業務フロー', 'Process')}
+            >
+              <ClipboardList className="w-4 h-4" />
+            </button>
+          </aside>
 
-        {/* COLUMN 1.5: SIDEBAR DRAWER PANEL */}
-        {isLeftSidebarExpanded && (
-          <aside className="shrink-0 w-60 bg-white border-r border-slate-200 flex flex-col h-full z-10 relative shadow-3xs animate-fade-in-right animate-duration-150">
+          {/* COLUMN 1.5: SIDEBAR DRAWER PANEL */}
+          {isLeftSidebarExpanded && (
+            <aside className="shrink-0 w-60 bg-white border-r border-slate-200 flex flex-col h-full z-10 relative shadow-3xs animate-fade-in-right animate-duration-150">
             {/* Header with Title and close button */}
             <div className="p-3 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between shrink-0 select-none">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-550">
@@ -2543,6 +2564,7 @@ export default function NotebookWorkspace() {
             </div>
           </aside>
         )}
+        </div>
 
         {/* COLUMN 2: CENTER WORKSPACE CANVAS (Width: flex-1) */}
         <main className="flex-1 bg-slate-50/50 flex flex-col h-full min-w-0 relative">
