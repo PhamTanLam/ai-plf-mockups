@@ -2965,7 +2965,7 @@ export default function NotebookWorkspace() {
                     >
                       {/* 3D Glossy Avatar Sphere */}
                       {msg.sender === 'ai' ? (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(99,102,241,0.3)] relative overflow-hidden border border-white/20 shrink-0 select-none group">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-500 to-brand-500 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(16,185,129,0.3)] relative overflow-hidden border border-white/20 shrink-0 select-none group">
                           {/* Glossy top reflection overlay */}
                           <div className="absolute top-0.5 left-0.5 right-0.5 h-[45%] bg-white/25 rounded-full blur-[0.5px]" />
                           <Sparkles className="w-3.5 h-3.5 text-white drop-shadow-sm relative z-10" />
@@ -2998,7 +2998,7 @@ export default function NotebookWorkspace() {
                           className={`leading-relaxed text-xs whitespace-pre-line relative ${
                             msg.sender === 'ai'
                               ? 'p-4 rounded-[22px] rounded-tl-none border border-slate-200/70 shadow-[0_12px_30px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.01)] bg-white text-slate-800'
-                              : 'p-3.5 px-4 rounded-[22px] rounded-tr-none border border-indigo-650/10 shadow-[0_10px_25px_rgba(99,102,241,0.18)] bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white font-medium'
+                              : 'p-3.5 px-4 rounded-[22px] rounded-tr-none border border-emerald-600/10 shadow-[0_10px_25px_rgba(16,185,129,0.18)] bg-gradient-to-r from-emerald-600 via-teal-600 to-brand-600 text-white font-medium'
                           }`}
                         >
                           {msg.sender === 'ai' ? (
@@ -3096,7 +3096,7 @@ export default function NotebookWorkspace() {
                           onClick={() => handleSuggestionClick(prompt)}
                           className={`snap-start px-3 py-1.5 text-[10px] font-bold rounded-full transition-all duration-250 flex items-center gap-1.5 cursor-pointer shrink-0 shadow-3xs hover:shadow-xs active:scale-95 whitespace-nowrap ${
                             isHighlighted
-                              ? 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white border border-blue-500/20 hover:opacity-95'
+                              ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-brand-500 text-white border border-emerald-500/20 hover:opacity-95'
                               : 'bg-white text-slate-600 hover:text-brand-600 border border-slate-200 hover:border-brand-500/20 hover:bg-brand-50/20'
                           }`}
                         >
