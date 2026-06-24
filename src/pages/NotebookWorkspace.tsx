@@ -2372,7 +2372,7 @@ export default function NotebookWorkspace() {
                 setIsLeftSidebarExpanded(true)
               }}
               className="w-9 h-9 rounded-xl flex items-center justify-center bg-brand-500 hover:bg-brand-600 text-white shadow-sm transition-all duration-200 active:scale-95 cursor-pointer"
-              title={L('Cuộc trò chuyện mới', '新しい会話', 'New conversation')}
+              title={L('Tạo mới trò chuyện', '新しい会話を作成', 'Create new conversation')}
             >
               <Plus className="w-5 h-5" />
             </button>
