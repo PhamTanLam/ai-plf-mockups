@@ -3088,22 +3088,15 @@ export default function NotebookWorkspace() {
                 <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none snap-x shrink-0">
                   {activeSuggestions
                     .filter((prompt) => !askedQuestions.includes(prompt))
-                    .map((prompt, idx) => {
-                      const isHighlighted = idx === 0;
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => handleSuggestionClick(prompt)}
-                          className={`snap-start px-3 py-1.5 text-[10px] font-bold rounded-full transition-all duration-250 flex items-center gap-1.5 cursor-pointer shrink-0 shadow-3xs hover:shadow-xs active:scale-95 whitespace-nowrap ${
-                            isHighlighted
-                              ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-brand-500 text-white border border-emerald-500/20 hover:opacity-95'
-                              : 'bg-white text-slate-600 hover:text-brand-600 border border-slate-200 hover:border-brand-500/20 hover:bg-brand-50/20'
-                          }`}
-                        >
-                          <span>{tc(prompt)}</span>
-                        </button>
-                      );
-                    })}
+                    .map((prompt, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSuggestionClick(prompt)}
+                        className="snap-start px-3 py-1.5 text-[10px] font-bold rounded-full transition-all duration-250 flex items-center gap-1.5 cursor-pointer shrink-0 shadow-3xs hover:shadow-xs active:scale-95 whitespace-nowrap bg-white text-slate-600 hover:text-brand-600 border border-slate-200 hover:border-brand-500/20 hover:bg-brand-50/20"
+                      >
+                        <span>{tc(prompt)}</span>
+                      </button>
+                    ))}
                 </div>
               </div>
 
