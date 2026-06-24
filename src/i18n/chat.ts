@@ -180,6 +180,38 @@ const CHAT: Record<string, { ja: string; en: string }> = {
     ja: '差分が記録されていないため、計算する追加費用はありません。',
     en: 'No differences recorded, so there are no change order costs to calculate.'
   },
+  'Tóm tắt tài liệu specs.txt của dự án': {
+    ja: 'プロジェクトの specs.txt 仕様書の要約',
+    en: 'Summarize the project specs.txt document'
+  },
+  'Hướng dẫn lập trình mã PLC Structured Text': {
+    ja: 'PLC Structured Text のプログラミングガイド',
+    en: 'PLC Structured Text programming guide'
+  },
+  'Xem bảng giá nâng cấp thành viên Premium': {
+    ja: 'Premiumメンバーシップ of アップグレード料金を見る',
+    en: 'View Premium membership upgrade pricing'
+  },
+  'Xem bảng giá dịch vụ': {
+    ja: 'サービス料金プランを見る',
+    en: 'View service plans and pricing'
+  },
+  'Nâng cấp lên Premium': {
+    ja: 'Premiumにアップグレード',
+    en: 'Upgrade to Premium'
+  },
+  'Tài liệu khao_sat_thay_doi_specs.txt ghi nhận các thông số kỹ thuật cốt lõi:\n- Hệ thống: Trạm hàn Robot WW2 Welding Cell.\n- Thiết bị cũ: CPU Mitsubishi FX5U compact, HMI 7-inch.\n- Yêu cầu nâng cấp: CPU Mitsubishi Q03UDE Module, bổ sung 2 cảm biến quang Omron, nâng cấp HMI lên GOT2000 10-inch, bổ sung 1 trục Servo Motor MR-J4 cho gá quay.': {
+    ja: '現地調査仕様変更ログ khao_sat_thay_doi_specs.txt には以下のコア技術仕様が記録されています：\n- システム：WW2溶接ロボットセル\n- 既存機器：コンパクトPLC FX5U、7インチHMI\n- アップグレード要求：モジュール型PLC Q03UDE、オムロン製光電センサー2個追加、HMIをGOT2000 10インチにアップグレード、治具回転軸用にサーボモータ MR-J4 1軸追加。',
+    en: 'The khao_sat_thay_doi_specs.txt survey log records the core technical specifications:\n- System: Robot Welding Cell WW2.\n- Existing equipment: Compact PLC FX5U, 7-inch HMI.\n- Upgrade requirements: Module PLC Q03UDE, add 2 Omron photoelectric sensors, upgrade HMI to GOT2000 10-inch, add 1 axis Servo Motor MR-J4 for rotation fixture.'
+  },
+  'Mã PLC Structured Text (ST) trong dự án tuân thủ tiêu chuẩn IEC 61131-3. Cấu trúc chương trình sử dụng khối hàm điều khiển trình tự (CASE..OF) để điều khiển bước cho gá quay, các ngõ ra kích hoạt van khí nén và Robot hàn. Để tối ưu hóa hoặc kiểm tra lỗi cú pháp, bạn có thể chuyển sang Bước 5: Debug để chạy trình biên dịch mô phỏng.': {
+    ja: 'プロジェクトの PLC ST（Structured Text）コードは IEC 61131-3 規格に準拠しています。プログラム構造は状態遷移（CASE..OF）回路を使用して治具回転、エアシリンダ弁アクチュエータ、および溶接ロボットを制御します。構文エラーチェックや最適化を行うには、ステップ5「デバッグ」に切り替えてシミュレータコンパイラを実行できます。',
+    en: 'The PLC Structured Text (ST) code in the project complies with the IEC 61131-3 standard. The program structure uses sequence control blocks (CASE..OF) to control the rotation fixture steps, pneumatic valve outputs, and the welding robot. To optimize or check for syntax errors, you can switch to Step 5: Debug to run the simulation compiler.'
+  },
+  'Hệ thống hỗ trợ 3 gói dịch vụ:\n1. Gói Free: Hỗ trợ Q&A cơ bản, đọc tài liệu.\n2. Gói Pro ($29/tháng): Hỗ trợ lập trình PLC ST nâng cao, mở khóa 8 bước.\n3. Gói Enterprise Premium ($99/tháng): Mở khóa toàn bộ 13 bước, tự động sinh bản vẽ CAD và code PLC từ specs, hỗ trợ xuất tài liệu nghiệm thu & HDSD vận hành.': {
+    ja: 'システムは3つのプランをサポートしています：\n1. フリープラン：基本的なQ&A、ソースドキュメントの読み込みに対応。\n2. プロプラン（$29/月）：高度なPLC STプログラミング支援、8つのステップを開放。\n3. Enterprise Premiumプラン（$99/月）：全13ステップを開放、仕様書からのCAD図面・PLCコード自動生成、技術検収書・HMI取扱説明書の自動作成機能に対応。',
+    en: 'The system supports 3 service plans:\n1. Free Plan: Basic Q&A and source document reading.\n2. Pro Plan ($29/month): Advanced PLC ST programming assistance, unlocks 8 steps.\n3. Enterprise Premium Plan ($99/month): Unlocks all 13 steps, auto CAD drawing and PLC code generation from specs, auto technical acceptance and HMI manual creation.'
+  }
 }
 
 export function tcText(text: string, locale: Locale): string {
