@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -1272,6 +1272,12 @@ export default function NotebookWorkspace() {
   const [renameConvVal, setRenameConvVal] = useState('')
   // Cuộc mới chưa chat = "draft": chưa thêm vào danh sách, chỉ commit khi có tin nhắn đầu tiên
   const draftConvRef = useRef<{ id: string; createdBy: 'Linh' | 'Kanai' | 'AI'; createdAt: number } | null>(null)
+
+  const filteredConversations = useMemo(() => {
+    return conversations
+      .filter(c => translateConvTitle(c.title, locale).toLowerCase().includes(convSearch.toLowerCase()))
+      .sort((a, b) => b.createdAt - a.createdAt)
+  }, [conversations, convSearch, locale])
 
   // Lưu tin nhắn + commit cuộc "draft" khi có tin nhắn đầu tiên + tự đặt tiêu đề
   useEffect(() => {
@@ -2580,10 +2586,7 @@ export default function NotebookWorkspace() {
                   </div>
 
                   <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 scrollbar-thin">
-                    {conversations
-                      .filter(c => translateConvTitle(c.title, locale).toLowerCase().includes(convSearch.toLowerCase()))
-                      .sort((a, b) => b.createdAt - a.createdAt)
-                      .map(c => {
+                    {filteredConversations.map(c => {
                         const active = c.id === activeConvId
                         const editing = renameConvId === c.id
                         const isAI = c.createdBy === 'AI'
