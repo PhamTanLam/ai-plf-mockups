@@ -229,6 +229,29 @@ interface PhaseDetail {
   note?: string
 }
 
+const POST_SALES_STEPS = [7, 8, 9, 10, 12, 11]
+
+const getDisplayStep = (phaseNum: number | null | undefined): string => {
+  if (phaseNum === null || phaseNum === undefined) return ''
+  if (phaseNum === 1) return '1'
+  if (phaseNum === 2) return '2'
+  if (phaseNum === 2.5) return '2.5'
+  if (phaseNum === 3) return '3'
+  if (phaseNum === 7) return '4'
+  if (phaseNum === 8) return '5'
+  if (phaseNum === 9) return '6'
+  if (phaseNum === 10) return '7'
+  if (phaseNum === 12) return '8'
+  if (phaseNum === 11) return '9'
+  return String(phaseNum)
+}
+
+const getDisplayStepPercent = (phaseNum: number | null | undefined): number => {
+  if (phaseNum === null || phaseNum === undefined) return 0
+  const stepVal = phaseNum === 2.5 ? 2.5 : parseFloat(getDisplayStep(phaseNum))
+  return isNaN(stepVal) ? 0 : (stepVal / 9) * 100
+}
+
 const phasesInfo: PhaseDetail[] = [
   // PRE-SALES = 3 mốc tiến độ trong sidebar, tất cả dùng chung 1 màn CaseInput
   {
@@ -1133,7 +1156,7 @@ export default function NotebookWorkspace() {
       updatedHasUsedPreSales = true
     }
 
-    const postSalesSteps = [7, 8, 9, 10, 12, 11]
+    const postSalesSteps = POST_SALES_STEPS
     if (postSalesSteps.includes(phaseNum)) {
       if (updatedHasUsedPreSales) {
         setProgressBarActivated(true)
@@ -2323,30 +2346,6 @@ export default function NotebookWorkspace() {
               <FileText className="w-4 h-4" />
             </button>
 
-            {/* Conversations History button */}
-            <button
-              onClick={() => {
-                if (isLeftSidebarExpanded && leftActiveTab === 'conversations') {
-                  setIsLeftSidebarExpanded(false)
-                } else {
-                  setLeftActiveTab('conversations')
-                  setIsLeftSidebarExpanded(true)
-                }
-              }}
-              onMouseEnter={() => {
-                setLeftActiveTab('conversations')
-                setIsLeftSidebarExpanded(true)
-              }}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                isLeftSidebarExpanded && leftActiveTab === 'conversations'
-                  ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
-                  : 'text-slate-550 hover:bg-slate-200/50 hover:text-slate-800'
-              }`}
-              title={L('Lịch sử cuộc trò chuyện', '会話履歴', 'Conversation history')}
-            >
-              <MessageSquare className="w-4 h-4" />
-            </button>
-
             {/* Process (Quy trình) button */}
             {progressBarActivated && (
               <button
@@ -2372,6 +2371,30 @@ export default function NotebookWorkspace() {
                 <ClipboardList className="w-4 h-4" />
               </button>
             )}
+
+            {/* Conversations History button */}
+            <button
+              onClick={() => {
+                if (isLeftSidebarExpanded && leftActiveTab === 'conversations') {
+                  setIsLeftSidebarExpanded(false)
+                } else {
+                  setLeftActiveTab('conversations')
+                  setIsLeftSidebarExpanded(true)
+                }
+              }}
+              onMouseEnter={() => {
+                setLeftActiveTab('conversations')
+                setIsLeftSidebarExpanded(true)
+              }}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                isLeftSidebarExpanded && leftActiveTab === 'conversations'
+                  ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
+                  : 'text-slate-555 hover:bg-slate-200/50 hover:text-slate-805'
+              }`}
+              title={L('Lịch sử cuộc trò chuyện', '会話履歴', 'Conversation history')}
+            >
+              <MessageSquare className="w-4 h-4" />
+            </button>
           </aside>
 
           {/* COLUMN 1.5: SIDEBAR DRAWER PANEL */}
@@ -2584,7 +2607,7 @@ export default function NotebookWorkspace() {
                             ? 'gradient-primary border-brand-500 text-white shadow-3xs shadow-brand-500/15'
                             : 'bg-slate-100 border-slate-200 text-slate-400'
                         }`}>
-                          {phaseNum}
+                          {getDisplayStep(phaseNum)}
                         </div>
                         <div className="min-w-0 flex-1 leading-tight py-0.5">
                           <div className={`text-[10px] font-extrabold truncate ${isActive ? 'text-brand-700' : 'text-slate-700'}`}>
@@ -2610,18 +2633,35 @@ export default function NotebookWorkspace() {
           
           {/* Active Phase Canvas Title Header */}
           {(!isZenMode || activeRightTab !== 'debug_code') && (
-            <div className="bg-white/95 backdrop-blur-md border-b border-slate-200 px-5 py-3.5 flex flex-col gap-3.5 flex-none shadow-xs select-none z-10">
+            <div className="bg-white/95 backdrop-blur-md border-b border-slate-200 px-5 py-3.5 flex flex-col gap-3 flex-none shadow-xs select-none z-10 animate-fade-in-up">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <span className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse shrink-0" />
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[9px] font-extrabold text-brand-700 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full tracking-wider font-mono">
                         {activePhase !== null ? (activePhase <= 3 ? t('ws.badge.preOrder') : t('ws.badge.postOrder')) : t('ws.badge.pipeline')}
                       </span>
                       <h1 className="text-sm font-extrabold text-slate-900">
                         {activePhase !== null ? phaseTitle(activePhase) : t('ws.canvas.detailArea')}
                       </h1>
+                      
+                      {/* Horizontal Process Progress Bar */}
+                      {activePhase !== null && (
+                        <div className="flex items-center gap-2 select-none ml-2 border-l border-slate-200 pl-2.5">
+                          <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/40 relative">
+                            <div 
+                              className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
+                              style={{
+                                width: `${getDisplayStepPercent(activePhase)}%`
+                              }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-slate-450 font-mono font-bold">
+                            {getDisplayStep(activePhase)}/9
+                          </span>
+                        </div>
+                      )}
                     </div>
                     {activePhase === null && (
                       <p className="mt-0.5 text-xs text-slate-500 leading-normal">
@@ -2630,8 +2670,6 @@ export default function NotebookWorkspace() {
                     )}
                   </div>
                 </div>
-
-
               </div>
             </div>
           )}
