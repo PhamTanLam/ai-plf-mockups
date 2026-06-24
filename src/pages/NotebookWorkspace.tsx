@@ -2374,7 +2374,7 @@ export default function NotebookWorkspace() {
 
           {/* COLUMN 1.5: SIDEBAR DRAWER PANEL */}
           {isLeftSidebarExpanded && (
-            <aside className="shrink-0 w-60 bg-white border-r border-slate-200 flex flex-col h-full z-10 relative shadow-3xs animate-fade-in-right animate-duration-150">
+            <aside className="absolute left-14 top-0 bottom-0 w-60 bg-white border-r border-slate-200 flex flex-col h-full z-20 shadow-md animate-fade-in-right animate-duration-150">
             {/* Header with Title and close button */}
             <div className="p-3 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between shrink-0 select-none">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-550">
