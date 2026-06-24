@@ -252,6 +252,51 @@ const getDisplayStepPercent = (phaseNum: number | null | undefined): number => {
   return isNaN(stepVal) ? 0 : (stepVal / 9) * 100
 }
 
+const translateConvTitle = (title: string, locale: string): string => {
+  const defaultMatch = title.match(/^(Cuộc trò chuyện|会話|Chat)\s+(\d+)$/)
+  if (defaultMatch) {
+    const num = defaultMatch[2]
+    if (locale === 'ja') return `会話 ${num}`
+    if (locale === 'en') return `Chat ${num}`
+    return `Cuộc trò chuyện ${num}`
+  }
+
+  // Seed demo titles translation
+  if (title === 'Review tài liệu hướng dẫn vận hành' || title === '操作説明書レビュー' || title === 'Review operation manual') {
+    if (locale === 'ja') return '操作説明書レビュー'
+    if (locale === 'en') return 'Review operation manual'
+    return 'Review tài liệu hướng dẫn vận hành'
+  }
+  if (title === 'Kiểm tra mã nguồn & yêu cầu UI' || title === 'ソースコード＆UI要件確認' || title === 'Check source code & UI requirements') {
+    if (locale === 'ja') return 'ソースコード＆UI要件確認'
+    if (locale === 'en') return 'Check source code & UI requirements'
+    return 'Kiểm tra mã nguồn & yêu cầu UI'
+  }
+  if (title === 'Đánh giá tổng quan thiết kế dự án' || title === 'プロジェクト設計の全体評価' || title === 'Project design review') {
+    if (locale === 'ja') return 'プロジェクト設計の全体評価'
+    if (locale === 'en') return 'Project design review'
+    return 'Đánh giá tổng quan thiết kế dự án'
+  }
+
+  return title
+}
+
+const translateUser = (user: string, locale: string): string => {
+  if (user === 'Linh' || user === 'リン') {
+    if (locale === 'ja') return 'リン'
+    return 'Linh'
+  }
+  if (user === 'Kanai' || user === '金井') {
+    if (locale === 'ja') return '金井'
+    return 'Kanai'
+  }
+  if (user === 'AI') {
+    return 'AI'
+  }
+  return user
+}
+
+
 const phasesInfo: PhaseDetail[] = [
   // PRE-SALES = 3 mốc tiến độ trong sidebar, tất cả dùng chung 1 màn CaseInput
   {
@@ -1219,7 +1264,7 @@ export default function NotebookWorkspace() {
       }
       let changed = false
       const next = prev.map(c => {
-        if (c.id !== activeConvId || !/^Cuộc trò chuyện \d+$/.test(c.title)) return c
+        if (c.id !== activeConvId || !/^(Cuộc trò chuyện|会話|Chat) \d+$/.test(c.title)) return c
         changed = true
         return { ...c, title }
       })
@@ -1266,7 +1311,7 @@ export default function NotebookWorkspace() {
     const next = conversations.filter(c => c.id !== cid)
     if (!next.length) {
       const nid = newConvId()
-      setConversations([{ id: nid, title: 'Cuộc trò chuyện 1', createdBy: activeUser, createdAt: Date.now() }])
+      setConversations([{ id: nid, title: L('Cuộc trò chuyện 1', '会話 1', 'Chat 1'), createdBy: activeUser, createdAt: Date.now() }])
       setActiveConvId(nid)
       setMessages([makeGreeting()])
       return
@@ -2524,12 +2569,13 @@ export default function NotebookWorkspace() {
 
                   <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 scrollbar-thin">
                     {conversations
-                      .filter(c => c.title.toLowerCase().includes(convSearch.toLowerCase()))
+                      .filter(c => translateConvTitle(c.title, locale).toLowerCase().includes(convSearch.toLowerCase()))
                       .sort((a, b) => b.createdAt - a.createdAt)
                       .map(c => {
                         const active = c.id === activeConvId
                         const editing = renameConvId === c.id
                         const isAI = c.createdBy === 'AI'
+                        const displayName = translateUser(c.createdBy, locale)
                         return (
                           <div
                             key={c.id}
@@ -2539,7 +2585,7 @@ export default function NotebookWorkspace() {
                             <span className={`w-6 h-6 rounded-full text-[8.5px] font-extrabold flex items-center justify-center shrink-0 ${
                               isAI ? 'bg-brand-500/15 text-brand-700 border border-brand-500/20' : 'bg-emerald-500/15 text-emerald-700 border border-emerald-500/20'
                             }`}>
-                              {isAI ? 'AI' : c.createdBy[0]}
+                              {isAI ? 'AI' : displayName[0]}
                             </span>
                             {editing ? (
                               <input
@@ -2553,8 +2599,12 @@ export default function NotebookWorkspace() {
                               />
                             ) : (
                               <div className="min-w-0 flex-1 leading-tight">
-                                <div className={`text-[11px] truncate ${active ? 'font-bold text-brand-700' : 'font-semibold text-slate-750'}`}>{c.title}</div>
-                                <div className="text-[9px] text-slate-400 font-medium">Tác giả: {c.createdBy}</div>
+                                <div className={`text-[11px] truncate ${active ? 'font-bold text-brand-700' : 'font-semibold text-slate-750'}`}>
+                                  {translateConvTitle(c.title, locale)}
+                                </div>
+                                <div className="text-[9px] text-slate-400 font-medium">
+                                  {L('Tác giả', '作成者', 'Author')}: {displayName}
+                                </div>
                               </div>
                             )}
                             {!editing && (
