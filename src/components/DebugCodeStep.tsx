@@ -499,36 +499,34 @@ export default function DebugCodeStep({
 
   // 3. Fix syntax automatically (AI quick-fix)
   const handleQuickFix = () => {
-    if (errorMessage && errorMessage.includes('Dòng')) {
-      const match = errorMessage.match(/Dòng (\d+)/)
-      if (match) {
-        const lineNum = parseInt(match[1]) - 1
-        const lines = code.split('\n')
-        const faultyLine = lines[lineNum]
-        
-        // Replace first '=' with ':='
-        if (faultyLine.includes('=') && !faultyLine.includes(':=')) {
-          lines[lineNum] = faultyLine.replace('=', ':=')
-        } else if (!faultyLine.endsWith(';')) {
-          lines[lineNum] = faultyLine + ';'
-        }
-        
-        const fixedCode = lines.join('\n')
-        setCode(fixedCode)
-        localStorage.setItem(STORAGE_KEY, fixedCode)
-        if (fixedCode.trim() !== '') {
-          localStorage.setItem(LOADED_FLAG_KEY, 'true')
-        }
-        window.dispatchEvent(new Event('storage'))
-        
-        setSyntaxStatus('valid')
-        setErrorMessage(null)
-        
-        // Save to revisions
-        saveRevision('AI Tự sửa lỗi cú pháp nhanh', fixedCode)
-        
-        if (onAddLog) onAddLog(L('Sửa nhanh lỗi cú pháp bằng AI hoàn tất', 'AI によるクイック構文修正が完了しました', 'AI quick-fix of syntax error completed'), 12)
+    const match = errorMessage ? errorMessage.match(/^(?:Dòng|Line|行)\s*(\d+)/i) : null
+    if (match) {
+      const lineNum = parseInt(match[1]) - 1
+      const lines = code.split('\n')
+      const faultyLine = lines[lineNum]
+      
+      // Replace first '=' with ':='
+      if (faultyLine.includes('=') && !faultyLine.includes(':=')) {
+        lines[lineNum] = faultyLine.replace('=', ':=')
+      } else if (!faultyLine.endsWith(';')) {
+        lines[lineNum] = faultyLine + ';'
       }
+      
+      const fixedCode = lines.join('\n')
+      setCode(fixedCode)
+      localStorage.setItem(STORAGE_KEY, fixedCode)
+      if (fixedCode.trim() !== '') {
+        localStorage.setItem(LOADED_FLAG_KEY, 'true')
+      }
+      window.dispatchEvent(new Event('storage'))
+      
+      setSyntaxStatus('valid')
+      setErrorMessage(null)
+      
+      // Save to revisions
+      saveRevision('AI Tự sửa lỗi cú pháp nhanh', fixedCode)
+      
+      if (onAddLog) onAddLog(L('Sửa nhanh lỗi cú pháp bằng AI hoàn tất', 'AI によるクイック構文修正が完了しました', 'AI quick-fix of syntax error completed'), 12)
     }
   }
 
@@ -605,9 +603,21 @@ export default function DebugCodeStep({
       localStorage.setItem(LOADED_FLAG_KEY, 'true')
     }
     window.dispatchEvent(new Event('storage'))
+    const getActionDescLabel = (desc: string) => {
+      if (desc.includes('Khôi phục')) {
+        return L('Khôi phục lại mã cấu hình gốc', 'デフォルトの構成コードを復元', 'Restore original configuration code')
+      }
+      if (desc.includes('Tối ưu')) {
+        return L('Tối ưu hóa gọn mã nguồn (State Machine / CASE)', 'ソースコードのコンパクト最適化 (状態遷移 / CASE)', 'Compact source code optimization (State Machine / CASE)')
+      }
+      if (desc.includes('Thêm cấu trúc')) {
+        return L('Thêm cấu trúc ghi chú & CASE chuẩn IEC', 'IEC標準コメントおよびCASE構造を追加', 'Add IEC standard comments & CASE structure')
+      }
+      return desc
+    }
     saveRevision(`AI Paraphrase: ${actionDesc}`, localizedTarget)
     
-    if (onAddLog) onAddLog(`${L('Áp dụng Paraphrase', 'パラフレーズ適用', 'Paraphrase applied')}: ${actionDesc}`, 12)
+    if (onAddLog) onAddLog(`${L('Áp dụng Paraphrase', 'パラフレーズ適用', 'Paraphrase applied')}: ${getActionDescLabel(actionDesc)}`, 12)
     if (onProgressChange) onProgressChange(100)
     
     alert(`${t('post.debug.alertApplySuccess')}: ${translateRevDesc(actionDesc, t)}`)

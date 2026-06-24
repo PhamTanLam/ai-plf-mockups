@@ -296,6 +296,31 @@ const translateUser = (user: string, locale: string): string => {
   return user
 }
 
+const translateUsersRole = (users: string, locale: string): string => {
+  if (locale === 'ja') {
+    if (users === 'Nhân viên kinh doanh') return '営業担当者'
+    if (users === 'Nhân viên kinh doanh hoặc SE') return '営業担当者またはSE'
+    if (users === 'Kỹ sư dự án') return 'プロジェクトエンジニア'
+    if (users === 'Kỹ sư & Người phụ trách') return 'エンジニア＆担当者'
+    if (users === 'Kỹ sư thiết kế / Sales') return '設計エンジニア/営業'
+    if (users === 'AI Assistant / Kỹ sư') return 'AIアシスタント/エンジニア'
+    if (users === 'Kỹ sư / AI Assistant') return 'エンジニア/AIアシスタント'
+    if (users === 'Khách hàng / SE') return '顧客/SE'
+  }
+  if (locale === 'en') {
+    if (users === 'Nhân viên kinh doanh') return 'Sales Representative'
+    if (users === 'Nhân viên kinh doanh hoặc SE') return 'Sales Rep or SE'
+    if (users === 'Kỹ sư dự án') return 'Project Engineer'
+    if (users === 'Kỹ sư & Người phụ trách') return 'Engineer & Owner'
+    if (users === 'Kỹ sư thiết kế / Sales') return 'Design Engineer / Sales'
+    if (users === 'AI Assistant / Kỹ sư') return 'AI Assistant / Engineer'
+    if (users === 'Kỹ sư / AI Assistant') return 'Engineer / AI Assistant'
+    if (users === 'Khách hàng / SE') return 'Customer / SE'
+  }
+  return users
+}
+
+
 
 const phasesInfo: PhaseDetail[] = [
   // PRE-SALES = 3 mốc tiến độ trong sidebar, tất cả dùng chung 1 màn CaseInput
@@ -2650,7 +2675,7 @@ export default function NotebookWorkspace() {
                           <div className={`text-[10px] font-extrabold truncate ${isActive ? 'text-brand-700' : 'text-slate-700'}`}>
                             {phaseTitle(p.num)}
                           </div>
-                          <div className="text-[8px] text-slate-400 font-medium font-mono truncate">{p.users}</div>
+                          <div className="text-[8px] text-slate-400 font-medium font-mono truncate">{translateUsersRole(p.users, locale)}</div>
                         </div>
                         {isActive && (
                           <span className="w-1.5 h-1.5 rounded-full bg-brand-500 absolute top-2 right-2 animate-pulse" />
