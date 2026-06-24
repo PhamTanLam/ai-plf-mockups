@@ -2348,28 +2348,30 @@ export default function NotebookWorkspace() {
             </button>
 
             {/* Process (Quy trình) button */}
-            <button
-              onClick={() => {
-                if (isLeftSidebarExpanded && leftActiveTab === 'process') {
-                  setIsLeftSidebarExpanded(false)
-                } else {
+            {progressBarActivated && (
+              <button
+                onClick={() => {
+                  if (isLeftSidebarExpanded && leftActiveTab === 'process') {
+                    setIsLeftSidebarExpanded(false)
+                  } else {
+                    setLeftActiveTab('process')
+                    setIsLeftSidebarExpanded(true)
+                  }
+                }}
+                onMouseEnter={() => {
                   setLeftActiveTab('process')
                   setIsLeftSidebarExpanded(true)
-                }
-              }}
-              onMouseEnter={() => {
-                setLeftActiveTab('process')
-                setIsLeftSidebarExpanded(true)
-              }}
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                isLeftSidebarExpanded && leftActiveTab === 'process'
-                  ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
-                  : 'text-slate-555 hover:bg-slate-200/50 hover:text-slate-805'
-              }`}
-              title={L('Quy trình thực hiện', '業務フロー', 'Process')}
-            >
-              <ClipboardList className="w-4 h-4" />
-            </button>
+                }}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                  isLeftSidebarExpanded && leftActiveTab === 'process'
+                    ? 'bg-brand-500/10 text-brand-700 font-extrabold border border-brand-500/20'
+                    : 'text-slate-555 hover:bg-slate-200/50 hover:text-slate-805'
+                }`}
+                title={L('Quy trình thực hiện', '業務フロー', 'Process')}
+              >
+                <ClipboardList className="w-4 h-4" />
+              </button>
+            )}
           </aside>
 
           {/* COLUMN 1.5: SIDEBAR DRAWER PANEL */}
