@@ -2984,7 +2984,15 @@ export default function NotebookWorkspace() {
                         </div>
                       )}
 
-                      <div className="space-y-0.5 max-w-[85%]">
+                      <div className="space-y-1.5 max-w-[85%]">
+                        {/* Sender info & Time */}
+                        <div className={`flex items-center gap-1.5 px-1 text-[10px] select-none ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <span className={`font-extrabold text-[10px] ${msg.sender === 'ai' ? 'text-brand-700' : 'text-slate-700'}`}>
+                            {msg.sender === 'ai' ? 'AI' : activeUser}
+                          </span>
+                          <span className="w-1 h-1 rounded-full bg-slate-350" />
+                          <span className="text-[9px] font-mono text-slate-400">${msg.timestamp}</span>
+                        </div>
                         {/* 3D Glassmorphic Bubble content */}
                         <div
                           className={`leading-relaxed text-xs whitespace-pre-line relative ${
