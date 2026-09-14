@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -7,15 +7,17 @@ on:
 
 # Huỷ run cũ khi có commit mới push liên tiếp lên main
 concurrency:
-  group: pages-main
+  group: pages
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      deployments: write
     steps:
       - uses: actions/checkout@v4
 
@@ -28,12 +30,23 @@ jobs:
         run: npm ci
 
       - name: Build (production web)
+        # base path phải khớp tên repo cho GitHub Pages project site
         run: npm run build:web
+        env:
+          BASE_PATH: /ai-plf-mockups/
 
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # luôn deploy production (làm việc trực tiếp trên main)
-          command: pages deploy dist-web --project-name=ai-plf --branch=main
+          path: dist-web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
